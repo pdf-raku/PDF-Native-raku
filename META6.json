@@ -13,7 +13,7 @@
   ],
   "source-url" : "git://github.com/p6-pdf/libpdf.git",
   "depends" : [ "LibraryMake" ],
-  "build-depends" : [ "Native::Resources" ],
+  "build-depends" : [ "Shell::Command" ],
   "test-depends" : [ ],
   "version" : "0.0.1"
 }
