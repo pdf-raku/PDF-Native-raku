@@ -1,22 +1,29 @@
+use v6;
+
 class Lib::PDF::Buf {
-    sub pdf_buf_resample_8_4($out, $in, uint32 $in-len) {
-        my int $j = 0;
-        loop (my $i = 0; $i < $in-len; $i++) {
-            my $v = $in[$i];
-            $out[$j++] = $v +> 4;
-            $out[$j++] = $v +& 15;
+
+    use NativeCall;
+    use LibraryMake;
+
+    # Find our compiled library.
+    sub libpdf {
+        state $ = do {
+            my $so = get-vars('')<SO>;
+            ~(%?RESOURCES{"lib/libpdf$so"});
         }
-        $out
     }
+
+    sub pdf_buf_pack_8_4(CArray[uint8], CArray[uint8], size_t) is native(&libpdf) { * }
     sub alloc($type, $len) {
-        my $buf = array[$type].new;
+        my $buf = CArray[$type].new;
         $buf[$len-1] = 0 if $len;
         $buf;
     }
+
     multi method resample( $in, 8, 4)  {
-        my uint32 $in-len = + $in;
+        my uint32 $in-len = $in.elems;
         my $out = alloc(uint8, $in-len * 2);
-        pdf_buf_resample_8_4($out, $in, $in-len);
+        pdf_buf_pack_8_4($out, $in, $in-len);
         $out.list;
     }
     proto method resample( $, $, $ --> Array) {*};
