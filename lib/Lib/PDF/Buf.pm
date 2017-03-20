@@ -13,16 +13,16 @@ class Lib::PDF::Buf {
         }
     }
 
-    sub pdf_buf_pack_8_4(CArray[uint8], CArray[uint8], size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_8_4(Blob, Blob, size_t) is native(&libpdf) { * }
     sub alloc($type, $len) {
-        my $buf = CArray[$type].new;
+        my $buf = buf8.new;
         $buf[$len-1] = 0 if $len;
         $buf;
     }
 
     multi method resample( $in, 8, 4)  {
         my uint32 $in-len = $in.elems;
-        my $out = alloc(uint8, $in-len * 2);
+        my $out := alloc(uint8, $in-len * 2);
         pdf_buf_pack_8_4($out, $in, $in-len);
         $out.list;
     }
