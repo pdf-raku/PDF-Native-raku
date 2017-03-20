@@ -4,6 +4,7 @@
   "name" : "Lib::PDF",
   "perl" : "6.c",
   "provides" : {
+      "Lib::PDF" : "lib/Lib/PDF.pm",
     "Lib::PDF::Buf" : "lib/Lib/PDF/Buf.pm"
   },
   "resources" : [

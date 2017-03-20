@@ -3,58 +3,14 @@ use v6;
 class Lib::PDF::Buf {
 
     use NativeCall;
-    use LibraryMake;
+    use Lib::PDF :libpdf;
 
-    # Find our compiled library.
-    sub libpdf {
-        state $ = do {
-            my $so = get-vars('')<SO>;
-            ~(%?RESOURCES{"lib/libpdf$so"});
-        }
-    }
-
-    sub pdf_buf_pack_8_4(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_pack_8_16($out, $in, uint32 $in-len) {
-        my $j = 0;
-        loop (my $i = 0; $i < $in-len;) {
-            $out[$j] = $in[$i++] +< 8;
-            $out[$j++] += $in[$i++]; 
-        }
-        $out
-    }
-    sub pdf_buf_pack_8_32($out, $in, uint32 $in-len) {
-        my int $j = 0;
-        loop (my $i = 0; $i < $in-len;) {
-            $out[$j++] = $in[$i++] +< 24  + $in[$i++] +< 16  + $in[$i++] +< 8  + $in[$i++]; 
-        }
-        $out
-    }
-    sub pdf_buf_pack_4_8($out, $in, uint32 $in-len) {
-        my $j = 0;
-        loop (my $i = 0; $i < $in-len;) {
-            $out[$j] = $in[$i++] +< 4;
-            $out[$j++] += $in[$i++]; 
-        }
-        $out
-    }
-    sub pdf_buf_pack_16_8($out, $in, uint32 $in-len) {
-        my $j = 0;
-        loop (my $i = 0; $i < $in-len;) {
-            $out[$j++] = $in[$i] +> 8;
-            $out[$j++] = $in[$i++];
-        }
-        $out
-    }
-    sub pdf_buf_pack_32_8($out, $in, uint32 $in-len) {
-        my $j = 0;
-        loop (my $i = 0; $i < $in-len;) {
-            $out[$j++] = $in[$i] +> 24;
-            $out[$j++] = $in[$i] +> 16;
-            $out[$j++] = $in[$i] +> 8;
-            $out[$j++] = $in[$i++];
-        }
-        $out
-    }
+    sub pdf_buf_pack_8_4(Blob, Blob, size_t)  is native(&libpdf) { * }
+    sub pdf_buf_pack_8_16(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_8_32(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_4_8(Blob, Blob, size_t)  is native(&libpdf) { * }
+    sub pdf_buf_pack_16_8(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_32_8(Blob, Blob, size_t) is native(&libpdf) { * }
 
     my subset PackingSize where 4|8|16|32;
     sub alloc($type, $len) {
@@ -62,15 +18,20 @@ class Lib::PDF::Buf {
         $buf[$len-1] = 0 if $len;
         $buf;
     }
+    sub container(PackingSize $n) {
+        %( 4 => uint8, 8 => uint8, 16 => uint16, 32 => uint32){$n};
+    }
     
-    sub do-packing($n, $m, $in, &pack) {
+    sub do-packing($n, $m, $in is copy, &pack) {
         my uint32 $in-len = $in.elems;
         die "incomplete scan-line: $in-len * $n not divisable by $m"
             unless ($in-len * $n) %% $m;
+        $in = Buf[container($n)].new($in)
+            unless $in.isa(Blob);
         my $out-size = max($m, 8);
-        my $out-type = %( 8 => uint8, 16 => uint16, 32 => uint32){$out-size};
+        my $out-type = container($m);
         my $out := alloc($out-type, ($in-len * $n) div $m);
-        &pack($out, $in, $in-len);
+        &pack($in, $out, $in-len);
         $out.list;
     }
     multi method resample($nums!, PackingSize $n!, PackingSize $m!)  {
