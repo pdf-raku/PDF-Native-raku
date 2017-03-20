@@ -14,50 +14,77 @@ class Lib::PDF::Buf {
     }
 
     sub pdf_buf_pack_8_4(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_8_16($out, $in, uint32 $in-len) {
+        my $j = 0;
+        loop (my $i = 0; $i < $in-len;) {
+            $out[$j] = $in[$i++] +< 8;
+            $out[$j++] += $in[$i++]; 
+        }
+        $out
+    }
+    sub pdf_buf_pack_8_32($out, $in, uint32 $in-len) {
+        my int $j = 0;
+        loop (my $i = 0; $i < $in-len;) {
+            $out[$j++] = $in[$i++] +< 24  + $in[$i++] +< 16  + $in[$i++] +< 8  + $in[$i++]; 
+        }
+        $out
+    }
+    sub pdf_buf_pack_4_8($out, $in, uint32 $in-len) {
+        my $j = 0;
+        loop (my $i = 0; $i < $in-len;) {
+            $out[$j] = $in[$i++] +< 4;
+            $out[$j++] += $in[$i++]; 
+        }
+        $out
+    }
+    sub pdf_buf_pack_16_8($out, $in, uint32 $in-len) {
+        my $j = 0;
+        loop (my $i = 0; $i < $in-len;) {
+            $out[$j++] = $in[$i] +> 8;
+            $out[$j++] = $in[$i++];
+        }
+        $out
+    }
+    sub pdf_buf_pack_32_8($out, $in, uint32 $in-len) {
+        my $j = 0;
+        loop (my $i = 0; $i < $in-len;) {
+            $out[$j++] = $in[$i] +> 24;
+            $out[$j++] = $in[$i] +> 16;
+            $out[$j++] = $in[$i] +> 8;
+            $out[$j++] = $in[$i++];
+        }
+        $out
+    }
+
+    my subset PackingSize where 4|8|16|32;
     sub alloc($type, $len) {
-        my $buf = buf8.new;
+        my $buf = Buf[$type].new;
         $buf[$len-1] = 0 if $len;
         $buf;
     }
-
-    multi method resample( $in, 8, 4)  {
+    
+    sub do-packing($n, $m, $in, &pack) {
         my uint32 $in-len = $in.elems;
-        my $out := alloc(uint8, $in-len * 2);
-        pdf_buf_pack_8_4($out, $in, $in-len);
+        die "incomplete scan-line: $in-len * $n not divisable by $m"
+            unless ($in-len * $n) %% $m;
+        my $out-size = max($m, 8);
+        my $out-type = %( 8 => uint8, 16 => uint16, 32 => uint32){$out-size};
+        my $out := alloc($out-type, ($in-len * $n) div $m);
+        &pack($out, $in, $in-len);
         $out.list;
     }
-    proto method resample( $, $, $ --> Array) {*};
-    multi method resample( $nums!, 4, 8)  { my uint8  @ = flat $nums.list.map: -> \hi, \lo { hi +< 4  +  lo } }
-    multi method resample( $nums!, 8, 16) { my uint16 @ = flat $nums.list.map: -> \hi, \lo { hi +< 8  +  lo } }
-    multi method resample( $nums!, 8, 32) { my uint32 @ = flat $nums.list.map: -> \b1, \b2, \b3, \b4 { b1 +< 24  +  b2 +< 16  +  b3 +< 8  +  b4 } }
-    multi method resample( $nums!, 16, 8) { my uint8  @ = flat $nums.list.map: { ($_ +> 8, $_) } }
-    multi method resample( $nums!, 32, 8) { my uint8  @ = flat $nums.list.map: { ($_ +> 24, $_ +> 16, $_ +> 8, $_) } }
-    multi method resample( $nums!, UInt $n!, UInt $ where $n == $_) { $nums }
-    sub get-bit($num, $bit) { $num +> ($bit) +& 1 }
-    sub set-bit($bit) { 1 +< ($bit) }
-    multi method resample( $nums!, UInt $n!, UInt $m!) is default {
-        warn "unoptimised $n => $m bit sampling";
-        flat gather {
-            my int $m0 = 1;
-            my int $sample = 0;
-
-            for $nums.list -> $num is copy {
-                for 1 .. $n -> int $n0 {
-
-                    $sample += set-bit( $m - $m0)
-                        if get-bit( $num, $n - $n0);
-
-                    if ++$m0 > $m {
-                        take $sample;
-                        $sample = 0;
-                        $m0 = 1;
-                    }
-                }
-            }
-
-            take $sample if $m0 > 1;
+    multi method resample($nums!, PackingSize $n!, PackingSize $m!)  {
+        when $n == $m { $nums }
+        when $n == 8 {
+            my &packer = %( 4 => &pdf_buf_pack_8_4, 16 => &pdf_buf_pack_8_16, 32 => &pdf_buf_pack_8_32 ){$m};
+            do-packing($n, $m, $nums, &packer);
+        }
+        when $m == 8 {
+            my &packer = %( 4 => &pdf_buf_pack_4_8, 16 => &pdf_buf_pack_16_8, 32 => &pdf_buf_pack_32_8 ){$n};
+            do-packing($n, $m, $nums, &packer);
         }
     }
+
     #| variable resampling, e.g. to decode/encode:
     #|   obj 123 0 << /Type /XRef /W [1, 3, 1]
     multi method resample( $nums!, 8, Array $W!)  {
@@ -90,6 +117,6 @@ class Lib::PDF::Buf {
                 @sample.append: @bytes;
             }
         }
-	flat @sample;
+	[flat @sample];
     }
 }
