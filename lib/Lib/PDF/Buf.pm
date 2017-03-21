@@ -11,15 +11,17 @@ class Lib::PDF::Buf {
     sub pdf_buf_pack_4_8(Blob, Blob, size_t)  is native(&libpdf) { * }
     sub pdf_buf_pack_16_8(Blob, Blob, size_t) is native(&libpdf) { * }
     sub pdf_buf_pack_32_8(Blob, Blob, size_t) is native(&libpdf) { * }
+##    sub pdf_buf_pack_32_8_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
+##    sub pdf_buf_pack_8_32_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
 
-    my subset PackingSize where 4|8|16|32;
+    my subset PackingSize where 4|8|16|24|32;
     sub alloc($type, $len) {
         my $buf = Buf[$type].new;
         $buf[$len-1] = 0 if $len;
         $buf;
     }
     sub container(PackingSize $n) {
-        %( 4 => uint8, 8 => uint8, 16 => uint16, 32 => uint32){$n};
+        %( 4 => uint8, 8 => uint8, 16 => uint16, 24 => uint32, 32 => uint32){$n};
     }
     
     sub do-packing($n, $m, $in is copy, &pack) {
@@ -37,11 +39,11 @@ class Lib::PDF::Buf {
     multi method resample($nums!, PackingSize $n!, PackingSize $m!)  {
         when $n == $m { $nums }
         when $n == 8 {
-            my &packer = %( 4 => &pdf_buf_pack_8_4, 16 => &pdf_buf_pack_8_16, 32 => &pdf_buf_pack_8_32 ){$m};
+            my &packer = %( 4 => &pdf_buf_pack_8_4, 16 => &pdf_buf_pack_8_16, 24|32 => &pdf_buf_pack_8_32 ){$m};
             do-packing($n, $m, $nums, &packer);
         }
         when $m == 8 {
-            my &packer = %( 4 => &pdf_buf_pack_4_8, 16 => &pdf_buf_pack_16_8, 32 => &pdf_buf_pack_32_8 ){$n};
+            my &packer = %( 4 => &pdf_buf_pack_4_8, 16 => &pdf_buf_pack_16_8, 24|32 => &pdf_buf_pack_32_8 ){$n};
             do-packing($n, $m, $nums, &packer);
         }
     }
@@ -50,34 +52,39 @@ class Lib::PDF::Buf {
     #|   obj 123 0 << /Type /XRef /W [1, 3, 1]
     multi method resample( $nums!, 8, Array $W!)  {
         my uint $j = 0;
-        my @samples;
+        my uint $k = 0;
+        my uint32 @idx;
+        @idx[+$nums div $W.sum] = 0
+            if +$nums;
         while $j < +$nums {
-            my @sample = $W.keys.map: -> $i {
-                my uint $s = 0;
+            for $W.keys -> $i {
+                my uint32 $s = 0;
                 for 1 .. $W[$i] {
                     $s *= 256;
                     $s += $nums[$j++];
                 }
-                $s;
+                @idx[$k++] = $s;
             }
-            @samples.push: @sample;
         }
-	@samples;
+	@idx.rotor(+$W);
     }
 
     multi method resample( $num-sets, Array $W!, 8)  {
 	my uint8 @sample;
-         for $num-sets.list -> Array $nums {
-            my uint $i = 0;
+        @sample[$W.sum * +$num-sets - 1] = 0
+            if +$num-sets;
+        my uint32 $i = -1;
+        for $num-sets.list -> List $nums {
+            my uint $k = 0;
             for $nums.list -> uint $num is copy {
-                my uint8 @bytes;
-                for 1 .. $W[$i++] {
-                    @bytes.unshift: $num;
+                my uint $n = +$W[$k++];
+                $i += $n;
+                loop (my $j = 0; $j < $n; $j++) {
+                    @sample[$i - $j] = $num;
                     $num div= 256;
                 }
-                @sample.append: @bytes;
             }
-        }
-	[flat @sample];
+         }
+	 @sample;
     }
 }
