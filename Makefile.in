@@ -1,7 +1,7 @@
 all: resources/lib/libpdf%SO% %FAKESO%
 
-resources/lib/libpdf%SO%: libpdf%O%
+resources/lib/libpdf%SO%: libpdf/buf%O%
 	%LD% %LDSHARED% %LDFLAGS% %LDOUT%resources/lib/libpdf%SO% libpdf/buf%O%
 
-libpdf%O%: libpdf/buf.c libpdf/buf.h
+libpdf/buf%O%: libpdf/buf.c libpdf/buf.h
 	%CC% -I . -c %CCSHARED% %CCFLAGS% %CCOUT%libpdf/buf%O% libpdf/buf.c

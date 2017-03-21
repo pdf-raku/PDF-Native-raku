@@ -11,8 +11,8 @@ class Lib::PDF::Buf {
     sub pdf_buf_pack_4_8(Blob, Blob, size_t)  is native(&libpdf) { * }
     sub pdf_buf_pack_16_8(Blob, Blob, size_t) is native(&libpdf) { * }
     sub pdf_buf_pack_32_8(Blob, Blob, size_t) is native(&libpdf) { * }
-##    sub pdf_buf_pack_32_8_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
-##    sub pdf_buf_pack_8_32_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_32_8_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_8_32_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
 
     my subset PackingSize where 4|8|16|24|32;
     sub alloc($type, $len) {
@@ -50,41 +50,27 @@ class Lib::PDF::Buf {
 
     #| variable resampling, e.g. to decode/encode:
     #|   obj 123 0 << /Type /XRef /W [1, 3, 1]
-    multi method resample( $nums!, 8, Array $W!)  {
-        my uint $j = 0;
-        my uint $k = 0;
-        my uint32 @idx;
-        @idx[+$nums div $W.sum] = 0
-            if +$nums;
-        while $j < +$nums {
-            for $W.keys -> $i {
-                my uint32 $s = 0;
-                for 1 .. $W[$i] {
-                    $s *= 256;
-                    $s += $nums[$j++];
-                }
-                @idx[$k++] = $s;
-            }
-        }
-	@idx.rotor(+$W);
+    multi method resample( $in!, 8, Array $W!)  {
+        my uint32 $in-len = +$in;
+        my buf8 $in-buf .= new($in);
+        my buf8 $W-buf .= new($W);
+        my $out-buf := buf32.new;
+        my $out-len = ($in-len * +$W) div $W.sum;
+        $out-buf[$out-len - 1] = 0
+           if $out-len;
+        pdf_buf_pack_8_32_W($in-buf, $out-buf, $in-len, $W-buf, +$W);
+	my uint32 @shaped[$out-len div +$W;+$W] Z= $out-buf;
+        @shaped;
+
     }
 
-    multi method resample( $num-sets, Array $W!, 8)  {
-	my uint8 @sample;
-        @sample[$W.sum * +$num-sets - 1] = 0
-            if +$num-sets;
-        my uint32 $i = -1;
-        for $num-sets.list -> List $nums {
-            my uint $k = 0;
-            for $nums.list -> uint $num is copy {
-                my uint $n = +$W[$k++];
-                $i += $n;
-                loop (my $j = 0; $j < $n; $j++) {
-                    @sample[$i - $j] = $num;
-                    $num div= 256;
-                }
-            }
-         }
-	 @sample;
+    multi method resample( $in, Array $W!, 8)  {
+        my $width = $W.sum;
+        my $in-len = $in.elems;
+	my $out = alloc(uint8, $in-len * $width);
+        my buf32 $in-buf .= new($in);
+        my buf8 $W-buf .= new($W);
+        pdf_buf_pack_32_8_W($in-buf, $out, $in-len, $W-buf, +$W);
+        $out.list;
     }
 }
