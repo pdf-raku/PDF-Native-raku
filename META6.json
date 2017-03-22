@@ -5,7 +5,8 @@
   "perl" : "6.c",
   "provides" : {
       "Lib::PDF" : "lib/Lib/PDF.pm",
-    "Lib::PDF::Buf" : "lib/Lib/PDF/Buf.pm"
+      "Lib::PDF::Buf" : "lib/Lib/PDF/Buf.pm"
+      "Lib::PDF::Filter::Predictors" : "lib/Lib/PDF/Filter/{redictors.pm"
   },
   "resources" : [
     "lib/libpdf.so",
