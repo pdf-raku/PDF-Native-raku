@@ -7,9 +7,11 @@ class Lib::PDF::Buf {
 
     sub pdf_buf_pack_8_4(Blob, Blob, size_t)  is native(&libpdf) { * }
     sub pdf_buf_pack_8_16(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_8_24(Blob, Blob, size_t) is native(&libpdf) { * }
     sub pdf_buf_pack_8_32(Blob, Blob, size_t) is native(&libpdf) { * }
     sub pdf_buf_pack_4_8(Blob, Blob, size_t)  is native(&libpdf) { * }
     sub pdf_buf_pack_16_8(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_24_8(Blob, Blob, size_t) is native(&libpdf) { * }
     sub pdf_buf_pack_32_8(Blob, Blob, size_t) is native(&libpdf) { * }
     sub pdf_buf_pack_32_8_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
     sub pdf_buf_pack_8_32_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
@@ -39,11 +41,19 @@ class Lib::PDF::Buf {
     multi method resample($nums!, PackingSize $n!, PackingSize $m!)  {
         when $n == $m { $nums }
         when $n == 8 {
-            my &packer = %( 4 => &pdf_buf_pack_8_4, 16 => &pdf_buf_pack_8_16, 24|32 => &pdf_buf_pack_8_32 ){$m};
+            my &packer = %( 4 => &pdf_buf_pack_8_4,
+                            16 => &pdf_buf_pack_8_16,
+                            24 => &pdf_buf_pack_8_24,
+                            32 => &pdf_buf_pack_8_32,
+                          ){$m};
             do-packing($n, $m, $nums, &packer);
         }
         when $m == 8 {
-            my &packer = %( 4 => &pdf_buf_pack_4_8, 16 => &pdf_buf_pack_16_8, 24|32 => &pdf_buf_pack_32_8 ){$n};
+            my &packer = %( 4 => &pdf_buf_pack_4_8,
+                            16 => &pdf_buf_pack_16_8,
+                            24 => &pdf_buf_pack_24_8,
+                            32 => &pdf_buf_pack_32_8,
+                          ){$n};
             do-packing($n, $m, $nums, &packer);
         }
     }
@@ -59,14 +69,14 @@ class Lib::PDF::Buf {
         $out-buf[$out-len - 1] = 0
            if $out-len;
         pdf_buf_pack_8_32_W($in-buf, $out-buf, $in-len, $W-buf, +$W);
-	$out-buf.list.rotor(+$W);
+	$out-buf.rotor(+$W);
     }
 
     multi method resample( $in, List $W!, 8)  {
         my $width = $W.sum;
         my $in-len = $in.elems;
 	my $out = alloc(uint8, $in-len * $width);
-        my buf32 $in-buf .= new(flat $in.map: {.list});
+        my buf32 $in-buf .= new($in.flatmap: {.list});
         my buf8 $W-buf .= new($W);
         pdf_buf_pack_32_8_W($in-buf, $out, $in-len, $W-buf, +$W);
         $out.list;

@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 9;
+plan 11;
 
 use Lib::PDF::Buf;
 use NativeCall;
@@ -16,6 +16,9 @@ is-deeply Lib::PDF::Buf.resample($bytes, 8, 8), $bytes, '8 bit resample';
 
 is-deeply (@result=Lib::PDF::Buf.resample($bytes, 8, 16)), [2580, 7720, 12860], '16 bit resample';
 is-deeply [Lib::PDF::Buf.resample(@result, 16, 8)], @bytes, 'resample round-trip: 16 => 8 => 16';
+
+is-deeply (@result=Lib::PDF::Buf.resample($bytes, 8, 24)), [660510, 2634300], '16 bit resample';
+is-deeply [Lib::PDF::Buf.resample(@result, 24, 8)], @bytes, 'resample round-trip: 16 => 8 => 16';
 
 is-deeply (@result=Lib::PDF::Buf.resample([1415192289,], 32, 8)), [84, 90, 30, 225], '32 => 8 resample';
 is-deeply (@result= Lib::PDF::Buf.resample([2 ** 32 - 1415192289 - 1,], 32, 8)), [255-84, 255-90, 255-30, 255-225], '32 => 8 resample (twos comp)';
