@@ -110,17 +110,14 @@ extern void pdf_buf_pack_8_32_W(uint8_t *in, uint32_t *out, size_t in_len, uint8
   size_t i;
   uint32_t j = 0;
   for (i = 0; i < in_len;) {
-    uint8_t wi;
-    for (wi = 0; wi < w_len; wi++) {
-      uint32_t v = 0;
-      uint8_t n = w[wi];
-      uint8_t k;
+    uint32_t v = 0;
+    uint8_t n = w[j % w_len];
+    uint8_t k;
 
-      for (k = 0; k < n; k++) {
-        v <<= 8;
-        v += in[i++];
-      }
-      out[j++] = v;
+    for (k = 0; k < n; k++) {
+      v <<= 8;
+      v += in[i++];
     }
+    out[j++] = v;
   }
 }
