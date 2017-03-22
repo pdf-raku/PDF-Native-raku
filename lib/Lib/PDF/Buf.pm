@@ -50,7 +50,7 @@ class Lib::PDF::Buf {
 
     #| variable resampling, e.g. to decode/encode:
     #|   obj 123 0 << /Type /XRef /W [1, 3, 1]
-    multi method resample( $in!, 8, Array $W!)  {
+    multi method resample( $in!, 8, List $W!)  {
         my uint32 $in-len = +$in;
         my buf8 $in-buf .= new($in);
         my buf8 $W-buf .= new($W);
@@ -59,16 +59,14 @@ class Lib::PDF::Buf {
         $out-buf[$out-len - 1] = 0
            if $out-len;
         pdf_buf_pack_8_32_W($in-buf, $out-buf, $in-len, $W-buf, +$W);
-	my uint32 @shaped[$out-len div +$W;+$W] Z= $out-buf;
-        @shaped;
-
+	$out-buf.list.rotor(+$W);
     }
 
-    multi method resample( $in, Array $W!, 8)  {
+    multi method resample( $in, List $W!, 8)  {
         my $width = $W.sum;
         my $in-len = $in.elems;
 	my $out = alloc(uint8, $in-len * $width);
-        my buf32 $in-buf .= new($in);
+        my buf32 $in-buf .= new(flat $in.map: {.list});
         my buf8 $W-buf .= new($W);
         pdf_buf_pack_32_8_W($in-buf, $out, $in-len, $W-buf, +$W);
         $out.list;
