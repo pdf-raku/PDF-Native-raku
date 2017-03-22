@@ -23,6 +23,8 @@ is-deeply [Lib::PDF::Buf.resample(@result, 24, 8)], @bytes, 'resample round-trip
 is-deeply (@result=Lib::PDF::Buf.resample([1415192289,], 32, 8)), [84, 90, 30, 225], '32 => 8 resample';
 is-deeply (@result= Lib::PDF::Buf.resample([2 ** 32 - 1415192289 - 1,], 32, 8)), [255-84, 255-90, 255-30, 255-225], '32 => 8 resample (twos comp)';
 
-is-deeply (@result=Lib::PDF::Buf.resample($bytes, 8, [1, 3, 2])), [(10, 1318440, 12860),], '8 => [1, 3, 2] resample';
-is-deeply [ Lib::PDF::Buf.resample(@result, [1, 3, 2], 8) ], @bytes, '[1, 3, 2] => 8 resample';
+my uint32 @in1[1;3] = ([10, 1318440, 12860],);
+my $idx;
+is-deeply ($idx=Lib::PDF::Buf.resample($bytes, 8, [1, 3, 2])).values, @in1.values, '8 => [1, 3, 2] resample';
+is-deeply array[uint8].new(Lib::PDF::Buf.resample($idx, [1, 3, 2], 8)).values, @bytes.values, '[1, 3, 2] => 8 resample';
 

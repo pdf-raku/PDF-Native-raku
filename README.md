@@ -15,4 +15,4 @@ Some other areas being considered:
 
 There's sure to be others.
 
-** Experimental Only **, at this stage. Needs further development and benchmarking.
+** Experimental Only **, at this stage. PDF and PDF::Content data-structures will need a bit of work to intergrate this (use of shaped arrays, etc.
