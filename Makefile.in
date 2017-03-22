@@ -1,7 +1,10 @@
 all: resources/lib/libpdf%SO% %FAKESO%
 
-resources/lib/libpdf%SO%: libpdf/buf%O%
-	%LD% %LDSHARED% %LDFLAGS% %LDOUT%resources/lib/libpdf%SO% libpdf/buf%O%
+resources/lib/libpdf%SO%: libpdf/buf%O%  libpdf/filter_predict%O%
+	%LD% %LDSHARED% %LDFLAGS% %LDOUT%resources/lib/libpdf%SO% libpdf/buf%O%  libpdf/filter_predict%O%
 
 libpdf/buf%O%: libpdf/buf.c libpdf/buf.h
 	%CC% -I . -c %CCSHARED% %CCFLAGS% %CCOUT%libpdf/buf%O% libpdf/buf.c
+
+libpdf/filter_predict%O%: libpdf/filter_predict.c libpdf/filter_predict.h
+	%CC% -I . -c %CCSHARED% %CCFLAGS% %CCOUT%libpdf/filter_predict%O% libpdf/filter_predict.c

@@ -7,19 +7,29 @@ class Lib::PDF::Filter::Predictors {
     use Lib::PDF::Buf;
 
     my subset BPC of UInt where 1 | 2 | 4 | 8 | 16;
+    my subset Predictor of Int where 1|2|10..15;
+
+    sub pdf_filter_predict(
+        Blob $in, Blob $out, size_t $in-len,
+        uint8 $predictor where Predictor,
+        uint8 $colums,
+        uint8 $colors,
+        uint8 $bpc where BPC,
+    )  returns uint32 is native(&libpdf) { * }
 
     sub resample(|c) {
          Lib::PDF::Buf.resample(|c);
     }
     # post prediction functions as described in the PDF 1.7 spec, table 3.8
     multi method post-prediction($buf where Blob | Buf, 
-                                 UInt :$Predictor! where { $_ <= 1}, #| predictor function
+                                 Predictor :$Predictor! where 1, #| predictor function
         ) {
         $buf; # noop
     }
 
+    #| tiff predictor (2)
     multi method prediction($buf where Blob | Buf, 
-                            UInt :$Predictor! where 2,   #| predictor function
+                            Predictor :$Predictor! where 2,   #| predictor function
                             UInt :$Columns = 1,          #| number of samples per row
                             UInt :$Colors = 1,           #| number of colors per sample
                             BPC  :$BitsPerComponent = 8, #| number of bits per color
@@ -47,7 +57,7 @@ class Lib::PDF::Filter::Predictors {
     }
 
     multi method prediction($buf where Blob | Buf,
-			    UInt :$Predictor! where { 10 <= $_ <= 15}, #| predictor function
+			    Predictor :$Predictor! where { 10 <= $_ <= 15}, #| predictor function
 			    UInt :$Columns = 1,          #| number of samples per row
 			    UInt :$Colors = 1,           #| number of colors per sample
 			    BPC  :$BitsPerComponent = 8, #| number of bits per color
@@ -123,16 +133,14 @@ class Lib::PDF::Filter::Predictors {
 
     # prediction filters, see PDF 1.7 spec table 3.8
     multi method prediction($buf where Blob | Buf,
-			    UInt :$Predictor=1, #| predictor function
+			    Predictor :$Predictor=1, #| predictor function
         ) {
-        die "Unknown Flate/LZW predictor function: $Predictor"
-            unless $Predictor == 1;
         $buf;
     }
 
     # prediction filters, see PDF 1.7 spec table 3.8
     multi method post-prediction($buf where Blob | Buf, 
-                                 UInt :$Predictor! where 2  , #| predictor function
+                                 Predictor :$Predictor! where 2  , #| predictor function
                                  UInt :$Columns = 1,          #| number of samples per row
                                  UInt :$Colors = 1,           #| number of colors per sample
                                  UInt :$BitsPerComponent = 8, #| number of bits per color
@@ -160,7 +168,7 @@ class Lib::PDF::Filter::Predictors {
     }
 
     multi method post-prediction($buf,  #| input stream
-                                 UInt :$Predictor! where { 10 <= $_ <= 15}, #| predictor function
+                                 Predictor :$Predictor! where { 10 <= $_ <= 15}, #| predictor function
                                  UInt :$Columns = 1,          #| number of samples per row
                                  UInt :$Colors = 1,           #| number of colors per sample
                                  UInt :$BitsPerComponent = 8, #| number of bits per color
@@ -240,9 +248,7 @@ class Lib::PDF::Filter::Predictors {
         buf8.new: @output;
     }
 
-    multi method post-prediction($buf, UInt :$Predictor = 1, ) is default {
-        die "Unknown Flate/LZW predictor function: $Predictor"
-            unless $Predictor == 1;
+    multi method post-prediction($buf, Predictor :$Predictor = 1, ) is default {
         $buf;
     }
 
