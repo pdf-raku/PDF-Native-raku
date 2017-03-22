@@ -90,7 +90,7 @@ extern void pdf_buf_pack_32_8(uint32_t *in, uint8_t *out, size_t in_len) {
 // packing of /W variable length words; for example in XRef streams
 extern void pdf_buf_pack_32_8_W(uint32_t *in, uint8_t *out, size_t in_len, uint8_t *w, size_t w_len) {
   size_t i;
-  uint32_t j = -1;
+  int32_t j = -1;
   for (i = 0; i < in_len;) {
     uint8_t wi;
     for (wi = 0; wi < w_len; wi++) {
