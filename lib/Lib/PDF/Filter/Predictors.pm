@@ -10,11 +10,12 @@ class Lib::PDF::Filter::Predictors {
     my subset Predictor of Int where 1|2|10..15;
 
     sub pdf_filter_predict(
-        Blob $in, Blob $out, size_t $in-len,
+        Blob $in, Blob $out,
         uint8 $predictor where Predictor,
-        uint8 $colums,
         uint8 $colors,
         uint8 $bpc where BPC,
+        uint16 $columns,
+        uint16 $rows,
     )  returns uint32 is native(&libpdf) { * }
 
     sub resample(|c) {
@@ -33,27 +34,13 @@ class Lib::PDF::Filter::Predictors {
                             UInt :$Columns = 1,          #| number of samples per row
                             UInt :$Colors = 1,           #| number of colors per sample
                             BPC  :$BitsPerComponent = 8, #| number of bits per color
-        ) {
-        my uint $bit-mask = 2 ** $BitsPerComponent  -  1;
-        my Buf \nums := resample( $buf, 8, $BitsPerComponent );
-        my uint $len = +nums;
-        my uint @output;
-        my uint $ptr = 0;
-
-        while $ptr < $len {
-	    for 1 .. $Colors {
-		@output.push: nums[ $ptr++ ];
-	    }
-            for 2 .. $Columns {
-                for 1 .. $Colors {
-                    my \prev-color = nums[$ptr - $Colors];
-                    my int $result = (nums[ $ptr++ ] - prev-color) +& $bit-mask;
-                    @output.push: $result;
-                }
-            }
-        }
-
-	buf8.new: resample( @output, $BitsPerComponent, 8);
+                           ) {
+        my $out = buf8.new;
+        $out[+$buf - 1] = 0
+            if +$buf;
+        my $rows = (+$buf * 8) div ($Columns * $Colors * $BitsPerComponent); 
+	pdf_filter_predict($buf, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
+        $out;
     }
 
     multi method prediction($buf where Blob | Buf,
