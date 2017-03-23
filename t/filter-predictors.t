@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 41;
+plan 57;
 
 use Lib::PDF::Filter::Predictors;
 
@@ -81,7 +81,7 @@ for flat 1, 2, 10 .. 15 -> $Predictor {
 
     is-deeply $decode, $rand-data, "$desc predictor ($Predictor) - appears lossless";
 
-    for 4, 8, 16 -> $BitsPerComponent {
+    for 1, 2, 4, 8, 16 -> $BitsPerComponent {
         my $encode2c = Lib::PDF::Filter::Predictors.encode( $rand-data,
 						       :Columns(4),
 						       :Colors(2),

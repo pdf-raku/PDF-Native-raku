@@ -3,6 +3,34 @@
 #include <stdint.h>
 #include <libpdf/buf.h>
 
+extern void pdf_buf_pack_8_1(uint8_t *in, uint8_t *out, size_t in_len) {
+  size_t i;
+  size_t j = 0;
+  for (i = 0; i < in_len; i++) {
+    uint8_t v = in[i];
+    uint8_t k;
+    j += 8;
+    for (k = 0; k < 8; k++) {
+      out[j - k - 1] = v & 1;
+      v >>= 1;
+    }
+  }
+}
+ 
+extern void pdf_buf_pack_8_2(uint8_t *in, uint8_t *out, size_t in_len) {
+  size_t i;
+  size_t j = 0;
+  for (i = 0; i < in_len; i++) {
+    uint8_t v = in[i];
+    uint8_t k;
+    j += 4;
+    for (k = 0; k < 4; k++) {
+      out[j - k - 1] = v & 3;
+      v >>= 2;
+    }
+  }
+}
+ 
 extern void pdf_buf_pack_8_4(uint8_t *in, uint8_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
@@ -45,11 +73,37 @@ extern void pdf_buf_pack_8_32(uint8_t *in, uint32_t *out, size_t in_len) {
   }
 }
  
+extern void pdf_buf_pack_1_8(uint8_t *in, uint8_t *out, size_t in_len) {
+  size_t i;
+  size_t j = 0;
+  for (i = 0; i < in_len; j++) {
+    uint8_t k;
+    out[j] = 0;
+    for (k = 0; k < 8; k++) {
+      out[j] <<= 1;
+      out[j] += in[i++];
+    }
+  }
+}
+ 
+extern void pdf_buf_pack_2_8(uint8_t *in, uint8_t *out, size_t in_len) {
+  size_t i;
+  size_t j = 0;
+  for (i = 0; i < in_len; j++) {
+    int8_t k;
+    out[j] = 0;
+    for (k = 0; k < 4; k++) {
+      out[j] <<= 2;
+      out[j] += in[i++];
+    }
+  }
+}
+ 
 extern void pdf_buf_pack_4_8(uint8_t *in, uint8_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; j++) {
-    out[j]  = in[i++] << 4;;
+    out[j]  = in[i++] << 4;
     out[j] += in[i++];
   }
 }

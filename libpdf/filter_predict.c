@@ -6,7 +6,7 @@
 
 /* Decoding */
 
-static void tiff_decode_sub_8 (uint8_t* in,
+static void tiff_decode_nibble (uint8_t* in,
                                uint8_t* out,
                                uint8_t colors,
                                uint16_t columns,
@@ -114,8 +114,10 @@ static void tiff_decode(uint8_t *in,
                          uint16_t rows
                          ) {
   switch (bpc) {
+  case 1:
+  case 2:
   case 4:
-    tiff_decode_sub_8(in, out, colors, columns, rows, bpc );
+    tiff_decode_nibble(in, out, colors, columns, rows, bpc );
     break;
   case 8:
     tiff_decode_8(in, out, colors, columns, rows );
@@ -161,7 +163,7 @@ pdf_filter_predict_decode(
 
 /* Encoding */
 
-static void tiff_encode_sub_8 (uint8_t* in,
+static void tiff_encode_nibble (uint8_t* in,
                                uint8_t* out,
                                uint8_t colors,
                                uint16_t columns,
@@ -268,8 +270,10 @@ static void tiff_encode(uint8_t *in,
                          uint16_t rows
                          ) {
   switch (bpc) {
+  case 1:
+  case 2:
   case 4:
-    tiff_encode_sub_8(in, out, colors, columns, rows, bpc );
+    tiff_encode_nibble(in, out, colors, columns, rows, bpc );
     break;
   case 8:
     tiff_encode_8(in, out, colors, columns, rows );

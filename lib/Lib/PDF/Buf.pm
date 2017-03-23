@@ -5,25 +5,30 @@ class Lib::PDF::Buf {
     use NativeCall;
     use Lib::PDF :libpdf;
 
+    sub pdf_buf_pack_8_1(Blob, Blob, size_t)  is native(&libpdf) { * }
+    sub pdf_buf_pack_8_2(Blob, Blob, size_t)  is native(&libpdf) { * }
     sub pdf_buf_pack_8_4(Blob, Blob, size_t)  is native(&libpdf) { * }
     sub pdf_buf_pack_8_16(Blob, Blob, size_t) is native(&libpdf) { * }
     sub pdf_buf_pack_8_24(Blob, Blob, size_t) is native(&libpdf) { * }
     sub pdf_buf_pack_8_32(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_8_32_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
+
+    sub pdf_buf_pack_1_8(Blob, Blob, size_t)  is native(&libpdf) { * }
+    sub pdf_buf_pack_2_8(Blob, Blob, size_t)  is native(&libpdf) { * }
     sub pdf_buf_pack_4_8(Blob, Blob, size_t)  is native(&libpdf) { * }
     sub pdf_buf_pack_16_8(Blob, Blob, size_t) is native(&libpdf) { * }
     sub pdf_buf_pack_24_8(Blob, Blob, size_t) is native(&libpdf) { * }
     sub pdf_buf_pack_32_8(Blob, Blob, size_t) is native(&libpdf) { * }
     sub pdf_buf_pack_32_8_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_pack_8_32_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
 
-    my subset PackingSize where 4|8|16|24|32;
+    my subset PackingSize where 1|2|4|8|16|24|32;
     sub alloc($type, $len) {
         my $buf = Buf[$type].new;
         $buf[$len-1] = 0 if $len;
         $buf;
     }
     sub container(PackingSize $n) {
-        %( 4 => uint8, 8 => uint8, 16 => uint16, 24 => uint32, 32 => uint32){$n};
+        %( 1 => uint8, 2 => uint8, 4 => uint8, 8 => uint8, 16 => uint16, 24 => uint32, 32 => uint32){$n};
     }
     
     sub do-packing($n, $m, $in is copy, &pack) {
@@ -41,19 +46,25 @@ class Lib::PDF::Buf {
     multi method resample($nums!, PackingSize $n!, PackingSize $m!)  {
         when $n == $m { $nums }
         when $n == 8 {
-            my &packer = %( 4 => &pdf_buf_pack_8_4,
-                            16 => &pdf_buf_pack_8_16,
-                            24 => &pdf_buf_pack_8_24,
-                            32 => &pdf_buf_pack_8_32,
-                          ){$m};
+            my &packer = %(
+                1 => &pdf_buf_pack_8_1,
+                2 => &pdf_buf_pack_8_2,
+                4 => &pdf_buf_pack_8_4,
+                16 => &pdf_buf_pack_8_16,
+                24 => &pdf_buf_pack_8_24,
+                32 => &pdf_buf_pack_8_32,
+            ){$m};
             do-packing($n, $m, $nums, &packer);
         }
         when $m == 8 {
-            my &packer = %( 4 => &pdf_buf_pack_4_8,
-                            16 => &pdf_buf_pack_16_8,
-                            24 => &pdf_buf_pack_24_8,
-                            32 => &pdf_buf_pack_32_8,
-                          ){$n};
+            my &packer = %(
+                1 => &pdf_buf_pack_1_8,
+                2 => &pdf_buf_pack_2_8,
+                4 => &pdf_buf_pack_4_8,
+                16 => &pdf_buf_pack_16_8,
+                24 => &pdf_buf_pack_24_8,
+                32 => &pdf_buf_pack_32_8,
+            ){$n};
             do-packing($n, $m, $nums, &packer);
         }
     }
