@@ -181,7 +181,7 @@ static void tiff_encode_sub_8 (uint8_t* in,
     }
     for (i = 1; i < columns; i++) {
       for (j = 0; j < colors; j++) {
-        *out_p++ = ((*in_p++ & mask) - (*prev++ & mask)) & 15;
+        *out_p++ = ((*in_p++ & mask) - (*prev++ & mask)) & mask;
       }
     }
   }
