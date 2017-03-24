@@ -5,21 +5,21 @@ class Lib::PDF::Buf {
     use NativeCall;
     use Lib::PDF :libpdf;
 
-    sub pdf_buf_pack_8_1(Blob, Blob, size_t)  is native(&libpdf) { * }
-    sub pdf_buf_pack_8_2(Blob, Blob, size_t)  is native(&libpdf) { * }
-    sub pdf_buf_pack_8_4(Blob, Blob, size_t)  is native(&libpdf) { * }
-    sub pdf_buf_pack_8_16(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_pack_8_24(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_pack_8_32(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_pack_8_32_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_unpack_1(Blob, Blob, size_t)  is native(&libpdf) { * }
+    sub pdf_buf_unpack_2(Blob, Blob, size_t)  is native(&libpdf) { * }
+    sub pdf_buf_unpack_4(Blob, Blob, size_t)  is native(&libpdf) { * }
+    sub pdf_buf_unpack_16(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_unpack_24(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_unpack_32(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_unpack_32_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
 
-    sub pdf_buf_pack_1_8(Blob, Blob, size_t)  is native(&libpdf) { * }
-    sub pdf_buf_pack_2_8(Blob, Blob, size_t)  is native(&libpdf) { * }
-    sub pdf_buf_pack_4_8(Blob, Blob, size_t)  is native(&libpdf) { * }
-    sub pdf_buf_pack_16_8(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_pack_24_8(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_pack_32_8(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_pack_32_8_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_1(Blob, Blob, size_t)  is native(&libpdf) { * }
+    sub pdf_buf_pack_2(Blob, Blob, size_t)  is native(&libpdf) { * }
+    sub pdf_buf_pack_4(Blob, Blob, size_t)  is native(&libpdf) { * }
+    sub pdf_buf_pack_16(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_24(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_32(Blob, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_32_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
 
     my subset PackingSize where 1|2|4|8|16|24|32;
     sub alloc($type, $len) {
@@ -47,23 +47,23 @@ class Lib::PDF::Buf {
         when $n == $m { $nums }
         when $n == 8 {
             my &packer = %(
-                1 => &pdf_buf_pack_8_1,
-                2 => &pdf_buf_pack_8_2,
-                4 => &pdf_buf_pack_8_4,
-                16 => &pdf_buf_pack_8_16,
-                24 => &pdf_buf_pack_8_24,
-                32 => &pdf_buf_pack_8_32,
+                1 => &pdf_buf_unpack_1,
+                2 => &pdf_buf_unpack_2,
+                4 => &pdf_buf_unpack_4,
+                16 => &pdf_buf_unpack_16,
+                24 => &pdf_buf_unpack_24,
+                32 => &pdf_buf_unpack_32,
             ){$m};
             do-packing($n, $m, $nums, &packer);
         }
         when $m == 8 {
             my &packer = %(
-                1 => &pdf_buf_pack_1_8,
-                2 => &pdf_buf_pack_2_8,
-                4 => &pdf_buf_pack_4_8,
-                16 => &pdf_buf_pack_16_8,
-                24 => &pdf_buf_pack_24_8,
-                32 => &pdf_buf_pack_32_8,
+                1 => &pdf_buf_pack_1,
+                2 => &pdf_buf_pack_2,
+                4 => &pdf_buf_pack_4,
+                16 => &pdf_buf_pack_16,
+                24 => &pdf_buf_pack_24,
+                32 => &pdf_buf_pack_32,
             ){$n};
             do-packing($n, $m, $nums, &packer);
         }
@@ -79,7 +79,7 @@ class Lib::PDF::Buf {
         my $out-len = ($in-len * +$W) div $W.sum;
         $out-buf[$out-len - 1] = 0
            if $out-len;
-        pdf_buf_pack_8_32_W($in-buf, $out-buf, $in-len, $W-buf, +$W);
+        pdf_buf_unpack_32_W($in-buf, $out-buf, $in-len, $W-buf, +$W);
 	my uint32 @shaped[$out-len div +$W;+$W] Z= $out-buf;
         @shaped;
     }
@@ -90,7 +90,7 @@ class Lib::PDF::Buf {
 	my $out = alloc(uint8, $in-len * $width);
         my buf32 $in-buf .= new($in);
         my buf8 $W-buf .= new($W);
-        pdf_buf_pack_32_8_W($in-buf, $out, $in-len, $W-buf, +$W);
+        pdf_buf_pack_32_W($in-buf, $out, $in-len, $W-buf, +$W);
         $out.list;
     }
 }

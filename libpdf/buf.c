@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <libpdf/buf.h>
 
-extern void pdf_buf_pack_8_1(uint8_t *in, uint8_t *out, size_t in_len) {
+extern void pdf_buf_unpack_1(uint8_t *in, uint8_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; i++) {
@@ -17,7 +17,7 @@ extern void pdf_buf_pack_8_1(uint8_t *in, uint8_t *out, size_t in_len) {
   }
 }
  
-extern void pdf_buf_pack_8_2(uint8_t *in, uint8_t *out, size_t in_len) {
+extern void pdf_buf_unpack_2(uint8_t *in, uint8_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; i++) {
@@ -31,7 +31,7 @@ extern void pdf_buf_pack_8_2(uint8_t *in, uint8_t *out, size_t in_len) {
   }
 }
  
-extern void pdf_buf_pack_8_4(uint8_t *in, uint8_t *out, size_t in_len) {
+extern void pdf_buf_unpack_4(uint8_t *in, uint8_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; i++) {
@@ -41,7 +41,7 @@ extern void pdf_buf_pack_8_4(uint8_t *in, uint8_t *out, size_t in_len) {
   }
 }
  
-extern void pdf_buf_pack_8_16(uint8_t *in, uint16_t *out, size_t in_len) {
+extern void pdf_buf_unpack_16(uint8_t *in, uint16_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; j++) {
@@ -50,7 +50,7 @@ extern void pdf_buf_pack_8_16(uint8_t *in, uint16_t *out, size_t in_len) {
   }
 }
 
-extern void pdf_buf_pack_8_24(uint8_t *in, uint32_t *out, size_t in_len) {
+extern void pdf_buf_unpack_24(uint8_t *in, uint32_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; j++) {
@@ -61,7 +61,7 @@ extern void pdf_buf_pack_8_24(uint8_t *in, uint32_t *out, size_t in_len) {
   }
 }
  
-extern void pdf_buf_pack_8_32(uint8_t *in, uint32_t *out, size_t in_len) {
+extern void pdf_buf_unpack_32(uint8_t *in, uint32_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; j++) {
@@ -73,7 +73,7 @@ extern void pdf_buf_pack_8_32(uint8_t *in, uint32_t *out, size_t in_len) {
   }
 }
  
-extern void pdf_buf_pack_1_8(uint8_t *in, uint8_t *out, size_t in_len) {
+extern void pdf_buf_pack_1(uint8_t *in, uint8_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; j++) {
@@ -86,7 +86,7 @@ extern void pdf_buf_pack_1_8(uint8_t *in, uint8_t *out, size_t in_len) {
   }
 }
  
-extern void pdf_buf_pack_2_8(uint8_t *in, uint8_t *out, size_t in_len) {
+extern void pdf_buf_pack_2(uint8_t *in, uint8_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; j++) {
@@ -99,7 +99,7 @@ extern void pdf_buf_pack_2_8(uint8_t *in, uint8_t *out, size_t in_len) {
   }
 }
  
-extern void pdf_buf_pack_4_8(uint8_t *in, uint8_t *out, size_t in_len) {
+extern void pdf_buf_pack_4(uint8_t *in, uint8_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; j++) {
@@ -108,7 +108,7 @@ extern void pdf_buf_pack_4_8(uint8_t *in, uint8_t *out, size_t in_len) {
   }
 }
  
-extern void pdf_buf_pack_16_8(uint16_t *in, uint8_t *out, size_t in_len) {
+extern void pdf_buf_pack_16(uint16_t *in, uint8_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; i++) {
@@ -118,7 +118,7 @@ extern void pdf_buf_pack_16_8(uint16_t *in, uint8_t *out, size_t in_len) {
   }
 }
  
-extern void pdf_buf_pack_24_8(uint32_t *in, uint8_t *out, size_t in_len) {
+extern void pdf_buf_pack_24(uint32_t *in, uint8_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; i++) {
@@ -129,7 +129,7 @@ extern void pdf_buf_pack_24_8(uint32_t *in, uint8_t *out, size_t in_len) {
   }
 }
 
-extern void pdf_buf_pack_32_8(uint32_t *in, uint8_t *out, size_t in_len) {
+extern void pdf_buf_pack_32(uint32_t *in, uint8_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; i++) {
@@ -142,7 +142,7 @@ extern void pdf_buf_pack_32_8(uint32_t *in, uint8_t *out, size_t in_len) {
 }
 
 // packing of /W variable length words; for example in XRef streams
-extern void pdf_buf_pack_32_8_W(uint32_t *in, uint8_t *out, size_t in_len, uint8_t *w, size_t w_len) {
+extern void pdf_buf_pack_32_W(uint32_t *in, uint8_t *out, size_t in_len, uint8_t *w, size_t w_len) {
   size_t i;
   int32_t j = -1;
   for (i = 0; i < in_len;) {
@@ -160,7 +160,7 @@ extern void pdf_buf_pack_32_8_W(uint32_t *in, uint8_t *out, size_t in_len, uint8
   }
 }
 
-extern void pdf_buf_pack_8_32_W(uint8_t *in, uint32_t *out, size_t in_len, uint8_t *w, size_t w_len) {
+extern void pdf_buf_unpack_32_W(uint8_t *in, uint32_t *out, size_t in_len, uint8_t *w, size_t w_len) {
   size_t i;
   uint32_t j = 0;
   for (i = 0; i < in_len;) {

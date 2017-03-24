@@ -37,11 +37,6 @@ class Lib::PDF::Filter::Predictors {
          Lib::PDF::Buf.resample(|c);
     }
     # post prediction functions as described in the PDF 1.7 spec, table 3.8
-    multi method decode($buf where Blob | Buf, 
-                        Predictor :$Predictor! where 1, #| predictor function
-        ) {
-        $buf; # noop
-    }
 
     #| tiff predictor (2)
     multi method encode($buf where Blob | Buf, 
