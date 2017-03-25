@@ -55,78 +55,99 @@ class Lib::PDF::Filter::Predictors {
         buf8.new: resample( $out, $BitsPerComponent, 8);
     }
 
-    multi method encode($buf where Blob | Buf,
+    multi method encode($buf is copy where Blob | Buf,
 			Predictor :$Predictor! where { 10 <= $_ <= 15}, #| predictor function
 			UInt :$Columns = 1,          #| number of samples per row
 			UInt :$Colors = 1,           #| number of colors per sample
 			BPC  :$BitsPerComponent = 8, #| number of bits per color
         ) {
 
-        my uint $bytes-per-col = ceiling($Colors * $BitsPerComponent / 8);
-        my uint $bytes-per-row = $bytes-per-col * $Columns;
+        my uint $bpc = $BitsPerComponent;
+        my uint $colors = $Colors;
+        if $bpc > 8 {
+            $colors *= $bpc div 8;
+            $bpc = 8;
+        }
+        $buf = resample($buf, 8, $bpc)
+            unless $bpc == 8;
+
+        my uint $bit-mask = 2 ** $bpc  -  1;
+        my uint $row-size = $colors * $Columns;
         my uint $ptr = 0;
-        my uint $row = 0;
         my uint8 @out;
         my uint $tag = min($Predictor - 10, 4);
         my int $n = 0;
         my int $len = +$buf;
 
-        while $ptr < $len {
+        my $padding = do {
+            my $bits-per-row = $row-size * $bpc;
+            my $bit-padding = -$bits-per-row % 8;
+            $bit-padding div $bpc;
+        }
 
+        my $rows = $len div $row-size;
+        # preallocate, allowing room for per-row data + tag + padding
+        @out[$rows * ($row-size + $padding + 1) - 1] = 0
+                if $rows;
+
+        loop (my uint $row = 0; $row < $rows; $row++) {
             @out[$n++] = $tag;
 
             given $tag {
                 when 0 { # None
                     @out[$n++] = $buf[$ptr++]
-                        for 1 .. $bytes-per-row;
+                        for 1 .. $row-size;
                 }
                 when 1 { # Left
-                    @out[$n++] = $buf[$ptr++] for 1 .. $bytes-per-col;
-                    for $bytes-per-col ^.. $bytes-per-row {
-                        my \left-byte = $buf[$ptr - $bytes-per-col];
-                        @out[$n++] = $buf[$ptr++] - left-byte;
+                    @out[$n++] = $buf[$ptr++] for 1 .. $colors;
+                    for $colors ^.. $row-size {
+                        my \left-val = $buf[$ptr - $colors];
+                        @out[$n++] = ($buf[$ptr++] - left-val) +& $bit-mask;
                     }
                 }
                 when 2 { # Up
-                    for 1 .. $bytes-per-row {
-                        my \up-byte = $row ?? $buf[$ptr - $bytes-per-row] !! 0;
-                        @out[$n++] = $buf[$ptr++] - up-byte;
+                    for 1 .. $row-size {
+                        my \up-val = $row ?? $buf[$ptr - $row-size] !! 0;
+                        @out[$n++] = ($buf[$ptr++] - up-val) +& $bit-mask;
                     }
                 }
                 when 3 { # Average
-                   for 1 .. $bytes-per-row -> \i {
-                        my \left-byte = i <= $bytes-per-col ?? 0 !! $buf[$ptr - $bytes-per-col];
-                        my \up-byte = $row ?? $buf[$ptr - $bytes-per-row] !! 0;
-                        @out[$n++] = $buf[$ptr++] - ( (left-byte + up-byte) div 2 );
+                   for 1 .. $row-size -> \i {
+                        my \left-val = i <= $colors ?? 0 !! $buf[$ptr - $colors];
+                        my \up-val = $row ?? $buf[$ptr - $row-size] !! 0;
+                        @out[$n++] = ($buf[$ptr++] - ( (left-val + up-val) div 2 )) +& $bit-mask;
                    }
                 }
                 when 4 { # Paeth
-                   for 1 .. $bytes-per-row -> \i {
-                       my \left-byte = i <= $bytes-per-col ?? 0 !! $buf[$ptr - $bytes-per-col];
-                       my \up-byte = $row ?? $buf[$ptr - $bytes-per-row] !! 0;
-                       my \up-left-byte = $row && i > $bytes-per-col ?? $buf[$ptr - $bytes-per-row - $bytes-per-col] !! 0;
+                   for 1 .. $row-size -> \i {
+                       my \left-val = i <= $colors ?? 0 !! $buf[$ptr - $colors];
+                       my \up-val = $row ?? $buf[$ptr - $row-size] !! 0;
+                       my \up-left-val = $row && i > $colors ?? $buf[$ptr - $row-size - $colors] !! 0;
 
-                       my int $p = left-byte + up-byte - up-left-byte;
-                       my int $pa = abs($p - left-byte);
-                       my int $pb = abs($p - up-byte);
-                       my int $pc = abs($p - up-left-byte);
+                       my int $p = left-val + up-val - up-left-val;
+                       my int $pa = abs($p - left-val);
+                       my int $pb = abs($p - up-val);
+                       my int $pc = abs($p - up-left-val);
                        my \nearest = do if $pa <= $pb and $pa <= $pc {
-                           left-byte;
+                           left-val;
                        }
                        elsif $pb <= $pc {
-                           up-byte;
+                           up-val;
                        }
                        else {
-                           up-left-byte
+                           up-left-val
                        }
-                       @out[$n++] = $buf[$ptr++] - nearest;
+                       @out[$n++] = ($buf[$ptr++] - nearest) +& $bit-mask;
                    }
                 }
             }
 
-            $row++;
-        }
+            @out[$n++] = 0
+                for 0 ..^ $padding;
+         }
 
+        @out = resample(@out, $bpc, 8)
+            unless $bpc == 8;
         buf8.new: @out;
     }
 
@@ -154,73 +175,92 @@ class Lib::PDF::Filter::Predictors {
         buf8.new: resample( $out, $BitsPerComponent, 8);
     }
 
-    multi method decode($buf,  #| input stream
+    multi method decode($buf is copy,  #| input stream
                         Predictor :$Predictor! where { 10 <= $_ <= 15}, #| predictor function
                         UInt :$Columns = 1,          #| number of samples per row
                         UInt :$Colors = 1,           #| number of colors per sample
                         UInt :$BitsPerComponent = 8, #| number of bits per color
         ) {
 
-        my uint $bytes-per-col = ceiling($Colors * $BitsPerComponent / 8);
-        my uint $bytes-per-row = $bytes-per-col * $Columns;
-        my uint $len = +$buf;
+        my uint $bpc = $BitsPerComponent;
+        my uint $colors = $Colors;
+        if $bpc > 8 {
+            $colors *= $bpc div 8;
+            $bpc = 8;
+        }
+        $buf = resample($buf, 8, $bpc)
+            unless $bpc == 8;
+
+        my uint $bit-mask = 2 ** $bpc  -  1;
+        my uint $row-size = $colors * $Columns;
         my uint $ptr = 0;
-        my uint8 @output;
+        my uint $len = +$buf;
+        my uint8 @out;
+        my int $n = 0;
 
-        my uint8 @up = 0 xx $bytes-per-row;
+        my $padding = do {
+            my $bits-per-row = $row-size * $bpc;
+            my $bit-padding = -$bits-per-row % 8;
+            $bit-padding div $bpc;
+        }
 
-        while $ptr < $len {
+        # each input row also has a tag plus any padding
+        my $rows = $len div ($row-size + $padding + 1);
+        # preallocate
+        @out[$rows * $row-size - 1] = 0
+            if $rows;
+
+        loop (my uint $row = 0; $row < $rows; $row++) {
             # PNG prediction can vary from row to row
-            my UInt \tag = $buf[$ptr++];
-            my uint8 @out;
-            my int $n = 0;
+            my UInt $tag = $buf[$ptr++];
+            $tag -= 10 if 10 <= $tag <= 14; 
 
-            given tag {
+            given $tag {
                 when 0 { # None
                     @out[$n++] = $buf[$ptr++]
-                        for 1 .. $bytes-per-row;
+                        for 1 .. $row-size;
                 }
-                when 1 { # Sub
-                    @out[$n++] = $buf[$ptr++] for 1 .. $bytes-per-col;
-                    for $bytes-per-col ^.. $bytes-per-row {
-                        my \left-byte = @out[$n - $bytes-per-col];
-                        @out[$n++] = $buf[$ptr++] + left-byte;
+                when 1 { # Left
+                    @out[$n++] = $buf[$ptr++] for 1 .. $colors;
+                    for $colors ^.. $row-size {
+                        my \left-val = @out[$n - $colors];
+                        @out[$n++] = ($buf[$ptr++] + left-val) +& $bit-mask;
                     }
                 }
                 when 2 { # Up
-                    for 1 .. $bytes-per-row {
-                        my \up-byte = @up[$n];
-                        @out[$n++] = $buf[$ptr++] + up-byte;
+                    for 1 .. $row-size {
+                        my \up-val = $row ?? @out[$n - $row-size] !! 0;
+                        @out[$n++] = ($buf[$ptr++] + up-val) +& $bit-mask;
                     }
                 }
                 when  3 { # Average
-                    for 1 .. $bytes-per-row -> \i {
-                        my \left-byte = i <= $bytes-per-col ?? 0 !! @out[$n - $bytes-per-col];
-                        my \up-byte = @up[$n];
-                        @out[$n++] = $buf[$ptr++] + ( (left-byte + up-byte) div 2 );
+                    for 1 .. $row-size -> \i {
+                        my \left-val = i <= $colors ?? 0 !! @out[$n - $colors];
+                        my \up-val = $row ?? @out[$n - $row-size] !! 0;
+                        @out[$n++] = ($buf[$ptr++] + ( (left-val + up-val) div 2 )) +& $bit-mask;
                     }
                 }
                 when 4 { # Paeth
-                    for 1 .. $bytes-per-row -> \i {
-                        my \left-byte = i <= $bytes-per-col ?? 0 !! @out[$n - $bytes-per-col];
-                        my \up-left-byte = i <= $bytes-per-col ?? 0 !! @up[$n - $bytes-per-col];
-                        my \up-byte = @up[$n];
+                    for 1 .. $row-size -> \i {
+                        my \left-val = i <= $colors ?? 0 !! @out[$n - $colors];
+                        my \up-val = $row ?? @out[$n - $row-size] !! 0;
+                        my \up-left-val = $row && i > $colors ?? @out[$n - $colors - $row-size] !! 0;
 
-                        my int $p = left-byte + up-byte - up-left-byte;
-                        my int $pa = abs($p - left-byte);
-                        my int $pb = abs($p - up-byte);
-                        my int $pc = abs($p - up-left-byte);
+                        my int $p = left-val + up-val - up-left-val;
+                        my int $pa = abs($p - left-val);
+                        my int $pb = abs($p - up-val);
+                        my int $pc = abs($p - up-left-val);
                         my \nearest = do if $pa <= $pb and $pa <= $pc {
-                            left-byte;
+                            left-val;
                         }
                         elsif $pb <= $pc {
-                            up-byte;
+                            up-val;
                         }
                         else {
-                            up-left-byte
+                            up-left-val
                         }
 
-                        @out[$n++] = $buf[$ptr++] + nearest;
+                        @out[$n++] = ($buf[$ptr++] + nearest) +& $bit-mask;
                     }
                 }
                 default {
@@ -228,11 +268,13 @@ class Lib::PDF::Filter::Predictors {
                 }
             }
 
-            @up := @out;
-            @output.append: @out;
+            $ptr++ for 0 ..^ $padding;
         }
 
-        buf8.new: @output;
+        @out = resample(@out, $bpc, 8)
+            unless $bpc == 8;
+
+        buf8.new: @out;
     }
 
     multi method decode($buf, Predictor :$Predictor = 1, ) is default {
