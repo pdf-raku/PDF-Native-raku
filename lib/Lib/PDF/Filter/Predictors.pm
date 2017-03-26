@@ -73,7 +73,7 @@ class Lib::PDF::Filter::Predictors {
 
         my uint $bit-mask = 2 ** $bpc  -  1;
         my uint $row-size = $colors * $Columns;
-        my uint $ptr = 0;
+        my uint $idx = 0;
         my uint8 @out;
         my uint $tag = min($Predictor - 10, 4);
         my int $n = 0;
@@ -95,34 +95,34 @@ class Lib::PDF::Filter::Predictors {
 
             given $tag {
                 when 0 { # None
-                    @out[$n++] = $buf[$ptr++]
+                    @out[$n++] = $buf[$idx++]
                         for 1 .. $row-size;
                 }
                 when 1 { # Left
-                    @out[$n++] = $buf[$ptr++] for 1 .. $colors;
+                    @out[$n++] = $buf[$idx++] for 1 .. $colors;
                     for $colors ^.. $row-size {
-                        my \left-val = $buf[$ptr - $colors];
-                        @out[$n++] = ($buf[$ptr++] - left-val) +& $bit-mask;
+                        my \left-val = $buf[$idx - $colors];
+                        @out[$n++] = ($buf[$idx++] - left-val) +& $bit-mask;
                     }
                 }
                 when 2 { # Up
                     for 1 .. $row-size {
-                        my \up-val = $row ?? $buf[$ptr - $row-size] !! 0;
-                        @out[$n++] = ($buf[$ptr++] - up-val) +& $bit-mask;
+                        my \up-val = $row ?? $buf[$idx - $row-size] !! 0;
+                        @out[$n++] = ($buf[$idx++] - up-val) +& $bit-mask;
                     }
                 }
                 when 3 { # Average
                    for 1 .. $row-size -> \i {
-                        my \left-val = i <= $colors ?? 0 !! $buf[$ptr - $colors];
-                        my \up-val = $row ?? $buf[$ptr - $row-size] !! 0;
-                        @out[$n++] = ($buf[$ptr++] - ( (left-val + up-val) div 2 )) +& $bit-mask;
+                        my \left-val = i <= $colors ?? 0 !! $buf[$idx - $colors];
+                        my \up-val = $row ?? $buf[$idx - $row-size] !! 0;
+                        @out[$n++] = ($buf[$idx++] - ( (left-val + up-val) div 2 )) +& $bit-mask;
                    }
                 }
                 when 4 { # Paeth
                    for 1 .. $row-size -> \i {
-                       my \left-val = i <= $colors ?? 0 !! $buf[$ptr - $colors];
-                       my \up-val = $row ?? $buf[$ptr - $row-size] !! 0;
-                       my \up-left-val = $row && i > $colors ?? $buf[$ptr - $row-size - $colors] !! 0;
+                       my \left-val = i <= $colors ?? 0 !! $buf[$idx - $colors];
+                       my \up-val = $row ?? $buf[$idx - $row-size] !! 0;
+                       my \up-left-val = $row && i > $colors ?? $buf[$idx - $row-size - $colors] !! 0;
 
                        my int $p = left-val + up-val - up-left-val;
                        my int $pa = abs($p - left-val);
@@ -137,7 +137,7 @@ class Lib::PDF::Filter::Predictors {
                        else {
                            up-left-val
                        }
-                       @out[$n++] = ($buf[$ptr++] - nearest) +& $bit-mask;
+                       @out[$n++] = ($buf[$idx++] - nearest) +& $bit-mask;
                    }
                 }
             }
@@ -188,93 +188,23 @@ class Lib::PDF::Filter::Predictors {
             $colors *= $bpc div 8;
             $bpc = 8;
         }
-        $buf = resample($buf, 8, $bpc)
-            unless $bpc == 8;
 
-        my uint $bit-mask = 2 ** $bpc  -  1;
         my uint $row-size = $colors * $Columns;
-        my uint $ptr = 0;
-        my uint $len = +$buf;
-        my uint8 @out;
-        my int $n = 0;
-
         my $padding = do {
-            my $bits-per-row = $row-size * $bpc;
-            my $bit-padding = -$bits-per-row % 8;
+            my $bit-padding = -($row-size * $bpc) % 8;
             $bit-padding div $bpc;
         }
-
-        # each input row also has a tag plus any padding
-        my $rows = $len div ($row-size + $padding + 1);
-        # preallocate
-        @out[$rows * $row-size - 1] = 0
+        # prepare buffers 
+        $buf = buf8.new: resample($buf, 8, $bpc);
+        my $rows = +$buf div ($row-size + $padding + 1);
+        my buf8 $out .= new;
+         # preallocate
+        $out[$rows * $row-size - 1] = 0
             if $rows;
 
-        loop (my uint $row = 0; $row < $rows; $row++) {
-            # PNG prediction can vary from row to row
-            my UInt $tag = $buf[$ptr++];
-            $tag -= 10 if 10 <= $tag <= 14; 
+        pdf_filt_predict_decode($buf, $out, $Predictor, $colors, $bpc, $Columns, $rows);
 
-            given $tag {
-                when 0 { # None
-                    @out[$n++] = $buf[$ptr++]
-                        for 1 .. $row-size;
-                }
-                when 1 { # Left
-                    @out[$n++] = $buf[$ptr++] for 1 .. $colors;
-                    for $colors ^.. $row-size {
-                        my \left-val = @out[$n - $colors];
-                        @out[$n++] = ($buf[$ptr++] + left-val) +& $bit-mask;
-                    }
-                }
-                when 2 { # Up
-                    for 1 .. $row-size {
-                        my \up-val = $row ?? @out[$n - $row-size] !! 0;
-                        @out[$n++] = ($buf[$ptr++] + up-val) +& $bit-mask;
-                    }
-                }
-                when  3 { # Average
-                    for 1 .. $row-size -> \i {
-                        my \left-val = i <= $colors ?? 0 !! @out[$n - $colors];
-                        my \up-val = $row ?? @out[$n - $row-size] !! 0;
-                        @out[$n++] = ($buf[$ptr++] + ( (left-val + up-val) div 2 )) +& $bit-mask;
-                    }
-                }
-                when 4 { # Paeth
-                    for 1 .. $row-size -> \i {
-                        my \left-val = i <= $colors ?? 0 !! @out[$n - $colors];
-                        my \up-val = $row ?? @out[$n - $row-size] !! 0;
-                        my \up-left-val = $row && i > $colors ?? @out[$n - $colors - $row-size] !! 0;
-
-                        my int $p = left-val + up-val - up-left-val;
-                        my int $pa = abs($p - left-val);
-                        my int $pb = abs($p - up-val);
-                        my int $pc = abs($p - up-left-val);
-                        my \nearest = do if $pa <= $pb and $pa <= $pc {
-                            left-val;
-                        }
-                        elsif $pb <= $pc {
-                            up-val;
-                        }
-                        else {
-                            up-left-val
-                        }
-
-                        @out[$n++] = ($buf[$ptr++] + nearest) +& $bit-mask;
-                    }
-                }
-                default {
-                    die "bad PNG predictor tag: $_";
-                }
-            }
-
-            $ptr++ for 0 ..^ $padding;
-        }
-
-        @out = resample(@out, $bpc, 8)
-            unless $bpc == 8;
-
-        buf8.new: @out;
+        buf8.new: resample($out, $bpc, 8);
     }
 
     multi method decode($buf, Predictor :$Predictor = 1, ) is default {
