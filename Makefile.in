@@ -1,10 +1,16 @@
 all: resources/lib/libpdf%SO% %FAKESO%
 
-resources/lib/libpdf%SO%: libpdf/buf%O%  libpdf/filter_predict%O%
-	%LD% %LDSHARED% %LDFLAGS% %LDOUT%resources/lib/libpdf%SO% libpdf/buf%O%  libpdf/filter_predict%O%
+resources/lib/libpdf%SO%: libpdf/pdf_buf%O% libpdf/pdf_filt_predict%O% libpdf/pdf_filt_predict_tiff%O% libpdf/pdf_filt_predict_png%O%
+	%LD% %LDSHARED% %LDFLAGS% %LDOUT%resources/lib/libpdf%SO% libpdf/pdf_buf%O% libpdf/pdf_filt_predict%O% libpdf/pdf_filt_predict_tiff%O% libpdf/pdf_filt_predict_png%O%
 
-libpdf/buf%O%: libpdf/buf.c libpdf/buf.h
-	%CC% -I . -c %CCSHARED% %CCFLAGS% %CCOUT%libpdf/buf%O% libpdf/buf.c
+libpdf/pdf_buf%O%: libpdf/pdf_buf.c libpdf/pdf_buf.h
+	%CC% -I . -c %CCSHARED% %CCFLAGS% %CCOUT%libpdf/pdf_buf%O% libpdf/pdf_buf.c
 
-libpdf/filter_predict%O%: libpdf/filter_predict.c libpdf/filter_predict.h
-	%CC% -I . -c %CCSHARED% %CCFLAGS% %CCOUT%libpdf/filter_predict%O% libpdf/filter_predict.c
+libpdf/pdf_filt_predict%O%: libpdf/pdf_filt_predict.c libpdf/pdf_filt_predict.h libpdf/pdf_filt_predict_tiff.h libpdf/pdf_filt_predict_png.h
+	%CC% -I . -c %CCSHARED% %CCFLAGS% %CCOUT%libpdf/pdf_filt_predict%O% libpdf/pdf_filt_predict.c
+
+libpdf/pdf_filt_predict_tiff%O%: libpdf/pdf_filt_predict_tiff.c libpdf/pdf_filt_predict_tiff.h
+	%CC% -I . -c %CCSHARED% %CCFLAGS% %CCOUT%libpdf/pdf_filt_predict_tiff%O% libpdf/pdf_filt_predict_tiff.c
+
+libpdf/pdf_filt_predict_png%O%: libpdf/pdf_filt_predict_png.c libpdf/pdf_filt_predict_png.h
+	%CC% -I . -c %CCSHARED% %CCFLAGS% %CCOUT%libpdf/pdf_filt_predict_png%O% libpdf/pdf_filt_predict_png.c

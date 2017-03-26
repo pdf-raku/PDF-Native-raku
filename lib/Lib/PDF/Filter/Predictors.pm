@@ -9,7 +9,7 @@ class Lib::PDF::Filter::Predictors {
     my subset BPC of UInt where 1 | 2 | 4 | 8 | 16;
     my subset Predictor of Int where 1|2|10..15;
 
-    sub pdf_filter_predict_decode(
+    sub pdf_filt_predict_decode(
         Blob $in, Blob $out,
         uint8 $predictor where Predictor,
         uint8 $colors,
@@ -18,7 +18,7 @@ class Lib::PDF::Filter::Predictors {
         uint16 $rows,
     )  returns uint32 is native(&libpdf) { * }
 
-    sub pdf_filter_predict_encode(
+    sub pdf_filt_predict_encode(
         Blob $in, Blob $out,
         uint8 $predictor where Predictor,
         uint8 $colors,
@@ -51,7 +51,7 @@ class Lib::PDF::Filter::Predictors {
         my $out = nums.new;
         $out[+nums - 1] = 0
             if +nums;
-	pdf_filter_predict_encode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
+	pdf_filt_predict_encode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
         buf8.new: resample( $out, $BitsPerComponent, 8);
     }
 
@@ -171,7 +171,7 @@ class Lib::PDF::Filter::Predictors {
         my $out = nums.new;
         $out[+nums - 1] = 0
             if +nums;
-	pdf_filter_predict_decode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
+	pdf_filt_predict_decode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
         buf8.new: resample( $out, $BitsPerComponent, 8);
     }
 

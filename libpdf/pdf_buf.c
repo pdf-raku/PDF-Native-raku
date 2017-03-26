@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <libpdf/buf.h>
+#include <libpdf/pdf_buf.h>
 
 extern void pdf_buf_unpack_1(uint8_t *in, uint8_t *out, size_t in_len) {
   size_t i;
