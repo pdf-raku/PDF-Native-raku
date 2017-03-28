@@ -14,3 +14,6 @@ libpdf/pdf_filt_predict_tiff%O%: libpdf/pdf_filt_predict_tiff.c libpdf/pdf_filt_
 
 libpdf/pdf_filt_predict_png%O%: libpdf/pdf_filt_predict_png.c libpdf/pdf_filt_predict_png.h
 	%CC% -I . -c %CCSHARED% %CCFLAGS% %CCOUT%libpdf/pdf_filt_predict_png%O% libpdf/pdf_filt_predict_png.c
+
+clean ::
+	@rm -f libpdf/*.o resources/lib/libpdf.dll resources/lib/libpdf.dll resources/lib/libpdf.dll resources/lib/libpdf.dylib resources/lib/libpdf.so
