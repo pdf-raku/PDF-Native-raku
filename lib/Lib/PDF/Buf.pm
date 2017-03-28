@@ -44,7 +44,10 @@ class Lib::PDF::Buf {
         $out;
     }
     multi method resample($nums!, PackingSize $n!, PackingSize $m!)  {
-        when $n == $m { $nums }
+        when $n == $m {
+            my $type = container($n);
+            $nums ~~ Buf[$type] ?? $nums !! Buf[$type].new: $nums;
+        }
         when $n == 8 {
             my &packer = %(
                 1 => &pdf_buf_unpack_1,
@@ -73,7 +76,7 @@ class Lib::PDF::Buf {
     #|   obj 123 0 << /Type /XRef /W [1, 3, 1]
     multi method resample( $in!, 8, Array $W!)  {
         my uint32 $in-len = +$in;
-        my buf8 $in-buf .= new($in);
+        my buf8 $in-buf = $in ~~ buf8 ?? $in !! buf8.new($in);
         my buf8 $W-buf .= new($W);
         my $out-buf := buf32.new;
         my $out-len = ($in-len * +$W) div $W.sum;
@@ -88,7 +91,7 @@ class Lib::PDF::Buf {
         my $width = $W.sum;
         my $in-len = $in.elems;
 	my $out = alloc(uint8, $in-len * $width);
-        my buf32 $in-buf .= new($in);
+        my buf32 $in-buf = $in ~~ buf32 ?? $in !! buf32.new($in);
         my buf8 $W-buf .= new($W);
         pdf_buf_pack_32_W($in-buf, $out, $in-len, $W-buf, +$W);
         $out;
