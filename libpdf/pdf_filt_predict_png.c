@@ -53,7 +53,7 @@ pdf_filt_predict_png_decode(uint8_t *buf,
         for (i = 0; i < row_size; i++) {
           uint8_t left_val = i < colors ? 0 : out[n - colors];
           uint8_t up_val = row ? out[n - row_size] : 0;
-          out[n++] = (buf[idx++] + ( (left_val + up_val) / 2 )) & bit_mask;
+          out[n++] = (buf[idx++] + ((left_val + up_val) / 2 )) & bit_mask;
           }
         break;
       }
@@ -137,10 +137,6 @@ extern void pdf_filt_predict_png_encode(uint8_t *buf,
         for (i = 0; i < row_size; i++) {
           uint8_t up_val = row ? buf[idx - row_size] : 0;
           out[n++] = (buf[idx++] - up_val) & bit_mask;
-#if 0
-          fprintf(stderr, "%d:  out:%d   =  buf:%d - up:%d\n",
-                  n-1, out[n-1], buf[idx-1], up_val);
-#endif
         }
         break;
       }
@@ -148,12 +144,11 @@ extern void pdf_filt_predict_png_encode(uint8_t *buf,
         for (i = 0; i < row_size; i++) {
           uint8_t left_val = i < colors ? 0 : buf[idx - colors];
           uint8_t up_val = row ? buf[idx - row_size] : 0;
-          out[n++] = (buf[idx++] - ( (left_val + up_val) / 2 )) & bit_mask;
-          }
+          out[n++] = (buf[idx++] - ((left_val + up_val) / 2 )) & bit_mask;
+        }
         break;
       }
-      case 4: /* Paeth */
-      case 5: {
+    case 4: { /* Paeth */
         for (i = 0; i < row_size; i++) {
           int left_val = i < colors ? 0 : buf[idx - colors];
           int up_val = row ? buf[idx - row_size] : 0;
