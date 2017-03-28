@@ -27,8 +27,8 @@ class Lib::PDF::Buf {
         $buf[$len-1] = 0 if $len;
         $buf;
     }
-    sub container(PackingSize $n) {
-        %( 1 => uint8, 2 => uint8, 4 => uint8, 8 => uint8, 16 => uint16, 24 => uint32, 32 => uint32){$n};
+    sub container(PackingSize $bits) {
+        $bits <= 8 ?? uint8 !! ($bits > 16 ?? uint32 !! uint16)
     }
     
     sub do-packing($n, $m, $in is copy, &pack) {
@@ -41,7 +41,7 @@ class Lib::PDF::Buf {
         my $out-type = container($m);
         my $out := alloc($out-type, ($in-len * $n) div $m);
         &pack($in, $out, $in-len);
-        $out.list;
+        $out;
     }
     multi method resample($nums!, PackingSize $n!, PackingSize $m!)  {
         when $n == $m { $nums }
@@ -91,6 +91,6 @@ class Lib::PDF::Buf {
         my buf32 $in-buf .= new($in);
         my buf8 $W-buf .= new($W);
         pdf_buf_pack_32_W($in-buf, $out, $in-len, $W-buf, +$W);
-        $out.list;
+        $out;
     }
 }
