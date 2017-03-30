@@ -1,3 +1,6 @@
+#ifndef PDF_FILT_PREDICT_PNG_H_
+#define PDF_FILT_PREDICT_PNG_H_
+
 extern void
 pdf_filt_predict_png_decode(uint8_t *buf,
                             uint8_t *out,
@@ -15,3 +18,5 @@ extern void pdf_filt_predict_png_encode(uint8_t *buf,
                                         uint16_t rows,
                                         uint8_t predictor
                                         );
+
+#endif

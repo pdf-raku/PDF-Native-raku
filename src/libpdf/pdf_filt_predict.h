@@ -1,3 +1,6 @@
+#ifndef PDF_FILT_PREDICT_H_
+#define PDF_FILT_PREDICT_H_
+
 typedef enum
 {
   PDF_FILTER_NO_PREDICTION = 1,
@@ -27,3 +30,5 @@ pdf_filt_predict_encode(uint8_t *in,
                         uint8_t bpc,
                         uint16_t columns,
                         uint16_t rows );
+
+#endif
