@@ -33,13 +33,10 @@ class Lib::PDF::Buf {
     
     sub do-packing($n, $m, $in is copy, &pack) {
         my uint32 $in-len = $in.elems;
-        die "incomplete scan-line: $in-len * $n not divisable by $m"
-            unless ($in-len * $n) %% $m;
         $in = Buf[container($n)].new($in)
             unless $in.isa(Blob);
-        my $out-size = max($m, 8);
         my $out-type = container($m);
-        my $out := alloc($out-type, ($in-len * $n) div $m);
+        my $out := alloc($out-type, ($in-len * $n + $m-1) div $m);
         &pack($in, $out, $in-len);
         $out;
     }

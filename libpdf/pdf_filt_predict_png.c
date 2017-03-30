@@ -12,11 +12,13 @@ pdf_filt_predict_png_decode(uint8_t *buf,
                             ) {
   int bit_mask = (1 << bpc) - 1;
   int row_size = colors * columns;
-  uint8_t padding = (-(columns * bpc) % 8) / bpc;
   int idx = 0;
   int n = 0;
   int row;
-
+  uint8_t padding = 0;
+  for (padding = 0; ((row_size + padding) * bpc) % 8; padding++) {
+  }
+  
   for (row = 0; row < rows; row++) {
     /* PNG prediction can vary from row to row */
     uint8_t tag = buf[idx++];
@@ -94,10 +96,12 @@ extern void pdf_filt_predict_png_encode(uint8_t *buf,
                                         ) {
   int bit_mask = (1 << bpc) - 1;
   int row_size = colors * columns;
-  uint8_t padding = (-(columns * bpc) % 8) / bpc;
   int idx = 0;
   int n = 0;
   int row;
+  uint8_t padding = 0;
+  for (padding = 0; ((row_size + padding) * bpc) % 8; padding++) {
+  }
 
   if (tag == 15) {
     /* optimize - just use Paeth */
