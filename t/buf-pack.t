@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 14;
+plan 15;
 
 use Lib::PDF::Buf;
 use NativeCall;
@@ -32,3 +32,8 @@ my $idx;
 is-deeply ($idx=Lib::PDF::Buf.resample($bytes, 8, [1, 3, 2])).values, @in1.values, '8 => [1, 3, 2] resample';
 is-deeply Lib::PDF::Buf.resample($idx, [1, 3, 2], 8), buf8.new(@bytes[0..5]), '[1, 3, 2] => 8 resample';
 
+my uint32 @in[4;3] = ([1, 16, 0], [1, 741, 0], [1, 1030, 0], [1, 1446, 0]);
+my $W = [1, 2, 1];
+my $out = buf8.new(1, 0, 16, 0,  1, 2, 229, 0,  1, 4, 6, 0,  1, 5, 166, 0);
+
+is-deeply Lib::PDF::Buf.resample(@in, $W, 8), $out, '$W[1, 2, 1] 8 bit sample';

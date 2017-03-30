@@ -85,12 +85,13 @@ class Lib::PDF::Buf {
     }
 
     multi method resample( $in, Array $W!, 8)  {
-        my $width = $W.sum;
-        my $in-len = $in.elems;
-	my $out = alloc(uint8, $in-len * $width);
+        my $rows = $in.elems;
+        my $cols-in = +$W;
+        my $cols-out = $W.sum;
+	my $out = alloc(uint8, $rows * $cols-out);
         my buf32 $in-buf = $in ~~ buf32 ?? $in !! buf32.new($in);
         my buf8 $W-buf .= new($W);
-        pdf_buf_pack_32_W($in-buf, $out, $in-len, $W-buf, +$W);
+        pdf_buf_pack_32_W($in-buf, $out, $rows * $cols-in, $W-buf, +$W);
         $out;
     }
 }
