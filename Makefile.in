@@ -17,7 +17,7 @@ $(SRC)/libpdf/pdf_filt_predict_tiff%O%: $(SRC)/libpdf/pdf_filt_predict_tiff.c $(
 $(SRC)/libpdf/pdf_filt_predict_png%O%: $(SRC)/libpdf/pdf_filt_predict_png.c $(SRC)/libpdf/pdf_filt_predict_png.h
 	%CC% -I $(SRC) -c %CCSHARED% %CCFLAGS% %CCOUT%$(SRC)/libpdf/pdf_filt_predict_png%O% $(SRC)/libpdf/pdf_filt_predict_png.c
 
-test ::
+test : all
 	@prove -e'perl6 -I lib' -v t
 
 clean ::
