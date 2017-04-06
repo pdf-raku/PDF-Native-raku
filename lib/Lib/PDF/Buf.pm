@@ -1,9 +1,12 @@
 use v6;
 
-class Lib::PDF::Buf {
+module Lib::PDF::Buf {
 
     use NativeCall;
     use Lib::PDF :libpdf;
+
+    our proto sub unpack( $, $ --> Buf) is export(:pack) {*};
+    our proto sub pack( $, $ --> Buf) is export(:pack) {*};
 
     sub pdf_buf_unpack_1(Blob, Blob, size_t)  is native(&libpdf) { * }
     sub pdf_buf_unpack_2(Blob, Blob, size_t)  is native(&libpdf) { * }
@@ -30,7 +33,7 @@ class Lib::PDF::Buf {
     sub container(PackingSize $bits) {
         $bits <= 8 ?? uint8 !! ($bits > 16 ?? uint32 !! uint16)
     }
-    
+
     sub do-packing($n, $m, $in is copy, &pack) {
         my uint32 $in-len = $in.elems;
         $in = Buf[container($n)].new($in)
@@ -40,38 +43,35 @@ class Lib::PDF::Buf {
         &pack($in, $out, $in-len);
         $out;
     }
-    multi method resample($nums!, PackingSize $n!, PackingSize $m!)  {
-        when $n == $m {
-            my $type = container($n);
-            $nums ~~ Buf[$type] ?? $nums !! Buf[$type].new: $nums;
-        }
-        when $n == 8 {
-            my &packer = %(
-                1 => &pdf_buf_unpack_1,
-                2 => &pdf_buf_unpack_2,
-                4 => &pdf_buf_unpack_4,
-                16 => &pdf_buf_unpack_16,
-                24 => &pdf_buf_unpack_24,
-                32 => &pdf_buf_unpack_32,
-            ){$m};
-            do-packing($n, $m, $nums, &packer);
-        }
-        when $m == 8 {
-            my &packer = %(
-                1 => &pdf_buf_pack_1,
-                2 => &pdf_buf_pack_2,
-                4 => &pdf_buf_pack_4,
-                16 => &pdf_buf_pack_16,
-                24 => &pdf_buf_pack_24,
-                32 => &pdf_buf_pack_32,
-            ){$n};
-            do-packing($n, $m, $nums, &packer);
-        }
+    multi sub unpack($nums!, PackingSize $n!)  {
+        my $type = container($n);
+        my &packer = %(
+            1 => &pdf_buf_unpack_1,
+            2 => &pdf_buf_unpack_2,
+            4 => &pdf_buf_unpack_4,
+            16 => &pdf_buf_unpack_16,
+            24 => &pdf_buf_unpack_24,
+            32 => &pdf_buf_unpack_32,
+        ){$n};
+            do-packing(8, $n, $nums, &packer);
+    }
+
+    multi sub pack($nums!, PackingSize $n!)  {
+        my $type = container($n);
+        my &packer = %(
+            1 => &pdf_buf_pack_1,
+            2 => &pdf_buf_pack_2,
+            4 => &pdf_buf_pack_4,
+            16 => &pdf_buf_pack_16,
+            24 => &pdf_buf_pack_24,
+            32 => &pdf_buf_pack_32,
+        ){$n};
+        do-packing($n, 8, $nums, &packer);
     }
 
     #| variable resampling, e.g. to decode/encode:
     #|   obj 123 0 << /Type /XRef /W [1, 3, 1]
-    multi method resample( $in!, 8, Array $W!)  {
+    multi sub unpack( $in!, Array $W!)  {
         my uint32 $in-len = +$in;
         my buf8 $in-buf = $in ~~ buf8 ?? $in !! buf8.new($in);
         my buf8 $W-buf .= new($W);
@@ -84,7 +84,7 @@ class Lib::PDF::Buf {
         @shaped;
     }
 
-    multi method resample( $in, Array $W!, 8)  {
+    multi sub pack( $in, Array $W!)  {
         my $rows = $in.elems;
         my $cols-in = +$W;
         my $cols-out = $W.sum;
@@ -94,4 +94,9 @@ class Lib::PDF::Buf {
         pdf_buf_pack_32_W($in-buf, $out, $rows * $cols-in, $W-buf, +$W);
         $out;
     }
+
+    multi sub pack(Buf $buf, 8) { $buf }
+    multi sub pack($nums, 8) { buf8.new: $nums }
+    multi sub unpack(Buf $b, 8) { $b }
+    multi sub unpack($nums, 8) { buf8.new: $nums }
 }
