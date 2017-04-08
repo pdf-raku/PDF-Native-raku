@@ -20,5 +20,6 @@ There's sure to be others.
 Currently giving me some benefits on work in development on larger PDFs.
 
 This module will not be deployed until there as been significant advancement on Rakudo/MoarVM JIT, and I've
-had a chance to benchmark this.
+had a chance to bemark this.
+
 

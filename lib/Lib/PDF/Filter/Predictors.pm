@@ -45,9 +45,7 @@ class Lib::PDF::Filter::Predictors {
         my $rows = (+$buf * 8) div ($Columns * $Colors * $BitsPerComponent);
         my $type = buf-type($BitsPerComponent);
         my \nums := unpack( $buf, $BitsPerComponent );
-        my $out = nums.new;
-        $out[nums.elems - 1] = 0
-            if nums.elems;
+        my $out = nums.new.reallocate(nums.elems);
 	pdf_filt_predict_encode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
         pack( $out, $BitsPerComponent);
     }
@@ -68,7 +66,6 @@ class Lib::PDF::Filter::Predictors {
         $buf = unpack($buf, $bpc);
 
         my uint $row-size = $colors * $Columns;
-        my buf8 $out .= new;
 
         my $padding = do {
             my $bit-padding = -($row-size * $bpc) % 8;
@@ -77,8 +74,7 @@ class Lib::PDF::Filter::Predictors {
 
         my $rows = +$buf div $row-size;
         # preallocate, allowing room for per-row data + tag + padding
-        $out[$rows * ($row-size + $padding + 1) - 1] = 0
-            if $rows;
+        my buf8 $out = buf8.allocate($rows * ($row-size + $padding + 1));
 
         pdf_filt_predict_encode($buf, $out, $Predictor, $colors, $bpc, $Columns, $rows);
 
@@ -101,9 +97,7 @@ class Lib::PDF::Filter::Predictors {
                        ) {
         my $rows = (+$buf * 8) div ($Columns * $Colors * $BitsPerComponent);
         my \nums := unpack( $buf, $BitsPerComponent );
-        my $out = nums.new;
-        $out[nums.elems - 1] = 0
-            if nums.elems;
+        my $out = nums.new.reallocate(nums.elems);
 	pdf_filt_predict_decode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
         pack( $out, $BitsPerComponent);
     }
@@ -130,10 +124,7 @@ class Lib::PDF::Filter::Predictors {
         # prepare buffers
         $buf = unpack($buf, $bpc);
         my $rows = +$buf div ($row-size + $padding + 1);
-        my buf8 $out .= new;
-         # preallocate
-        $out[$rows * $row-size - 1] = 0
-            if $rows;
+        my buf8 $out = buf8.allocate($rows * $row-size);
 
         pdf_filt_predict_decode($buf, $out, $Predictor, $colors, $bpc, $Columns, $rows);
 
