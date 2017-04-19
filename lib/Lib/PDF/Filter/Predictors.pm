@@ -6,7 +6,7 @@ class Lib::PDF::Filter::Predictors {
     use Lib::PDF :libpdf;
     use Lib::PDF::Buf :pack;
 
-    my subset BPC of UInt where 1 | 2 | 4 | 8 | 16;
+    my subset BPC of UInt where 1|2|4|8|16;
     my subset Predictor of Int where 1|2|10..15;
 
     sub pdf_filt_predict_decode(
@@ -30,8 +30,8 @@ class Lib::PDF::Filter::Predictors {
     # post prediction functions as described in the PDF 1.7 spec, table 3.8
 
     #| tiff predictor (2)
-    multi method encode($buf where Blob | Buf,
-                        Predictor :$Predictor! where 2,   #| predictor function
+    multi method encode($buf where Blob|Buf,
+                        Predictor :$Predictor! where 2, #| predictor function
                         UInt :$Columns = 1,          #| number of samples per row
                         UInt :$Colors = 1,           #| number of colors per sample
                         BPC  :$BitsPerComponent = 8, #| number of bits per color
@@ -40,10 +40,10 @@ class Lib::PDF::Filter::Predictors {
         my \nums := unpack( $buf, $BitsPerComponent );
         my $out = nums.WHAT.allocate(nums.elems);
 	pdf_filt_predict_encode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
-        pack( $out, $BitsPerComponent);
+        pack($out, $BitsPerComponent);
     }
 
-    multi method encode($buf is copy where Blob | Buf,
+    multi method encode($buf is copy where Blob|Buf,
 			Predictor :$Predictor! where { 10 <= $_ <= 15}, #| predictor function
 			UInt :$Columns = 1,          #| number of samples per row
 			UInt :$Colors = 1,           #| number of colors per sample
@@ -56,7 +56,6 @@ class Lib::PDF::Filter::Predictors {
             $colors *= $bpc div 8;
             $bpc = 8;
         }
-        $buf = unpack($buf, $bpc);
 
         my uint $row-size = $colors * $Columns;
 
@@ -65,6 +64,7 @@ class Lib::PDF::Filter::Predictors {
             $bit-padding div $bpc;
         }
 
+        $buf = unpack($buf, $bpc);
         my $rows = +$buf div $row-size;
         # preallocate, allowing room for per-row data + tag + padding
         my buf8 $out = buf8.allocate($rows * ($row-size + $padding + 1));
@@ -75,15 +75,15 @@ class Lib::PDF::Filter::Predictors {
     }
 
     # prediction filters, see PDF 1.7 spec table 3.8
-    multi method encode($buf where Blob | Buf,
+    multi method encode($buf where Blob|Buf,
 			Predictor :$Predictor=1, #| predictor function
         ) {
         $buf;
     }
 
     # prediction filters, see PDF 1.7 spec table 3.8
-    multi method decode($buf where Blob | Buf,
-                        Predictor :$Predictor! where 2  , #| predictor function
+    multi method decode($buf where Blob|Buf,
+                        Predictor :$Predictor! where 2, #| predictor function
                         UInt :$Columns = 1,          #| number of samples per row
                         UInt :$Colors = 1,           #| number of colors per sample
                         UInt :$BitsPerComponent = 8, #| number of bits per color
