@@ -25,11 +25,6 @@ module Lib::PDF::Buf {
     sub pdf_buf_pack_32_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
 
     my subset PackingSize where 1|2|4|8|16|24|32;
-    sub alloc($type, $len) {
-        my $buf = Buf[$type].new;
-        $buf[$len-1] = 0 if $len;
-        $buf;
-    }
     sub container(PackingSize $bits) {
         $bits <= 8 ?? uint8 !! ($bits > 16 ?? uint32 !! uint16)
     }
@@ -38,8 +33,7 @@ module Lib::PDF::Buf {
         my uint32 $in-len = $in.elems;
         $in = Buf[container($n)].new($in)
             unless $in.isa(Blob);
-        my $out-type = container($m);
-        my $out := alloc($out-type, ($in-len * $n + $m-1) div $m);
+        my $out := Buf[container($m)].allocate(($in-len * $n + $m-1) div $m);
         &pack($in, $out, $in-len);
         $out;
     }
@@ -88,7 +82,7 @@ module Lib::PDF::Buf {
         my $rows = $in.elems;
         my $cols-in = +$W;
         my $cols-out = $W.sum;
-	my $out = alloc(uint8, $rows * $cols-out);
+	my $out = buf8.allocate($rows * $cols-out);
         my buf32 $in-buf = $in ~~ buf32 ?? $in !! buf32.new($in);
         my buf8 $W-buf .= new($W);
         pdf_buf_pack_32_W($in-buf, $out, $rows * $cols-in, $W-buf, +$W);
