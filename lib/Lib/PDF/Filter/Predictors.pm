@@ -27,12 +27,6 @@ class Lib::PDF::Filter::Predictors {
         uint16 $rows,
     )  returns uint32 is native(&libpdf) { * }
 
-    sub buf-type(Numeric $_) {
-        when 32 { uint32 }
-        when 16 { uint16 }
-        default { uint8 }
-    }
-
     # post prediction functions as described in the PDF 1.7 spec, table 3.8
 
     #| tiff predictor (2)
@@ -43,7 +37,6 @@ class Lib::PDF::Filter::Predictors {
                         BPC  :$BitsPerComponent = 8, #| number of bits per color
                        ) {
         my $rows = (+$buf * 8) div ($Columns * $Colors * $BitsPerComponent);
-        my $type = buf-type($BitsPerComponent);
         my \nums := unpack( $buf, $BitsPerComponent );
         my $out = nums.WHAT.allocate(nums.elems);
 	pdf_filt_predict_encode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
