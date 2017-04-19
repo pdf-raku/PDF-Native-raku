@@ -45,7 +45,7 @@ class Lib::PDF::Filter::Predictors {
         my $rows = (+$buf * 8) div ($Columns * $Colors * $BitsPerComponent);
         my $type = buf-type($BitsPerComponent);
         my \nums := unpack( $buf, $BitsPerComponent );
-        my $out = nums.new.reallocate(nums.elems);
+        my $out = nums.WHAT.allocate(nums.elems);
 	pdf_filt_predict_encode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
         pack( $out, $BitsPerComponent);
     }
@@ -97,7 +97,7 @@ class Lib::PDF::Filter::Predictors {
                        ) {
         my $rows = (+$buf * 8) div ($Columns * $Colors * $BitsPerComponent);
         my \nums := unpack( $buf, $BitsPerComponent );
-        my $out = nums.new.reallocate(nums.elems);
+        my $out = nums.WHAT.allocate(nums.elems);
 	pdf_filt_predict_decode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
         pack( $out, $BitsPerComponent);
     }
