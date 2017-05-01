@@ -9,6 +9,7 @@ So far covered are:
 
 - the widely used PDF::IO::Util `pack` and `unpack` functions.
 - the PDF::IO::Filter::Predictor decode and encode functions.
+- base64 encoding
 
 Some other areas under consideration:
 

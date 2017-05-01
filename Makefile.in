@@ -2,11 +2,14 @@ SRC=src
 
 all: resources/lib/libpdf%SO% %FAKESO%
 
-resources/lib/libpdf%SO%: $(SRC)/libpdf/pdf_buf%O% $(SRC)/libpdf/pdf_filt_predict%O% $(SRC)/libpdf/pdf_filt_predict_tiff%O% $(SRC)/libpdf/pdf_filt_predict_png%O%
-	%LD% %LDSHARED% %LDFLAGS% %LDOUT%resources/lib/libpdf%SO% $(SRC)/libpdf/pdf_buf%O% $(SRC)/libpdf/pdf_filt_predict%O% $(SRC)/libpdf/pdf_filt_predict_tiff%O% $(SRC)/libpdf/pdf_filt_predict_png%O%
+resources/lib/libpdf%SO%: $(SRC)/libpdf/pdf_buf%O%  $(SRC)/libpdf/pdf_encode%O% $(SRC)/libpdf/pdf_filt_predict%O% $(SRC)/libpdf/pdf_filt_predict_tiff%O% $(SRC)/libpdf/pdf_filt_predict_png%O%
+	%LD% %LDSHARED% %LDFLAGS% %LDOUT%resources/lib/libpdf%SO% $(SRC)/libpdf/pdf_buf%O%  %LDOUT%resources/lib/libpdf%SO% $(SRC)/libpdf/pdf_encode%O% $(SRC)/libpdf/pdf_filt_predict%O% $(SRC)/libpdf/pdf_filt_predict_tiff%O% $(SRC)/libpdf/pdf_filt_predict_png%O%
 
 $(SRC)/libpdf/pdf_buf%O%: $(SRC)/libpdf/pdf_buf.c $(SRC)/libpdf/pdf_buf.h
 	%CC% -I $(SRC) -c %CCSHARED% %CCFLAGS% %CCOUT%$(SRC)/libpdf/pdf_buf%O% $(SRC)/libpdf/pdf_buf.c
+
+$(SRC)/libpdf/pdf_encode%O%: $(SRC)/libpdf/pdf_encode.c $(SRC)/libpdf/pdf_encode.h
+	%CC% -I $(SRC) -c %CCSHARED% %CCFLAGS% %CCOUT%$(SRC)/libpdf/pdf_encode%O% $(SRC)/libpdf/pdf_encode.c
 
 $(SRC)/libpdf/pdf_filt_predict%O%: $(SRC)/libpdf/pdf_filt_predict.c $(SRC)/libpdf/pdf_filt_predict.h $(SRC)/libpdf/pdf_filt_predict_tiff.h $(SRC)/libpdf/pdf_filt_predict_png.h
 	%CC% -I $(SRC) -c %CCSHARED% %CCFLAGS% %CCOUT%$(SRC)/libpdf/pdf_filt_predict%O% $(SRC)/libpdf/pdf_filt_predict.c
