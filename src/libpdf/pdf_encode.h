@@ -10,4 +10,9 @@
 DLLEXPORT void pdf_encode_base64 (uint8_t* in, size_t inlen,
 				  uint8_t* out, size_t outlen);
 
+DLLEXPORT int32_t pdf_decode_base64(uint8_t* in,
+				    size_t inlen,
+				    uint8_t* out,
+				    size_t outlen);
+
 #endif /* __PDF_ENC_BASE64_H */

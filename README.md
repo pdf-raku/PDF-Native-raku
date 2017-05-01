@@ -15,7 +15,7 @@ Some other areas under consideration:
 
 - C equivalents for other PDF::IO::Filter encoding functions, including predictors, ASCII-Hex, ASCII-85 and run-length encoding
 
-- Support for PDF::Content::Image, including base-64 encoding/decoding, color-channel separation and (de)multiplexing. GIF decompression de-interlacing.
+- Support for PDF::Content::Image, including color-channel separation and (de)multiplexing. GIF decompression de-interlacing.
 
 - Serialization. e.g. writing of literal or hex-encoded byte strings
 
