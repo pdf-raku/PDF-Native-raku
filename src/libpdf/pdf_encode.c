@@ -123,10 +123,10 @@ int32_t pdf_decode_base64(uint8_t* in,
 
       uint8_t sextet[4] = {0, 0, 0, 0};
       uint32_t triple;
-      uint8_t n = 0;
+      uint8_t n_digits = 0;
       int8_t k, m;
       for (k = 0; k < 4; k++) {
-	sextet[k] = next_digit(in, inlen, &i, &n, &error);
+	sextet[k] = next_digit(in, inlen, &i, &n_digits, &error);
       }
 
       triple = (sextet[0] << 3 * 6)
@@ -134,7 +134,7 @@ int32_t pdf_decode_base64(uint8_t* in,
         + (sextet[2] << 1 * 6)
         + (sextet[3] << 0 * 6);
 
-      m = n == 4 ? 0 : n == 3 ? 1 : 2;
+      m = n_digits == 4 ? 0 : n_digits == 3 ? 1 : 2;
 
       for (k = 2; k >= m && j < outlen; k--) {
 	out[j++] = (triple >> k * 8) & 0xFF;
