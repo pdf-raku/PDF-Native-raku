@@ -1,0 +1,20 @@
+# set COVERAGE to enable coverage reporting
+# e.g. % make COVERAGE=1
+CC_OPT = $(if $(COVERAGE),-fprofile-arcs -ftest-coverage,)
+LD_OPT = $(if $(COVERAGE),-coverage -lgcov,)
+objects=pdf_buf%O% pdf_encode%O% pdf_filt_predict%O% pdf_filt_predict_tiff%O% pdf_filt_predict_png%O%
+
+all: libpdf%SO%
+
+libpdf%SO%: $(objects)
+	%LD% %LDSHARED% %LDFLAGS% %LDOUT%libpdf%SO% $(objects) $(LD_OPT)
+
+$(objects): %%O%: %.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_OPT) %CCOUT%$@ $<
+
+# need to be built with COVERAGE=1
+coverage : all
+	gcov pdf_*.c
+
+clean :
+	@rm -f pdf_*%O% pdf_*.gc?? libpdf%SO%

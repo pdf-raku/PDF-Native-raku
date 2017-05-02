@@ -2,6 +2,7 @@
   "authors" : [ "David Warring" ],
   "description" : "Performance booster for the PDF tool-chain",
   "name" : "Lib::PDF",
+  "license" : "Artistic-2.0",
   "perl" : "6.c",
   "provides" : {
       "Lib::PDF" : "lib/Lib/PDF.pm",
@@ -14,7 +15,7 @@
     "lib/libpdf.dll",
     "lib/libpdf.dylib"
   ],
-  "source-url" : "git://github.com/p6-pdf/libpdf.git",
+  "source-url" : "git://github.com/p6-pdf/libpdf-p6.git",
   "depends" : [ "LibraryMake" ],
   "build-depends" : [ "Shell::Command" ],
   "test-depends" : [ ],

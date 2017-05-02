@@ -1,8 +1,6 @@
 # lib-pdf
 
-Travis (Linux / Mac build): [![Build Status](https://travis-ci.org/p6-pdf/libpdf.svg?branch=master)](https://travis-ci.org/p6-pdf/libpdf)
-
-CodeCov (code coverage): [![codecov](https://codecov.io/gh/p6-pdf/libpdf/branch/master/graph/badge.svg)](https://codecov.io/gh/p6-pdf/libpdf)
+[![Build Status](https://travis-ci.org/p6-pdf/libpdf.svg?branch=master)](https://travis-ci.org/p6-pdf/libpdf) [![codecov](https://codecov.io/gh/p6-pdf/libpdf/branch/master/graph/badge.svg)](https://codecov.io/gh/p6-pdf/libpdf)
 
 Low level native library of PDF support functions.
 

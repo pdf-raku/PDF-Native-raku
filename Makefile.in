@@ -1,17 +1,14 @@
-SRC=src
-# set $COVERAGE to enable coverage reporting
-# e.g. % make COVERAGE=1
-CC_OPT = $(if $(COVERAGE),-coverage,)
-LD_OPT = $(if $(COVERAGE),-lgcov,)
-all: resources/lib/libpdf%SO% %FAKESO%
+all : resources/lib/libpdf%SO% %FAKESO%
+	@echo done
 
-objects=$(SRC)/libpdf/pdf_buf%O% $(SRC)/libpdf/pdf_encode%O% $(SRC)/libpdf/pdf_filt_predict%O% $(SRC)/libpdf/pdf_filt_predict_tiff%O% $(SRC)/libpdf/pdf_filt_predict_png%O%
+resources/lib/libpdf%SO% :
+	(cd src/libpdf && $(MAKE) all) \
+	&& install src/libpdf/libpdf%SO% resources/lib/
 
-resources/lib/libpdf%SO%: $(objects)
-	%LD% %LDSHARED% %LDFLAGS%  %LDOUT%resources/lib/libpdf%SO% $(objects) $(LD_OPT)
-
-$(objects): %%O%: %.c
-	%CC% -I $(SRC) -c %CCSHARED% %CCFLAGS% $(CC_OPT) %CCOUT%$@ $<
+coverage :
+	export COVERAGE=1;\
+	$(MAKE) clean test;\
+	cd src/libpdf && $(MAKE) coverage
 
 test : all
 	@prove -e'perl6 -I lib' -v t
@@ -19,6 +16,7 @@ test : all
 memtest : all
 	@prove -e'perl6-valgrind-m -I lib' -v t
 
-clean ::
-	@rm -f $(SRC)/libpdf/*.o resources/lib/libpdf.dll resources/lib/libpdf.dll resources/lib/libpdf.dll resources/lib/libpdf.dylib resources/lib/libpdf.so
+clean :
+	(cd src/libpdf && $(MAKE) $@) \
+	&& rm -f resources/lib/libpdf.dll resources/lib/libpdf.dylib resources/lib/libpdf.so
 

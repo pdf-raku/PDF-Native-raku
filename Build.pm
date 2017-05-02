@@ -24,9 +24,10 @@ class Build {
         }).join("\n");
 
         mkdir($destfolder);
-        LibraryMake::process-makefile($folder, %vars);
-        spurt("$folder/Makefile", $fake-so-rules, :append);
-        shell(%vars<MAKE>);
+	LibraryMake::process-makefile($folder, %vars);
+	spurt("$folder/Makefile", $fake-so-rules, :append);
+	LibraryMake::process-makefile($folder~'/src/libpdf', %vars);
+	shell(%vars<MAKE>);
     }
 
     method build($workdir) {
