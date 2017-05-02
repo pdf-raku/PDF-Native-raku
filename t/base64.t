@@ -35,9 +35,13 @@ is base64-decode("").decode, "", "decode to 1 bytes";
 is base64-decode("YWJjZA==").decode, "abcd", "decode to 4 bytes";
 is base64-decode("YWJjZA").decode, "abcd", "decode no padding";
 is base64-decode(" Y\nWJj ZA == ").decode, "abcd", "decode whitespace";
+is-deeply base64-decode("-_== "), base64-decode("+/== "), "URI encoding";
 dies-ok {base64-decode("YW(=").decode}, "decode invalid input";
 
 is base64-decode($base64).decode, $text, "longer decoding";
 is base64-decode($base64, $trunc-out).decode, $text.substr(0,10), "truncted decoding";
+
+my $all = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+is base64-encode(base64-decode($all)).decode, $all, "charset roundtrip";
 
 done-testing;
