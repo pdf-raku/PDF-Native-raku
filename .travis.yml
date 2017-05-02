@@ -1,4 +1,6 @@
 language: perl6
+env:
+  - COVERAGE=1
 sudo: false
 perl6:
   - latest
@@ -7,3 +9,5 @@ install:
   - rakudobrew build-zef
   - zef --depsonly install .
   - zef build .
+after_success:
+  - bash <(curl -s https://codecov.io/bash)

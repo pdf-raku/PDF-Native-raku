@@ -39,7 +39,7 @@ is-deeply base64-decode("-_== "), base64-decode("+/== "), "URI encoding";
 dies-ok {base64-decode("YW(=").decode}, "decode invalid input";
 
 is base64-decode($base64).decode, $text, "longer decoding";
-is base64-decode($base64, $trunc-out).decode, $text.substr(0,10), "truncted decoding";
+is base64-decode($base64, $trunc-out).decode, $text.substr(0,10), "truncated decoding";
 
 my $all = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 is base64-encode(base64-decode($all)).decode, $all, "charset roundtrip";

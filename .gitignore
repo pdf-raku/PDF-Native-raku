@@ -4,5 +4,8 @@
 *.so
 *.dll
 *.dylib
+*.gcov
+*.gcda
+*.gcno
 Makefile
 blib/
