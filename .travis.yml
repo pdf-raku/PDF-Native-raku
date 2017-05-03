@@ -2,9 +2,7 @@ language: perl6
 matrix:
   include:
     - os: linux
-      script: make coverage
     - os: osx
-      script: make test
 sudo: false
 perl6:
   - latest
