@@ -1,17 +1,15 @@
 language: perl6
-matrix:
-  include:
-    - os: linux
-    - os: osx
-sudo: false
 perl6:
   - latest
   - 2016.12
+os:
+  - linux
+  - osx
 install:
   - rakudobrew build-zef
   - zef --depsonly install .
   - zef build .
 script:
-  - make coverage
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then make test-coverage; else make test; fi
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then bash <(curl -s https://codecov.io/bash); fi

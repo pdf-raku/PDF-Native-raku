@@ -1,10 +1,10 @@
 all :
 	(cd src/libpdf && $(MAKE) all)
 
-coverage :
+test-coverage :
 	export COVERAGE=1;\
 	$(MAKE) clean test;\
-	cd src/libpdf && $(MAKE) coverage
+	cd src/libpdf && $(MAKE) coverage-reports
 
 test : all
 	@prove -e'perl6 -I lib' -v t

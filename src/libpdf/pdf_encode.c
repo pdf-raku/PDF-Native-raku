@@ -132,7 +132,6 @@ int32_t pdf_decode_base64(uint8_t* in,
         + (sextet[3] << 0 * 6);
 
       m = n_digits == 4 ? 0 : n_digits == 3 ? 1 : 2;
-
       for (k = 2; k >= m && j < outlen; k--) {
 	out[j++] = (triple >> k * 8) & 0xFF;
       }

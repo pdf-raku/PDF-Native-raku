@@ -13,7 +13,7 @@ $(objects): %%O%: %.c
 	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_OPT) %CCOUT%$@ $<
 
 # need to be built with COVERAGE=1
-coverage : all
+coverage-reports : all
 	gcov pdf_*.c
 
 clean :
