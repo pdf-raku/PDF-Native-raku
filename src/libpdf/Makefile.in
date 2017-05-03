@@ -4,10 +4,10 @@ CC_OPT = $(if $(COVERAGE),-fprofile-arcs -ftest-coverage,)
 LD_OPT = $(if $(COVERAGE),-coverage -lgcov,)
 objects=pdf_buf%O% pdf_encode%O% pdf_filt_predict%O% pdf_filt_predict_tiff%O% pdf_filt_predict_png%O%
 
-all: libpdf%SO%
+all: %DEST%/libpdf%SO%
 
-libpdf%SO%: $(objects)
-	%LD% %LDSHARED% %LDFLAGS% %LDOUT%libpdf%SO% $(objects) $(LD_OPT)
+%DEST%/libpdf%SO%: $(objects)
+	%LD% %LDSHARED% %LDFLAGS% %LDOUT%%DEST%/libpdf%SO% $(objects) $(LD_OPT)
 
 $(objects): %%O%: %.c
 	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_OPT) %CCOUT%$@ $<
@@ -17,4 +17,5 @@ coverage : all
 	gcov pdf_*.c
 
 clean :
-	@rm -f pdf_*%O% pdf_*.gc?? libpdf%SO%
+	@rm -f pdf_*%O% pdf_*.gc?? libpdf%SO% \
+	&& rm -f %DEST%/libpdf.dll %DEST%/libpdf.dylib %DEST%/libpdf.so

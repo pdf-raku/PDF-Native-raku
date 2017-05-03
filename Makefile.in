@@ -1,9 +1,5 @@
-all : resources/lib/libpdf%SO% %FAKESO%
-	@echo done
-
-resources/lib/libpdf%SO% :
-	(cd src/libpdf && $(MAKE) all) \
-	&& install src/libpdf/libpdf%SO% resources/lib/
+all :
+	(cd src/libpdf && $(MAKE) all)
 
 coverage :
 	export COVERAGE=1;\
@@ -17,6 +13,5 @@ memtest : all
 	@prove -e'perl6-valgrind-m -I lib' -v t
 
 clean :
-	(cd src/libpdf && $(MAKE) $@) \
-	&& rm -f resources/lib/libpdf.dll resources/lib/libpdf.dylib resources/lib/libpdf.so
+	(cd src/libpdf && $(MAKE) $@)
 

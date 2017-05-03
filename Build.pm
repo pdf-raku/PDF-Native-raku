@@ -18,14 +18,17 @@ class Build {
         my @fake-shared-object-extensions = <.so .dll .dylib>.grep(* ne %vars<SO>);
 
         %vars<FAKESO> = @fake-shared-object-extensions.map("resources/lib/lib$libname" ~ *).eager;
+	%vars<DEST> = "resources/lib";
 
         my $fake-so-rules = %vars<FAKESO>.map(-> $filename {
-            qq{$filename:\n\tperl6 -e "print ''" > $filename}
-        }).join("\n");
+            qq{$filename:\n\tperl6 -e "print ''" > $filename\n}
+        });
 
         mkdir($destfolder);
 	LibraryMake::process-makefile($folder, %vars);
 	spurt("$folder/Makefile", $fake-so-rules, :append);
+
+	%vars<DEST> = "../../resources/lib";
 	LibraryMake::process-makefile($folder~'/src/libpdf', %vars);
 	shell(%vars<MAKE>);
     }
