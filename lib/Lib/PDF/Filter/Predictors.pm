@@ -6,7 +6,7 @@ class Lib::PDF::Filter::Predictors {
     use Lib::PDF :libpdf;
     use Lib::PDF::Buf :pack;
 
-    my subset BPC of UInt where 1|2|4|8|16;
+    my subset BPC of UInt where 1|2|4|8|16|32;
     my subset Predictor of Int where 1|2|10..15;
 
     sub pdf_filt_predict_decode(
@@ -30,20 +30,21 @@ class Lib::PDF::Filter::Predictors {
     # post prediction functions as described in the PDF 1.7 spec, table 3.8
 
     #| tiff predictor (2)
-    multi method encode($buf where Blob|Buf,
+    multi method encode($buf where Blob,
                         Predictor :$Predictor! where 2, #| predictor function
                         UInt :$Columns = 1,          #| number of samples per row
                         UInt :$Colors = 1,           #| number of colors per sample
                         BPC  :$BitsPerComponent = 8, #| number of bits per color
                        ) {
-        my $rows = (+$buf * 8) div ($Columns * $Colors * $BitsPerComponent);
+        my $rows = ($buf.bytes * 8) div ($Columns * $Colors * $BitsPerComponent);
         my \nums := unpack( $buf, $BitsPerComponent );
         my $out = nums.WHAT.allocate(nums.elems);
 	pdf_filt_predict_encode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
-        pack($out, $BitsPerComponent);
+        $out = pack($out, $BitsPerComponent);
+	$out;
     }
 
-    multi method encode($buf is copy where Blob|Buf,
+    multi method encode($buf is copy where Blob,
 			Predictor :$Predictor! where { 10 <= $_ <= 15}, #| predictor function
 			UInt :$Columns = 1,          #| number of samples per row
 			UInt :$Colors = 1,           #| number of colors per sample
@@ -75,31 +76,33 @@ class Lib::PDF::Filter::Predictors {
     }
 
     # prediction filters, see PDF 1.7 spec table 3.8
-    multi method encode($buf where Blob|Buf,
-			Predictor :$Predictor=1, #| predictor function
-        ) {
+    multi method encode($buf where Blob, Predictor :$Predictor = 1,
+			UInt :$Columns=1, UInt :$Colors=1,
+			BPC :$BitsPerComponent=8,
+        ) is default {
         $buf;
     }
 
     # prediction filters, see PDF 1.7 spec table 3.8
-    multi method decode($buf where Blob|Buf,
+    multi method decode($buf where Blob,
                         Predictor :$Predictor! where 2, #| predictor function
                         UInt :$Columns = 1,          #| number of samples per row
                         UInt :$Colors = 1,           #| number of colors per sample
-                        UInt :$BitsPerComponent = 8, #| number of bits per color
+                        BPC :$BitsPerComponent = 8,  #| number of bits per color
                        ) {
-        my $rows = (+$buf * 8) div ($Columns * $Colors * $BitsPerComponent);
+        my $rows = ($buf.bytes * 8) div ($Columns * $Colors * $BitsPerComponent);
         my \nums := unpack( $buf, $BitsPerComponent );
         my $out = nums.WHAT.allocate(nums.elems);
 	pdf_filt_predict_decode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
-        pack( $out, $BitsPerComponent);
+        $out = pack( $out, $BitsPerComponent);
+	$out;
     }
 
     multi method decode($buf is copy,  #| input stream
                         Predictor :$Predictor! where { 10 <= $_ <= 15}, #| predictor function
                         UInt :$Columns = 1,          #| number of samples per row
                         UInt :$Colors = 1,           #| number of colors per sample
-                        UInt :$BitsPerComponent = 8, #| number of bits per color
+                        BPC :$BitsPerComponent = 8,  #| number of bits per color
         ) {
 
         my uint $bpc = $BitsPerComponent;
@@ -124,7 +127,9 @@ class Lib::PDF::Filter::Predictors {
         pack($out, $bpc);
     }
 
-    multi method decode($buf, Predictor :$Predictor = 1, ) is default {
+    multi method decode($buf, Predictor :$Predictor = 1,
+			UInt :$Columns=1, UInt :$Colors=8,
+			BPC :$BitsPerComponent=8 ) is default {
         $buf;
     }
 

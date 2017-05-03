@@ -55,10 +55,10 @@ static void tiff_decode_8 (uint8_t* in,
 }
 
 static void tiff_decode_16 (uint8_t* in,
-                             uint8_t* out,
-                             uint8_t colors,
-                             uint16_t columns,
-                             uint16_t rows) {
+			    uint8_t* out,
+			    uint8_t colors,
+			    uint16_t columns,
+			    uint16_t rows) {
   int i;
   int j;
   int r;
@@ -79,10 +79,10 @@ static void tiff_decode_16 (uint8_t* in,
 }
 
 static void tiff_decode_32 (uint8_t* in,
-                             uint8_t* out,
-                             uint8_t colors,
-                             uint16_t columns,
-                             uint16_t rows) {
+			    uint8_t* out,
+			    uint8_t colors,
+			    uint16_t columns,
+			    uint16_t rows) {
   int i;
   int j;
   int r;
@@ -105,12 +105,12 @@ static void tiff_decode_32 (uint8_t* in,
 
 extern void
 pdf_filt_predict_tiff_decode(uint8_t *in,
-                               uint8_t *out,
-                               uint8_t colors,
-                               uint8_t bpc,
-                               uint16_t columns,
-                               uint16_t rows
-                               ) {
+			     uint8_t *out,
+			     uint8_t colors,
+			     uint8_t bpc,
+			     uint16_t columns,
+			     uint16_t rows
+			     ) {
   switch (bpc) {
   case 1:
   case 2:
@@ -135,11 +135,11 @@ pdf_filt_predict_tiff_decode(uint8_t *in,
 /* Encoding */
 
 static void tiff_encode_nibble (uint8_t* in,
-                               uint8_t* out,
-                               uint8_t colors,
-                               uint16_t columns,
-                               uint16_t rows,
-                               uint8_t bpc) {
+				uint8_t* out,
+				uint8_t colors,
+				uint16_t columns,
+				uint16_t rows,
+				uint8_t bpc) {
   int i;
   int j;
   int r;
@@ -161,10 +161,10 @@ static void tiff_encode_nibble (uint8_t* in,
 }
 
 static void tiff_encode_8 (uint8_t* in,
-                            uint8_t* out,
-                            uint8_t colors,
-                            uint16_t columns,
-                            uint16_t rows) {
+			   uint8_t* out,
+			   uint8_t colors,
+			   uint16_t columns,
+			   uint16_t rows) {
   int i;
   int j;
   int r;
@@ -185,10 +185,10 @@ static void tiff_encode_8 (uint8_t* in,
 }
 
 static void tiff_encode_16 (uint8_t* in,
-                             uint8_t* out,
-                             uint8_t colors,
-                             uint16_t columns,
-                             uint16_t rows) {
+			    uint8_t* out,
+			    uint8_t colors,
+			    uint16_t columns,
+			    uint16_t rows) {
   int i;
   int j;
   int r;
@@ -209,10 +209,10 @@ static void tiff_encode_16 (uint8_t* in,
 }
 
 static void tiff_encode_32 (uint8_t* in,
-                             uint8_t* out,
-                             uint8_t colors,
-                             uint16_t columns,
-                             uint16_t rows) {
+			    uint8_t* out,
+			    uint8_t colors,
+			    uint16_t columns,
+			    uint16_t rows) {
   int i;
   int j;
   int r;
@@ -234,12 +234,12 @@ static void tiff_encode_32 (uint8_t* in,
 }
 
 extern void pdf_filt_predict_tiff_encode(uint8_t *in,
-                                           uint8_t *out,
-                                           uint8_t colors,
-                                           uint8_t bpc,
-                                           uint16_t columns,
-                                           uint16_t rows
-                                           ) {
+					 uint8_t *out,
+					 uint8_t colors,
+					 uint8_t bpc,
+					 uint16_t columns,
+					 uint16_t rows
+					 ) {
   switch (bpc) {
   case 1:
   case 2:
