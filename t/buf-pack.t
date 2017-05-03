@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 13;
+plan 15;
 
 use Lib::PDF::Buf :pack;
 use NativeCall;
@@ -14,6 +14,9 @@ is-deeply pack($buf, 4), $bytes, 'pack round-trip: 8 => 4 => 8';
 
 is-deeply ($buf =unpack($bytes,  2)), buf8.new(0, 0, 2, 2, 0, 1, 1, 0, 0, 1, 3, 2, 0, 2, 2, 0, 0, 3, 0, 2, 0, 3, 3, 0, 1, 0, 1, 2, 1, 1, 0, 0), '2 bit unpack';
 is-deeply pack($buf, 2), $bytes, 'pack round-trip: 8 => 2 => 8';
+
+is-deeply ($buf =unpack($bytes,  1)), buf8.new(0,0,0,0,1,0,1,0,0,0,0,1,0,1,0,0,0,0,0,1,1,1,1,0,0,0,1,0,1,0,0,0,0,0,1,1,0,0,1,0,0,0,1,1,1,1,0,0,0,1,0,0,0,1,1,0,0,1,0,1,0,0,0,0), '1 bit unpack';
+is-deeply pack($buf, 1), $bytes, 'pack round-trip: 8 => 1 => 8';
 
 is-deeply ($buf=unpack($bytes, 16)), buf16.new(2580, 7720, 12860, 18000), '16 bit unpack';
 is-deeply pack($buf, 16), $bytes, 'pack round-trip: 16 => 8 => 16';

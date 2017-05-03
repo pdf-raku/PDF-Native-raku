@@ -53,9 +53,6 @@ pdf_encode_base64 (uint8_t* in, size_t inlen,
     }
   }
 
-  if (outlen) {
-    *out = '\0';
-  }
 }
 
 #define NotSetUp 253
