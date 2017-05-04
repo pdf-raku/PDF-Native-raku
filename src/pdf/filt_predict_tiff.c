@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <libpdf/pdf_filt_predict_tiff.h>
+#include <pdf/filt_predict_tiff.h>
 /* Decoding */
 
 static void tiff_decode_nibble (uint8_t* in,

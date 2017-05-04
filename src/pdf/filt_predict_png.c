@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <libpdf/pdf_filt_predict_png.h>
+#include <pdf/filt_predict_png.h>
 extern void
 pdf_filt_predict_png_decode(uint8_t *buf,
                             uint8_t *out,

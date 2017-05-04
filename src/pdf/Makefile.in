@@ -1,0 +1,34 @@
+# set COVERAGE to enable coverage reporting
+# e.g. % make COVERAGE=1
+CC_OPT = $(if $(COVERAGE),-fprofile-arcs -ftest-coverage,)
+LD_OPT = $(if $(COVERAGE),-coverage -lgcov,)
+
+SRCS = buf.c base64.c filt_predict.c filt_predict_tiff.c filt_predict_png.c
+OBJS=$(SRCS:.c=%O%)
+
+all: %DEST%/libpdf%SO%
+
+%DEST%/libpdf%SO%: $(OBJS)
+	%LD% %LDSHARED% %LDFLAGS% %LDOUT%%DEST%/libpdf%SO% $(OBJS) $(LD_OPT)
+
+$(OBJS): %%O%: %.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_OPT) %CCOUT%$@ $<
+
+# each source has an include
+$(SRCS): %.c: %.h
+
+# need to be built with COVERAGE=1
+coverage-reports : all
+	gcov *.c
+
+clean :
+	@rm -f *%O% *.gc?? libpdf%SO% \
+	&& rm -f %DEST%/libpdf.dll %DEST%/libpdf.dylib %DEST%/libpdf.so
+
+depend: .depend
+
+.depend: $(SRCS)
+	rm -f ./.depend
+	%CC% -I .. %CCFLAGS% -MM $^ > ./.depend;
+
+include .depend

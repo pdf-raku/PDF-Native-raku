@@ -4,6 +4,7 @@
 *.so
 *.dll
 *.dylib
+*.bak
 *.gcov
 *.gcda
 *.gcno

@@ -2,9 +2,9 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <libpdf/pdf_filt_predict.h>
-#include <libpdf/pdf_filt_predict_tiff.h>
-#include <libpdf/pdf_filt_predict_png.h>
+#include <pdf/filt_predict.h>
+#include <pdf/filt_predict_tiff.h>
+#include <pdf/filt_predict_png.h>
 
 extern void
 pdf_filt_predict_decode(

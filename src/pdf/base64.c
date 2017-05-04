@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <libpdf/pdf_encode.h>
+#include <pdf/base64.h>
 static const char b64_enc[64] =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 

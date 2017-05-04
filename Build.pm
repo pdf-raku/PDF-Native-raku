@@ -29,7 +29,7 @@ class Build {
 	spurt("$folder/Makefile", $fake-so-rules, :append);
 
 	%vars<DEST> = "../../resources/lib";
-	LibraryMake::process-makefile($folder~'/src/libpdf', %vars);
+	LibraryMake::process-makefile($folder~'/src/pdf', %vars);
 	shell(%vars<MAKE>);
     }
 
