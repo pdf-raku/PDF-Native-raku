@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 #include <pdf/base64.h>
 static const char b64_enc[64] =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -62,12 +63,10 @@ pdf_encode_base64 (uint8_t* in, size_t inlen,
 static uint8_t b64_dec[256] = {NotSetUp};
 static void build_b64_dec() {
   uint8_t i;
-  for (i = 0; i <= 32; i++) {
-    b64_dec[i] = WhiteSpace;
-  }
-  for (i = 33; i < 255; i++) {
-    b64_dec[i] = NonDigit;
-  }
+
+  memset(b64_dec, WhiteSpace, 33);
+  memset(b64_dec + 33, NonDigit, 255-33);
+
   for (i = 0; i < 64; i++) {
     b64_dec[(uint8_t) b64_enc[i]] = i;
   }
