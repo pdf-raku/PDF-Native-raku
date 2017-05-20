@@ -56,24 +56,27 @@ pdf_encode_base64 (uint8_t* in, size_t inlen,
 
 }
 
-#define NotSetUp 253
-#define WhiteSpace 254
-#define NonDigit 255
+#define W 254  // Whitespace
+#define X 255 // Illegal Character
 
-static uint8_t b64_dec[256] = {NotSetUp};
-static void build_b64_dec() {
-  uint8_t i;
-
-  memset(b64_dec, WhiteSpace, 33);
-  memset(b64_dec + 33, NonDigit, 255-33);
-
-  for (i = 0; i < 64; i++) {
-    b64_dec[(uint8_t) b64_enc[i]] = i;
-  }
-  /* allow URI input characters */
-  b64_dec[(uint8_t) '-'] = 62;
-  b64_dec[(uint8_t) '_'] = 63;
-}
+static uint8_t b64_dec[256] = {
+    W,  W,  W,  W,  W,  W,  W,  W,  W,  W,  W,  W,  W,  W,  W,  W,
+    W,  W,  W,  W,  W,  W,  W,  W,  W,  W,  W,  W,  W,  W,  W,  W,
+    W,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  62, X,  62, X,  63,
+    52, 53, 54, 55, 56, 57, 58, 59, 60, 61, X,  X,  X,  X,  X,  X,
+    X,   0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, X,  X,  X,  X,  63,
+    X,  26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, X,  X,  X,  X,  X,
+    X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,
+    X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,
+    X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,
+    X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,
+    X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,
+    X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,
+    X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,
+    X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X,  X
+};
 
 uint8_t next_digit(uint8_t* in,
 		   size_t inlen,
@@ -84,11 +87,11 @@ uint8_t next_digit(uint8_t* in,
   uint8_t digit = 0;
   if (*i < inlen) {
     digit = b64_dec[ in[ (*i)++ ] ];
-    if (digit == WhiteSpace) {
+    if (digit == W) {    // White-space
       digit = next_digit(in, inlen, i, n, error);
     }
     else {
-      if (digit == NonDigit) {
+      if (digit == X) {  // Illegal character
 	*error = 1;
 	digit = next_digit(in, inlen, i, n, error);
       }
@@ -108,10 +111,9 @@ int32_t pdf_decode_base64(uint8_t* in,
     size_t i;
     int32_t j;
     uint8_t error = 0;
-    if (b64_dec[0] == NotSetUp) build_b64_dec();
 
     while (inlen > 0 && in[inlen - 1] == '='
-	   || b64_dec[ in[inlen - 1] ] == WhiteSpace) {
+	   || b64_dec[ in[inlen - 1] ] == W) {
       inlen--;
     }
 
