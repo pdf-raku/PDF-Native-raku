@@ -1,9 +1,4 @@
 #! /usr/bin/env perl6
-#Note that this is *not* run during panda install - it is intended to be
-# run manually for testing / recompiling without needing to do a 'panda install'
-#
-# The example here is how the 'make' sub generates the makefile in the above Build.pm file
-# and then builds our collection of shared resources
 use v6;
 
 class Build {
@@ -15,18 +10,11 @@ class Build {
     #| without any prefixes or extensions.
     sub make(Str $folder, Str $destfolder, Str :$libname) {
         my %vars = LibraryMake::get-vars($destfolder);
-        my @fake-shared-object-extensions = <.so .dll .dylib>.grep(* ne %vars<SO>);
 
-        %vars<FAKESO> = @fake-shared-object-extensions.map("resources/lib/lib$libname" ~ *).eager;
 	%vars<DEST> = "resources/lib";
-
-        my $fake-so-rules = %vars<FAKESO>.map(-> $filename {
-            qq{$filename:\n\tperl6 -e "print ''" > $filename\n}
-        });
 
         mkdir($destfolder);
 	LibraryMake::process-makefile($folder, %vars);
-	spurt("$folder/Makefile", $fake-so-rules, :append);
 
 	%vars<DEST> = "../../resources/lib";
 	LibraryMake::process-makefile($folder~'/src/pdf', %vars);

@@ -1,7 +1,7 @@
 #ifndef PDF_FILT_PREDICT_PNG_H_
 #define PDF_FILT_PREDICT_PNG_H_
 
-extern void
+DLLEXPORT void
 pdf_filt_predict_png_decode(uint8_t *buf,
                             uint8_t *out,
                             uint8_t colors,
@@ -10,7 +10,7 @@ pdf_filt_predict_png_decode(uint8_t *buf,
                             uint16_t rows
                             );
 
-extern void
+DLLEXPORT void
 pdf_filt_predict_png_encode(uint8_t *buf,
                             uint8_t *out,
                             uint8_t colors,

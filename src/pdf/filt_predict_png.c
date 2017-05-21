@@ -1,8 +1,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <pdf/filt_predict_png.h>
-extern void
+#include "pdf.h"
+#include "pdf/filt_predict_png.h"
+DLLEXPORT void
 pdf_filt_predict_png_decode(uint8_t *buf,
                             uint8_t *out,
                             uint8_t colors,
@@ -86,7 +87,7 @@ pdf_filt_predict_png_decode(uint8_t *buf,
   }
 }
 
-extern void pdf_filt_predict_png_encode(uint8_t *buf,
+DLLEXPORT void pdf_filt_predict_png_encode(uint8_t *buf,
                                         uint8_t *out,
                                         uint8_t colors,
                                         uint8_t bpc,

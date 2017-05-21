@@ -2,11 +2,12 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include <pdf/filt_predict.h>
-#include <pdf/filt_predict_tiff.h>
-#include <pdf/filt_predict_png.h>
+#include "pdf.h"
+#include "pdf/filt_predict.h"
+#include "pdf/filt_predict_tiff.h"
+#include "pdf/filt_predict_png.h"
 
-extern void
+DLLEXPORT void
 pdf_filt_predict_decode(
                         uint8_t *in,
                         uint8_t *out,
@@ -42,7 +43,7 @@ pdf_filt_predict_decode(
   }
 }
 
-extern void
+DLLEXPORT void
 pdf_filt_predict_encode(
                         uint8_t *in,
                         uint8_t *out,

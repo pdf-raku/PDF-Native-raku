@@ -15,3 +15,7 @@ memtest : all
 clean :
 	(cd src/pdf && $(MAKE) $@)
 
+realclean :
+	(cd src/pdf && $(MAKE) $@)
+	@rm -f Makefile
+

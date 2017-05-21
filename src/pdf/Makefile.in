@@ -25,6 +25,9 @@ clean :
 	@rm -f *%O% *.gc?? libpdf%SO% \
 	&& rm -f %DEST%/libpdf.dll %DEST%/libpdf.dylib %DEST%/libpdf.so
 
+realclean : clean
+	@rm -f Makefile .depend
+
 depend: .depend
 
 .depend: $(SRCS)

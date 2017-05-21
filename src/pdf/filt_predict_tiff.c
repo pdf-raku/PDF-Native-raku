@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <pdf/filt_predict_tiff.h>
+#include "pdf.h"
+#include "pdf/filt_predict_tiff.h"
 /* Decoding */
 
 static void tiff_decode_nibble (uint8_t* in,
@@ -103,7 +104,7 @@ static void tiff_decode_32 (uint8_t* in,
   }
 }
 
-extern void
+DLLEXPORT void
 pdf_filt_predict_tiff_decode(uint8_t *in,
 			     uint8_t *out,
 			     uint8_t colors,
@@ -233,13 +234,14 @@ static void tiff_encode_32 (uint8_t* in,
   }
 }
 
-extern void pdf_filt_predict_tiff_encode(uint8_t *in,
-					 uint8_t *out,
-					 uint8_t colors,
-					 uint8_t bpc,
-					 uint16_t columns,
-					 uint16_t rows
-					 ) {
+DLLEXPORT void
+pdf_filt_predict_tiff_encode(uint8_t *in,
+			     uint8_t *out,
+			     uint8_t colors,
+			     uint8_t bpc,
+			     uint16_t columns,
+			     uint16_t rows
+			     ) {
   switch (bpc) {
   case 1:
   case 2:

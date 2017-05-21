@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/p6-pdf/libpdf-p6.svg?branch=master)](https://travis-ci.org/p6-pdf/libpdf-p6) [![codecov](https://codecov.io/gh/p6-pdf/libpdf-p6/branch/master/graph/badge.svg)](https://codecov.io/gh/p6-pdf/libpdf-p6)
 
+ <a href="https://ci.appveyor.com/project/p6-pdf/libpdf-p6/branch/master"><img src="https://ci.appveyor.com/api/projects/status/github/p6-pdf/libpdf-p6?branch=master&passingText=Windows%20-%20OK&failingText=Windows%20-%20FAIL&pendingText=Windows%20-%20pending&svg=true"></a>
 Low level native library of PDF support functions.
 
 The main aim is to optionally boost performance in the PDF tool-chain including
