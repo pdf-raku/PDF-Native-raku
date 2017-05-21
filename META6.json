@@ -16,7 +16,7 @@
   ],
   "source-url" : "git://github.com/p6-pdf/libpdf-p6.git",
   "depends" : [ "LibraryMake" ],
-  "build-depends" : [ "Shell::Command" ],
+  "build-depends" : [ ],
   "test-depends" : [ ],
   "version" : "0.0.1"
 }
