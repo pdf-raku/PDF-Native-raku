@@ -1,10 +1,10 @@
 all :
-	cd src/pdf && $(MAKE) all
+	cd src/pdf && %MAKE% all
 
 test-coverage :
 	export COVERAGE=1;\
-	$(MAKE) clean test;\
-	cd src/pdf && $(MAKE) coverage-reports
+	%MAKE% clean test;\
+	cd src/pdf && %MAKE% coverage-reports
 
 test : all
 	@prove -e'perl6 -I lib' -v t
@@ -13,9 +13,9 @@ memtest : all
 	@prove -e'perl6-valgrind-m -I lib' -v t
 
 clean :
-	cd src/pdf && $(MAKE) $@
+	cd src/pdf && %MAKE% $@
 
 realclean :
 	@rm -f Makefile;\
-	cd src/pdf && $(MAKE) $@
+	cd src/pdf && %MAKE% $@
 
