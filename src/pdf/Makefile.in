@@ -1,23 +1,25 @@
 # set COVERAGE to enable coverage reporting
-# e.g. % make COVERAGE=1
-CC_OPT = $(if $(COVERAGE),-fprofile-arcs -ftest-coverage,)
-LD_OPT = $(if $(COVERAGE),-coverage -lgcov,)
-
-SRCS = buf.c filt_predict.c filt_predict_tiff.c filt_predict_png.c
-OBJS=$(SRCS:.c=%O%)
 
 all: %DEST%/libpdf%SO%
 
+SRCS = buf.c filt_predict.c filt_predict_png.c filt_predict_tiff.c
+OBJS = buf%O% filt_predict%O% filt_predict_png%O% filt_predict_tiff%O%
+
 %DEST%/libpdf%SO%: $(OBJS)
-	%LD% %LDSHARED% %LDFLAGS% %LDOUT%%DEST%/libpdf%SO% $(OBJS) $(LD_OPT)
+	%LD% %LDSHARED% %LDFLAGS% %LDOUT%%DEST%/libpdf%SO% $(OBJS) $(LD_COV_OPT)
 
-$(OBJS): %%O%: %.c
-	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_OPT) %CCOUT%$@ $<
+buf%O% : buf.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ $<
 
-# each source has an include
-$(SRCS): %.c: %.h
+filt_predict%O% : filt_predict.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ $<
 
-# need to be built with COVERAGE=1
+filt_predict_png%O% : filt_predict_png.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ $<
+
+filt_predict_tiff%O% : filt_predict_tiff.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ $<
+
 coverage-reports : all
 	gcov *.c
 
@@ -32,6 +34,6 @@ depend: .depend
 
 .depend: $(SRCS)
 	rm -f ./.depend
-	%CC% -I .. %CCFLAGS% -MM $^ > ./.depend;
+	%CC% -I .. %CCFLAGS% -MM $(SRCS) > ./.depend;
 
 include .depend

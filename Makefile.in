@@ -2,7 +2,8 @@ all :
 	cd src/pdf && %MAKE% all
 
 test-coverage :
-	export COVERAGE=1;\
+	export CC_COV_OPT="-fprofile-arcs -ftest-coverage";\
+	export LD_COV_OPT="-coverage -lgcov";\
 	%MAKE% clean test;\
 	cd src/pdf && %MAKE% coverage-reports
 
