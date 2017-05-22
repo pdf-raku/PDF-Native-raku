@@ -11,14 +11,15 @@ class Build {
     sub make(Str $folder, Str $destfolder, Str :$libname) {
         my %vars = LibraryMake::get-vars($destfolder);
 
-	%vars<DEST> = "resources/lib";
-
         mkdir($destfolder);
 	LibraryMake::process-makefile($folder, %vars);
 
 	%vars<DEST> = "../../resources/lib";
 	LibraryMake::process-makefile($folder~'/src/pdf', %vars);
 	shell(%vars<MAKE>);
+
+        my @fake-lib-exts = <.so .dll .dylib>.grep(* ne %vars<SO>);
+        "resources/lib/lib$libname$_".IO.open(:w) for @fake-lib-exts;
     }
 
     method build($workdir) {
