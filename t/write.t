@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 12;
+plan 17;
 
 use Lib::PDF::Writer;
 
@@ -17,4 +17,9 @@ given Lib::PDF::Writer {
      is .write-int(42), "42";
      is .write-int(-42), "-42";
      is .write-int(-0), "0";
+     is .write-literal("Hi"), '(Hi)';
+     is .write-literal("A\rB\nC\fD\bE\t"), '(A\rB\nC\fD\bE\t)';
+     is .write-literal(""), '()';
+     is .write-literal("\\ % # / ( ) < > [ ] \{ \}"), '(\\\\ \% \# \/ \( \) \< \> \[ \] \{ \})';
+     is .write-literal("\x0E\xA0"),'(\\016\\240)'; 
 }
