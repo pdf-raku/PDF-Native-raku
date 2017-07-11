@@ -24,7 +24,7 @@ class Lib::PDF::Writer {
         returns Str is encoded('ascii')
         is native(&libpdf) {*};
 
-    method write-bool(Bool(Cool) $val, $buf = Blob[uint8].allocate(8)) {
+    method write-bool(Bool(Cool) $val, $buf = Blob[uint8].allocate(10)) {
         pdf_write_bool($val, $buf, $buf.bytes);
     }
 
@@ -36,13 +36,17 @@ class Lib::PDF::Writer {
         pdf_write_real($val, $buf, $buf.bytes);
     }
 
-    method write-literal(Str(Cool) $val, $buf = Blob[uint8].allocate(128)) {
+    method write-literal(Str(Cool) $val, Blob $buf? is copy) {
        my Blob[uint8] $enc = $val.encode: "latin-1";
-       pdf_write_literal($enc, $enc.bytes, $buf, $buf.bytes);
+       my \bytes = $enc.bytes;
+       $buf //= Blob[uint8].allocate(4 * bytes  +  3);
+       pdf_write_literal($enc, bytes, $buf, $buf.bytes);
     }
 
-    method write-hex-string(Str(Cool) $val, $buf = Blob[uint8].allocate(128)) {
-       my Blob[uint8] $enc = $val.encode: "latin-1";
-       pdf_write_hex_string($enc, $enc.bytes, $buf, $buf.bytes);
+    method write-hex-string(Str(Cool) $val, Blob $buf? is copy) {
+        my Blob[uint8] $enc = $val.encode: "latin-1";
+        my \bytes = $enc.bytes;
+        $buf //= Blob[uint8].allocate(2 * bytes  +  3);
+        pdf_write_hex_string($enc, bytes, $buf, $buf.bytes);
     }
 }
