@@ -101,3 +101,36 @@ DLLEXPORT uint8_t* pdf_write_literal(PDF_STRING val, size_t in_len, PDF_STRING o
   return out;
 }
 
+static uint8_t hex_char(uint8_t c) {
+  return ((c < 10)
+          ? ('0' + c)
+          : ('a' + (c - 10))
+          );
+}
+
+DLLEXPORT uint8_t* pdf_write_hex_string(PDF_STRING val, size_t in_len, PDF_STRING out, size_t out_len) {
+
+  PDF_STRING in_p = val;
+  PDF_STRING in_end = val + in_len;
+  PDF_STRING out_p = out;
+  PDF_STRING out_end = out + out_len;
+
+  if (out_p < out_end) *(out_p++) = '<';
+
+  while (in_p < in_end && out_p < out_end - 1) {
+    uint8_t c = *(in_p++);
+    *(out_p++) = hex_char(c / 16);
+    *(out_p++) = hex_char(c % 16);
+  }
+
+  if (out_p < out_end) *(out_p++) = '>';
+  if (out_p < out_end) {
+    *out_p = 0;
+  }
+  else {
+    if (out_len) out[out_len-1] = 0;
+  }
+
+  return out;
+}
+

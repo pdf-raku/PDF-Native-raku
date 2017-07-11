@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 17;
+plan 18;
 
 use Lib::PDF::Writer;
 
@@ -21,5 +21,6 @@ given Lib::PDF::Writer {
      is .write-literal("A\rB\nC\fD\bE\t"), '(A\rB\nC\fD\bE\t)';
      is .write-literal(""), '()';
      is .write-literal("\\ % # / ( ) < > [ ] \{ \}"), '(\\\\ \% \# \/ \( \) \< \> \[ \] \{ \})';
-     is .write-literal("\x0E\xA0"),'(\\016\\240)'; 
+     is .write-literal("\x0E\x0\xA0"),'(\\016\000\\240)'; 
+     is .write-hex-string("snoopy"),'<736e6f6f7079>'; 
 }
