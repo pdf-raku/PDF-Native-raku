@@ -13,6 +13,7 @@ module Lib::PDF {
 
     constant PDF_BOOL is export(:types)   = int32;
     constant PDF_INT  is export(:types)   = int32;
+    constant PDF_UINT  is export(:types)  = uint32;
     constant PDF_REAL is export(:types)   = num64;
     constant PDF_STRING is export(:types) = str;
 }

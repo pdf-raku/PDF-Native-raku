@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 18;
+plan 19;
 
 use Lib::PDF::Writer;
 
@@ -20,7 +20,25 @@ given Lib::PDF::Writer {
      is .write-literal("Hi"), '(Hi)';
      is .write-literal("A\rB\nC\fD\bE\t"), '(A\rB\nC\fD\bE\t)';
      is .write-literal(""), '()';
-     is .write-literal("\\ % # / ( ) < > [ ] \{ \}"), '(\\\\ \% \# \/ \( \) \< \> \[ \] \{ \})';
+     is .write-literal("\\ % # / ( ) < > [ ] \{ \}"), '(\\\\ \% \# / \( \) \< \> \[ \] \{ \})';
      is .write-literal("\x0E\x0\xA0"),'(\\016\000\\240)'; 
-     is .write-hex-string("snoopy"),'<736e6f6f7079>'; 
+     is .write-hex-string("snoopy"),'<736e6f6f7079>';
+
+     enum <free inuse>;
+
+     my uint32 @xref = [
+        free, 0, 65535, 0,
+        inuse, 1, 0, 42,
+        inuse, 2, 0, 69,
+        inuse, 4, 0, 100,
+     ];
+     is-deeply .write-xref-array(@xref).lines, (
+         'xref',
+         '0 3',
+         '0000000000 65535 f ',
+         '0000000042 00000 n ',
+         '0000000069 00000 n ',
+         '4 1',
+         '0000000100 00000 n '
+     );
 }
