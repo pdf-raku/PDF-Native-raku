@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 19;
+plan 22;
 
 use Lib::PDF::Writer;
 
@@ -41,4 +41,7 @@ given Lib::PDF::Writer {
          '4 1',
          '0000000100 00000 n '
      );
+     is .write-name('Hi'), '/Hi';
+     is .write-name('Hi#there'), '/Hi##there';
+     is .write-name("A\fB\xE C"), '/A#0cB#0e#20C';
 }

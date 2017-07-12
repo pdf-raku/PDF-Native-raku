@@ -28,6 +28,10 @@ class Lib::PDF::Writer {
         returns Str is encoded('ascii')
         is native(&libpdf) {*};
 
+    sub pdf_write_name(Blob[32] $val, size_t $val_len, Blob $out, size_t $outlen)
+        returns Str is encoded('ascii')
+        is native(&libpdf) {*};
+
     method write-bool(Bool(Cool) $val, $buf = Blob[uint8].allocate(10)) {
         pdf_write_bool($val, $buf, $buf.bytes);
     }
@@ -59,5 +63,12 @@ class Lib::PDF::Writer {
         # check array is sorted. work out number of segments
         $buf //= Blob[uint8].allocate((rows * 2) * 22 +  5);
         pdf_write_xref(@xref, rows, $buf, $buf.bytes);
+    }
+
+    method write-name(Str(Cool) $val, Blob $buf? is copy) {
+        my Blob[uint32] $in .= new: $val.ords;
+        my \quads = $in.elems;
+        $buf //= Blob[uint8].allocate(12 * quads  +  2);
+        pdf_write_name($in, quads, $buf, $buf.bytes);
     }
 }

@@ -189,3 +189,82 @@ DLLEXPORT uint8_t* pdf_write_xref(PDF_UINT* xref, size_t rows, uint8_t *out, siz
   if (out_len) out[out_len - 1] = 0;
   return out;
 }
+
+static uint8_t utf8_encode(uint8_t *bp, uint32_t cp) {
+    if (cp <= 0x7F) {
+        bp[0] = (uint8_t)cp;
+        return 1;
+    }
+
+    if (cp <= 0x07FF) {
+        bp[0] = (uint8_t)(( 6 << 5) |  (cp >> 6));
+        bp[1] = (uint8_t)(( 2 << 6) |  (cp &  0x3F));
+        return 2;
+    }
+
+    if (cp <= 0xFFFF) {
+        bp[0] = (uint8_t)((14 << 4) |  (cp >> 12));
+        bp[1] = (uint8_t)(( 2 << 6) | ((cp >> 6) & 0x3F));
+        bp[2] = (uint8_t)(( 2 << 6) | ( cp       & 0x3F));
+        return 3;
+    }
+
+    if (cp <= 0x1FFFFF) {
+        bp[0] = (uint8_t)((30 << 3) |  (cp >> 18));
+        bp[1] = (uint8_t)(( 2 << 6) | ((cp >> 12) & 0x3F));
+        bp[2] = (uint8_t)(( 2 << 6) | ((cp >>  6) & 0x3F));
+        bp[3] = (uint8_t)(( 2 << 6) | ( cp        & 0x3F));
+        return 4;
+    }
+
+    return 0;
+}
+
+DLLEXPORT uint8_t* pdf_write_name(uint32_t *val, size_t in_len, PDF_STRING out, size_t out_len) {
+
+  uint32_t* in_p = val;
+  uint32_t* in_end = val + in_len;
+  PDF_STRING out_p = out;
+  PDF_STRING out_end = out + out_len;
+
+  if (out_p < out_end) *(out_p++) = '/';
+
+  while (in_p < in_end && out_p < out_end - 1) {
+    uint32_t cp = *(in_p++);
+    uint8_t bp[5];
+    uint8_t n;
+    uint8_t i;
+    uint8_t byte;
+
+    if (cp >= (uint32_t) '!' && cp <= (uint32_t) '~') {
+      // regular printable ascii character
+      uint8_t c = (uint8_t) cp;
+      if (c == '#') {
+        concat(&out_p, out_end, "##");
+      }
+      else {
+        if (out_p < out_end) *(out_p++) = c;
+      }
+      continue;
+    }
+    n = utf8_encode(bp,cp);
+    for (i = 0; i < n; i++) {
+      uint8_t buf[4];
+      byte = bp[i];
+      buf[0] = '#';
+      buf[1] = hex_char(byte / 16);
+      buf[2] = hex_char(byte % 16);
+      buf[3] = 0;
+      concat(&out_p, out_end, buf);
+    }
+  }
+
+  if (out_p < out_end) {
+    *out_p = 0;
+  }
+  else {
+    if (out_len) out[out_len-1] = 0;
+  }
+
+  return out;
+}
