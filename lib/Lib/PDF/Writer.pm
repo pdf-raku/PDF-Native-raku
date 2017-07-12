@@ -4,31 +4,31 @@ class Lib::PDF::Writer {
     use NativeCall;
     use Lib::PDF :libpdf, :types;
 
-    sub pdf_write_bool(PDF_BOOL $val, Blob $out, size_t $outlen)
+    sub pdf_write_bool(PDF_BOOL $val, Blob[uint8] $out, size_t $outlen)
         returns Str is encoded('ascii')
         is native(&libpdf) {*};
 
-    sub pdf_write_int(PDF_INT $val, Blob $out, size_t $outlen)
+    sub pdf_write_int(PDF_INT $val, Blob[uint8] $out, size_t $outlen)
         returns Str is encoded('ascii')
         is native(&libpdf) {*};
 
-    sub pdf_write_real(PDF_REAL $val, Blob $out, size_t $outlen)
+    sub pdf_write_real(PDF_REAL $val, Blob[uint8] $out, size_t $outlen)
         returns Str is encoded('ascii')
         is native(&libpdf) {*};
 
-    sub pdf_write_literal(Blob $val, size_t $val_len, Blob $out, size_t $outlen)
+    sub pdf_write_literal(Blob[uint8] $val, size_t $val_len, Blob[uint8] $out, size_t $outlen)
         returns Str is encoded('ascii')
         is native(&libpdf) {*};
 
-    sub pdf_write_hex_string(Blob $val, size_t $val_len, Blob $out, size_t $outlen)
+    sub pdf_write_hex_string(Blob[uint8] $val, size_t $val_len, Blob[uint8] $out, size_t $outlen)
         returns Str is encoded('ascii')
         is native(&libpdf) {*};
 
-    sub pdf_write_xref(Blob $val, size_t $rows, Blob $out, size_t $outlen)
+    sub pdf_write_xref(Blob[uint8] $val, size_t $rows, Blob[uint8] $out, size_t $outlen)
         returns Str is encoded('ascii')
         is native(&libpdf) {*};
 
-    sub pdf_write_name(Blob[32] $val, size_t $val_len, Blob $out, size_t $outlen)
+    sub pdf_write_name(Blob[32] $val, size_t $val_len, Blob[uint8] $out, size_t $outlen)
         returns Str is encoded('ascii')
         is native(&libpdf) {*};
 
