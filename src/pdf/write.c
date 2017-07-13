@@ -209,7 +209,7 @@ static uint8_t utf8_encode(uint8_t *bp, uint32_t cp) {
         return 3;
     }
 
-    if (cp <= 0x1FFFFF) {
+    if (cp <= 0x10FFFF) {
         bp[0] = (uint8_t)((30 << 3) |  (cp >> 18));
         bp[1] = (uint8_t)(( 2 << 6) | ((cp >> 12) & 0x3F));
         bp[2] = (uint8_t)(( 2 << 6) | ((cp >>  6) & 0x3F));
