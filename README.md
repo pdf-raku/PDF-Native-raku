@@ -62,18 +62,19 @@ Also handles variable byte packing and unpacking. As seen in the `/W` parameter 
 
 Serialization functions have been implemented for a few PDF data-types:
 
-- boolean, real, integers, literal-strings, hex-strings and cross reference tables.
+- boolean, real, integers, literal-strings, hex-strings, names and cross reference tables.
 
 ```
 use Lib::PDF::Writer;
 
 given Lib::PDF::Writer {
-     say .write-bool(0);    # false;
+     say .write-bool(0);    # false
      say .write-bool(1);    # true
      say .write-real(pi);   # 3.14159
      say .write-int(42e3),  # 42000
-     say .write-literal("Hi\nthere"); # (Hi\nthere)';
-     say .write-hex-string("snoopy"); # <736e6f6f7079>';
+     say .write-literal("Hi\nthere"); # (Hi\nthere)
+     say .write-hex-string("snoopy"); # <736e6f6f7079>
+     say .write-name('Hi#there');     # /Hi##there
 
      # xref table, presorted by object-number. each row is:
      #     <status> <obj-num> <gen-num> <offset>
