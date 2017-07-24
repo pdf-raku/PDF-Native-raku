@@ -5,12 +5,12 @@
 /* Decoding */
 
 static void tiff_decode_nibble (uint8_t* in,
-                               uint8_t* out,
-                               uint8_t colors,
-                               uint16_t columns,
-                               uint16_t rows,
-                               uint8_t bpc
-                               ) {
+                                uint8_t* out,
+                                uint8_t colors,
+                                uint16_t columns,
+                                uint16_t rows,
+                                uint8_t bpc
+                                ) {
   int i;
   int j;
   int r;
@@ -32,10 +32,10 @@ static void tiff_decode_nibble (uint8_t* in,
 }
 
 static void tiff_decode_8 (uint8_t* in,
-                            uint8_t* out,
-                            uint8_t colors,
-                            uint16_t columns,
-                            uint16_t rows) {
+                           uint8_t* out,
+                           uint8_t colors,
+                           uint16_t columns,
+                           uint16_t rows) {
   int i;
   int j;
   int r;

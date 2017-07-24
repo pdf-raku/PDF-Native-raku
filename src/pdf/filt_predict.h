@@ -13,6 +13,7 @@ typedef enum
   PDF_FILTER_PNG_OPTIMUM = 15
 } pdf_filt_predict_type_t;
 
+// Decode None, TIFF or PNG predictors
 DLLEXPORT void
 pdf_filt_predict_decode(uint8_t *in,
                         uint8_t *out,
@@ -22,6 +23,7 @@ pdf_filt_predict_decode(uint8_t *in,
                         uint16_t columns,
                         uint16_t rows );
 
+// Encode None, TIFF or PNG predictors
 DLLEXPORT void
 pdf_filt_predict_encode(uint8_t *in,
                         uint8_t *out,

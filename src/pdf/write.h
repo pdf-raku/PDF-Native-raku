@@ -1,11 +1,40 @@
-#ifndef PDF_BUF_H_
-#define PDF_BUF_H_
+#ifndef PDF_WRITE_H_
+#define PDF_WRITE_H_
 
-DLLEXPORT uint8_t* pdf_write_bool(PDF_BOOL val, uint8_t *out, size_t in_len);
+/* write boolean: 0 -> "true", 1 -> "false" */
+DLLEXPORT uint8_t* pdf_write_bool(PDF_BOOL val, uint8_t *out, size_t out_len);
+
+/* write integer: 42 -> "42" */
 DLLEXPORT uint8_t* pdf_write_int(PDF_INT val, uint8_t *out, size_t out_len);
-DLLEXPORT uint8_t* pdf_write_real(PDF_REAL val, uint8_t *out, size_t in_len);
+
+/* write real: pi -> "3.14159" */
+DLLEXPORT uint8_t* pdf_write_real(PDF_REAL val, uint8_t *out, size_t out_len);
+
+/* write literal string: "Hi\nthere" -> "(Hi\nthere)" */
 DLLEXPORT uint8_t* pdf_write_literal(PDF_STRING val, size_t in_len, PDF_STRING out, size_t out_len);
+
+/* write hex string: "snoopy" -> "<736e6f6f7079>" */
 DLLEXPORT uint8_t* pdf_write_hex_string(PDF_STRING val, size_t in_len, PDF_STRING out, size_t out_len);
-DLLEXPORT uint8_t* pdf_write_xref(PDF_UINT* xref, size_t rows, uint8_t *out, size_t out_len);
+
+/* write name: "Hi#there" -> "/Hi##there" */
 DLLEXPORT uint8_t* pdf_write_name(uint32_t *val, size_t in_len, PDF_STRING out, size_t out_len);
+
+/* write xref from array:
+   typedef enum {free, inuse};
+   // status, obj#, gen#,  offset
+   {  free,   0,    65535, 0,
+      inuse,  1,    0,     42,
+      inuse,  2,    0,     69,
+      inuse,  4,    0,     100 }
+   ->
+     xref
+     0 3
+     0000000000 65535 f 
+     0000000042 00000 n 
+     0000000069 00000 n 
+     4 1
+     0000000100 00000 n
+*/
+DLLEXPORT uint8_t* pdf_write_xref(PDF_UINT* xref, size_t rows, uint8_t *out, size_t out_len);
+
 #endif

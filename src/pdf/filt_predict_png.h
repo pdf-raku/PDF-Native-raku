@@ -1,6 +1,7 @@
 #ifndef PDF_FILT_PREDICT_PNG_H_
 #define PDF_FILT_PREDICT_PNG_H_
 
+// Decode PNG predictors
 DLLEXPORT void
 pdf_filt_predict_png_decode(uint8_t *buf,
                             uint8_t *out,
@@ -10,6 +11,7 @@ pdf_filt_predict_png_decode(uint8_t *buf,
                             uint16_t rows
                             );
 
+// Encode PNG predictors
 DLLEXPORT void
 pdf_filt_predict_png_encode(uint8_t *buf,
                             uint8_t *out,
