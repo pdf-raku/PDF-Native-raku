@@ -8,19 +8,19 @@ OBJS = buf%O% filt_predict%O% filt_predict_png%O% filt_predict_tiff%O% write%O%
 %DEST%/libpdf%SO%: $(OBJS)
 	%LD% %LDSHARED% %LDFLAGS% %LDOUT%%DEST%/libpdf%SO% $(OBJS) $(LD_COV_OPT)
 
-buf%O% : buf.c
+buf%O% :
 	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ buf.c
 
-filt_predict%O% : filt_predict.c
+filt_predict%O% :
 	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ filt_predict.c
 
-filt_predict_png%O% : filt_predict_png.c
+filt_predict_png%O% :
 	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ filt_predict_png.c
 
-filt_predict_tiff%O% : filt_predict_tiff.c
+filt_predict_tiff%O% :
 	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ filt_predict_tiff.c
 
-write%O% : write.c
+write%O% :
 	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ write.c
 
 coverage-reports : all
