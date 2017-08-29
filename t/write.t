@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 26;
+plan 27;
 
 use Lib::PDF::Writer;
 
@@ -9,6 +9,7 @@ given Lib::PDF::Writer {
      is .write-bool(1), "true";
      is .write-bool(0, Blob[uint8].allocate(4)), "fal";
      is .write-real(pi), "3.14159";
+     is .write-real(0.074877), "0.07488";
      is .write-real(42), "42";
      is .write-real(0), "0";
      is .write-real(-42), "-42";
@@ -27,20 +28,17 @@ given Lib::PDF::Writer {
 
      enum <free inuse>;
 
-     my uint32 @xref = [
-        free, 0, 65535, 0,
-        inuse, 1, 0, 42,
-        inuse, 2, 0, 69,
-        inuse, 4, 0, 100,
-     ];
-     is-deeply .write-xref-array(@xref).lines, (
-         'xref',
-         '0 3',
+     my uint64 @xref[4;3] = (
+        [0, 65535, free],
+        [42, 0, inuse],
+        [69, 0, inuse],
+        [100, 2, inuse],
+     );
+     is-deeply .write-entries(@xref).lines, (
          '0000000000 65535 f ',
          '0000000042 00000 n ',
          '0000000069 00000 n ',
-         '4 1',
-         '0000000100 00000 n '
+         '0000000100 00002 n '
      );
      is .write-name('Hi'), '/Hi';
      is .write-name('Hi#there'), '/Hi##there';

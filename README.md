@@ -76,24 +76,19 @@ given Lib::PDF::Writer {
      say .write-hex-string("snoopy"); # <736e6f6f7079>
      say .write-name('Hi#there');     # /Hi##there
 
-     # xref table, presorted by object-number. each row is:
-     #     <status> <obj-num> <gen-num> <offset>
+     # xref entries
      enum <free inuse>;
-
-     my uint32 @xref = [
-        free,  0, 65535, 0,
-        inuse, 1, 0, 42,
-        inuse, 2, 0, 69,
-        inuse, 4, 0, 100,
-     ];
-     say .write-xref-array(@xref).lines;
-         # xref
-         # 0 3
+     my uint64 @xref[4;3] = (
+        [0, 65535, free],
+        [42, 0, inuse],
+        [69, 0, inuse],
+        [100, 2, inuse],
+     );
+     say .write-entries(@xref).lines;
          # 0000000000 65535 f 
          # 0000000042 00000 n 
          # 0000000069 00000 n 
-         # 4 1
-         # 0000000100 00000 n
+         # 0000000100 00002 n
 }
 ```
 

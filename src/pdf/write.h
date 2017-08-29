@@ -19,22 +19,19 @@ DLLEXPORT uint8_t* pdf_write_hex_string(PDF_STRING val, size_t in_len, PDF_STRIN
 /* write name: "Hi#there" -> "/Hi##there" */
 DLLEXPORT uint8_t* pdf_write_name(uint32_t *val, size_t in_len, PDF_STRING out, size_t out_len);
 
-/* write xref from array:
+/* write xref entries;
    typedef enum {free, inuse};
    // status, obj#, gen#,  offset
-   {  free,   0,    65535, 0,
-      inuse,  1,    0,     42,
-      inuse,  2,    0,     69,
-      inuse,  4,    0,     100 }
+   {  0,    65535, free,
+      42,   0      inuse,
+      60,   0      inuse,
+      100,  2      inuse }
    ->
-     xref
-     0 3
      0000000000 65535 f 
      0000000042 00000 n 
      0000000069 00000 n 
-     4 1
-     0000000100 00000 n
+     0000000100 00002 n
 */
-DLLEXPORT uint8_t* pdf_write_xref(PDF_UINT* xref, size_t rows, uint8_t *out, size_t out_len);
+DLLEXPORT uint8_t* pdf_write_entries(PDF_UINT64 *xref, PDF_UINT length, uint8_t *out, size_t out_len);
 
 #endif

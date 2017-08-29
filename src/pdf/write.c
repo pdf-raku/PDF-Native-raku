@@ -142,48 +142,19 @@ DLLEXPORT uint8_t* pdf_write_hex_string(PDF_STRING val, size_t in_len, PDF_STRIN
   return out;
 }
 
-static uint32_t xref_segment_length(PDF_UINT* xref, size_t rows) {
-  uint32_t i = 1;
-  uint32_t next_obj_num = xref[i];
-  uint32_t length = 0;
-  while (length <= rows) {
-    uint32_t obj_num = xref[i];
-    if (obj_num == next_obj_num) {
-      length++;
-      next_obj_num++;
-      i += 4;
-    }
-    else {
-      break;
-    }
-  }
-  return length;
-}
-
-DLLEXPORT uint8_t* pdf_write_xref(PDF_UINT* xref, size_t rows, uint8_t *out, size_t out_len) {
+DLLEXPORT uint8_t* pdf_write_entries(PDF_UINT64 *xref, PDF_UINT length, uint8_t *out, size_t out_len) {
   PDF_STRING out_p = out;
   PDF_STRING out_end = out + out_len;
   uint8_t buf[24];
-  uint16_t row = 0;
-  concat(&out_p, out_end, "xref\n");
+  PDF_UINT i;
 
-  while (row < rows && out_p < out_end) {
-    uint32_t first = xref[1];
-    uint32_t length = xref_segment_length(xref, rows - row);
-    uint16_t i;
-
-    sprintf(buf,"%d %d\n", first, length);
-    concat(&out_p, out_end, buf);
-
-    for (i = 0; i < length; i++, row++) {
-      uint8_t type = *(xref++) ? 'n' : 'f';
-      uint32_t _obj_num = *(xref++);
-      uint32_t gen_num = *(xref++);
-      uint32_t offset = *(xref++);
+  for (i = 0; i < length; i++) {
+      uint64_t offset  = *(xref++);
+      uint64_t gen_num = *(xref++);
+      uint8_t type     = *(xref++) ? 'n' : 'f';
 
       sprintf(buf, "%010d %05d %c \n", offset, gen_num, type);
       concat(&out_p, out_end, buf);
-    }
   }
 
   if (out_len) out[out_len - 1] = 0;

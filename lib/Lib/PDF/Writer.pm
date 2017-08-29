@@ -24,7 +24,7 @@ class Lib::PDF::Writer {
         returns Str is encoded('ascii')
         is native(&libpdf) {*};
 
-    sub pdf_write_xref(Blob[uint8] $val, size_t $rows, Blob[uint8] $out, size_t $outlen)
+    sub pdf_write_entries(Blob[uint64] $val, size_t $rows, Blob[uint8] $out, size_t $outlen)
         returns Str is encoded('ascii')
         is native(&libpdf) {*};
 
@@ -58,13 +58,17 @@ class Lib::PDF::Writer {
         pdf_write_hex_string($enc, bytes, $buf, $buf.bytes);
     }
 
-    method write-xref-array(PDF_UINT @xref, Blob $buf? is copy) {
-        my \rows = +@xref div 4;
+    multi method write-entries(array $xref, Blob $buf? is copy) {
+        my \rows = +$xref.list div 3;
         # check array is sorted. work out number of segments
-        $buf //= Blob[uint8].allocate((rows * 2) * 22 +  5);
-        pdf_write_xref(@xref, rows, $buf, $buf.bytes);
+        $buf //= Blob[uint8].allocate(rows * 22 + 1);
+        pdf_write_entries(buf64.new($xref), rows, $buf, $buf.bytes);
     }
-
+    multi method write-entries(List $_, |c) is default {
+        my uint64 @shaped[.elems;3] = .List;
+        self.write-entries(@shaped, |c);
+    }
+    
     method write-name(Str(Cool) $val, Blob $buf? is copy) {
         my Blob[uint32] $in .= new: $val.ords;
         my \quads = $in.elems;
