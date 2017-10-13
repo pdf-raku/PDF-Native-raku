@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include "pdf.h"
 #include "pdf/types.h"
@@ -36,7 +37,7 @@ DLLEXPORT uint8_t* pdf_write_real(PDF_REAL val, uint8_t *out, size_t out_len) {
   uint8_t *t;
   char *dp;
 
-  const char* fmt = (val > 9999999 || val < -9999999) ? "%.1f" : "%.5f";
+  const char* fmt = (abs(val) > 9999999) ? "%.1f" : "%.5f";
   snprintf(buf, sizeof(buf), fmt, val);
 
   dp = strchr(buf, '.');

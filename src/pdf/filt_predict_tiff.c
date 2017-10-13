@@ -128,7 +128,7 @@ pdf_filt_predict_tiff_decode(uint8_t *in,
     tiff_decode_32(in, out, colors, columns, rows );
     break;
   default:
-    fprintf(stderr, "%s: unhanded TIFF bpc: %d\n", __FILE__, bpc);
+    fprintf(stderr, "%s: unhandled TIFF bpc: %d\n", __FILE__, bpc);
   }
 }
 
@@ -258,6 +258,6 @@ pdf_filt_predict_tiff_encode(uint8_t *in,
     tiff_encode_32(in, out, colors, columns, rows );
     break;
   default:
-    fprintf(stderr, "%s: unhanded TIFF bpc: %d\n", __FILE__, bpc);
+    fprintf(stderr, "%s: unhandled TIFF bpc: %d\n", __FILE__, bpc);
   }
 }
