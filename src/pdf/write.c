@@ -91,7 +91,7 @@ DLLEXPORT uint8_t* pdf_write_literal(PDF_STRING val, size_t in_len, PDF_STRING o
       concat(&out_p, out_end, esc);
     }
     else {
-      if (strchr("\\%#()<>[]{}", c)) {
+      if (strchr("\\%#()<>[]", c)) {
         if (out_p < out_end) *(out_p++) = '\\';
       }
 
