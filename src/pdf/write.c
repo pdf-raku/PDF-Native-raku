@@ -75,7 +75,7 @@ DLLEXPORT size_t pdf_write_literal(PDF_STRING val, size_t in_len, PDF_STRING out
       concat(&out_p, out_end, esc);
     }
     else {
-      if (c && strchr("\\%()<>[]", c)) {
+      if (c && strchr("\\()", c)) {
         if (out_p < out_end) *(out_p++) = '\\';
       }
 

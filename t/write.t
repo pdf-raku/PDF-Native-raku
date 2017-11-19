@@ -22,7 +22,7 @@ given Lib::PDF::Writer {
      is .write-literal("Hi"), '(Hi)';
      is .write-literal("A\rB\nC\fD\bE\t"), '(A\rB\nC\fD\bE\t)';
      is .write-literal(""), '()';
-     is .write-literal("\\ % # / ( ) < > [ ] \{ \}"), '(\\\\ \% # / \( \) \< \> \[ \] { })';
+     is .write-literal("\\ % # / ( ) < > [ ] \{ \}"), '(\\\\ % # / \( \) < > [ ] { })';
      is .write-literal("\x0E\x0\xA0"),"(\o016\o0\o240)"; 
      is .write-hex-string("snoopy"),'<736e6f6f7079>';
 
