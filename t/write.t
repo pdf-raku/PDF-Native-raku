@@ -7,7 +7,7 @@ use Lib::PDF::Writer;
 given Lib::PDF::Writer {
      is .write-bool(0), "false";
      is .write-bool(1), "true";
-     is .write-bool(0, Blob[uint8].allocate(4)), "fal";
+     is .write-bool(0, Blob[uint8].allocate(4)), "fals";
      is .write-real(pi), "3.14159";
      is .write-real(0.074877), "0.07488";
      is .write-real(42), "42";
@@ -22,8 +22,8 @@ given Lib::PDF::Writer {
      is .write-literal("Hi"), '(Hi)';
      is .write-literal("A\rB\nC\fD\bE\t"), '(A\rB\nC\fD\bE\t)';
      is .write-literal(""), '()';
-     is .write-literal("\\ % # / ( ) < > [ ] \{ \}"), '(\\\\ \% \# / \( \) \< \> \[ \] { })';
-     is .write-literal("\x0E\x0\xA0"),'(\\016\000\\240)'; 
+     is .write-literal("\\ % # / ( ) < > [ ] \{ \}"), '(\\\\ \% # / \( \) \< \> \[ \] { })';
+     is .write-literal("\x0E\x0\xA0"),"(\o016\o0\o240)"; 
      is .write-hex-string("snoopy"),'<736e6f6f7079>';
 
      enum <free inuse>;
