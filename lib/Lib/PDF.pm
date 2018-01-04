@@ -1,6 +1,6 @@
 use v6;
 
-module Lib::PDF {
+class Lib::PDF:ver<0.0.1> {
     use LibraryMake;
     use NativeCall;
     # Find our compiled library.
@@ -11,10 +11,18 @@ module Lib::PDF {
         }
     }
 
+    sub pdf_version
+        returns Str
+        is native(&libpdf) {*};
+
     constant PDF_BOOL   is export(:types) = int32;
     constant PDF_INT    is export(:types) = int32;
     constant PDF_UINT   is export(:types) = uint32;
     constant PDF_UINT64 is export(:types) = uint64;
     constant PDF_REAL   is export(:types) = num64;
     constant PDF_STRING is export(:types) = str;
+
+    method lib-version {
+        return Version.new: pdf_version();
+    }
 }
