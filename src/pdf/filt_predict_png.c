@@ -11,22 +11,15 @@ pdf_filt_predict_png_decode(uint8_t *buf,
                             uint16_t columns,
                             uint16_t rows
                             ) {
-  int bit_mask = (1 << bpc) - 1;
-  int row_size = colors * columns;
+  int row_size = (colors * bpc * columns + 7) / 8;
   int idx = 0;
   int n = 0;
   int row;
-  uint8_t padding = 0;
-  for (padding = 0; ((row_size + padding) * bpc) % 8; padding++) {
-  }
   
   for (row = 0; row < rows; row++) {
     /* PNG prediction can vary from row to row */
     uint8_t tag = buf[idx++];
     int i;
-    if (tag >= 10 && tag <= 14) {
-      tag -= 10;
-    }
 
     switch (tag) {
       case 0: { /* None */
@@ -41,14 +34,14 @@ pdf_filt_predict_png_decode(uint8_t *buf,
         }
         for (i = colors+1; i <= row_size; i++) {
           uint8_t left_val = out[n - colors];
-          out[n++] = (buf[idx++] + left_val) & bit_mask;
+          out[n++] = buf[idx++] + left_val;
         }
         break;
       }
       case 2: { /* Up */
         for (i = 0; i < row_size; i++) {
           uint8_t up_val = row ? out[n - row_size] : 0;
-          out[n++] = (buf[idx++] + up_val) & bit_mask;
+          out[n++] = buf[idx++] + up_val;
         }
         break;
       }
@@ -56,7 +49,7 @@ pdf_filt_predict_png_decode(uint8_t *buf,
         for (i = 0; i < row_size; i++) {
           uint8_t left_val = i < colors ? 0 : out[n - colors];
           uint8_t up_val = row ? out[n - row_size] : 0;
-          out[n++] = (buf[idx++] + ((left_val + up_val) / 2 )) & bit_mask;
+          out[n++] = (buf[idx++] + (left_val + up_val) / 2 );
           }
         break;
       }
@@ -74,7 +67,7 @@ pdf_filt_predict_png_decode(uint8_t *buf,
             ? left_val
             : (pb <= pc ? up_val : up_left_val);
 
-          out[n++] = (buf[idx++] + nearest) & bit_mask;
+          out[n++] = buf[idx++] + nearest;
         }
         break;
       }
@@ -82,27 +75,21 @@ pdf_filt_predict_png_decode(uint8_t *buf,
         fprintf(stderr, "bad PNG predictor tag: %d\n", tag);
       }
     }
-
-    idx += padding;
   }
 }
 
 DLLEXPORT void pdf_filt_predict_png_encode(uint8_t *buf,
-                                        uint8_t *out,
-                                        uint8_t colors,
-                                        uint8_t bpc,
-                                        uint16_t columns,
-                                        uint16_t rows,
-                                        uint8_t tag
-                                        ) {
-  int bit_mask = (1 << bpc) - 1;
-  int row_size = colors * columns;
+                                           uint8_t *out,
+                                           uint8_t colors,
+                                           uint8_t bpc,
+                                           uint16_t columns,
+                                           uint16_t rows,
+                                           uint8_t tag
+                                           ) {
+  int row_size = (colors * bpc * columns + 7) / 8;
   int idx = 0;
   int n = 0;
   int row;
-  uint8_t padding = 0;
-  for (padding = 0; ((row_size + padding) * bpc) % 8; padding++) {
-  }
 
   if (tag == 15) {
     /* optimize - just use Paeth */
@@ -134,14 +121,14 @@ DLLEXPORT void pdf_filt_predict_png_encode(uint8_t *buf,
         }
         for (i = colors+1; i <= row_size; i++) {
           uint8_t left_val = buf[idx - colors];
-          out[n++] = (buf[idx++] - left_val) & bit_mask;
+          out[n++] = buf[idx++] - left_val;
         }
         break;
       }
       case 2: { /* Up */
         for (i = 0; i < row_size; i++) {
           uint8_t up_val = row ? buf[idx - row_size] : 0;
-          out[n++] = (buf[idx++] - up_val) & bit_mask;
+          out[n++] = buf[idx++] - up_val;
         }
         break;
       }
@@ -149,7 +136,7 @@ DLLEXPORT void pdf_filt_predict_png_encode(uint8_t *buf,
         for (i = 0; i < row_size; i++) {
           uint8_t left_val = i < colors ? 0 : buf[idx - colors];
           uint8_t up_val = row ? buf[idx - row_size] : 0;
-          out[n++] = (buf[idx++] - ((left_val + up_val) / 2 )) & bit_mask;
+          out[n++] = (buf[idx++] - (left_val + up_val) / 2 );
         }
         break;
       }
@@ -167,14 +154,10 @@ DLLEXPORT void pdf_filt_predict_png_encode(uint8_t *buf,
             ? left_val
             : (pb <= pc ? up_val : up_left_val);
 
-          out[n++] = (buf[idx++] - nearest) & bit_mask;
+          out[n++] = buf[idx++] - nearest;
         }
         break;
       }
-    }
-
-    for (i = 0; i < padding; i++) {
-      out[n++] = 0;
     }
   }
 }

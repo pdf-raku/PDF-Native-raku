@@ -63,22 +63,14 @@ class Lib::PDF::Filter::Predictors {
             $colors *= $bpc div 8;
             $bpc = 8;
         }
-
-        my uint $row-size = $colors * $Columns;
-
-        my $padding = do {
-            my $bit-padding = -($row-size * $bpc) % 8;
-            $bit-padding div $bpc;
-        }
-
-        $buf = unpack($buf, $bpc);
+        my uint $row-size = ($colors * $bpc * $Columns + 7) div 8;
         my $rows = +$buf div $row-size;
         # preallocate, allowing room for per-row data + tag + padding
-        my buf8 $out = buf8.allocate($rows * ($row-size + $padding + 1));
+        my buf8 $out = buf8.allocate($rows * ($row-size + 1));
 
         pdf_filt_predict_encode($buf, $out, $Predictor, $colors, $bpc, $Columns, $rows);
 
-        pack($out, $bpc);
+        $out;
     }
 
     # prediction filters, see PDF 1.7 spec table 3.8
@@ -104,7 +96,7 @@ class Lib::PDF::Filter::Predictors {
 	$out;
     }
 
-    multi method decode($buf is copy,  #| input stream
+    multi method decode(Blob $buf,  #| input stream
                         Predictor :$Predictor! where PNG-Range, #| predictor function
                         UInt :$Columns = 1,          #| number of samples per row
                         UInt :$Colors = 1,           #| number of colors per sample
@@ -118,19 +110,13 @@ class Lib::PDF::Filter::Predictors {
             $bpc = 8;
         }
 
-        my uint $row-size = $colors * $Columns;
-        my $padding = do {
-            my $bit-padding = -($row-size * $bpc) % 8;
-            $bit-padding div $bpc;
-        }
-        # prepare buffers
-        $buf = unpack($buf, $bpc);
-        my $rows = +$buf div ($row-size + $padding + 1);
+        my uint $row-size = ($colors * $bpc * $Columns + 7) div 8;
+        my $rows = +$buf div ($row-size + 1);
         my buf8 $out = buf8.allocate($rows * $row-size);
 
         pdf_filt_predict_decode($buf, $out, $Predictor, $colors, $bpc, $Columns, $rows);
 
-        pack($out, $bpc);
+        $out;
     }
 
     multi method decode($buf, Predictor :$Predictor = None,
