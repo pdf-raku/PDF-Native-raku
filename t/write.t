@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 27;
+plan 28;
 
 use Lib::PDF::Writer;
 
@@ -46,5 +46,5 @@ given Lib::PDF::Writer {
      is .write-name("Zsófia"), '/Zs#c3#b3fia';
      is .write-name("\x10aa"), '/#e1#82#aa';
      is .write-name("\x10aaaa"), '/#f4#8a#aa#aa';
-
+     is .write-null(), 'null';
 }

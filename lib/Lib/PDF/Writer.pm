@@ -79,4 +79,7 @@ class Lib::PDF::Writer {
         $buf //= Blob[uint8].allocate(12 * quads  +  2);
         self!decode: $buf, pdf_write_name($in, quads, $buf, $buf.bytes);
     }
+
+    # just in case this get routed to us
+    method write-null($?) { 'null' }
 }
