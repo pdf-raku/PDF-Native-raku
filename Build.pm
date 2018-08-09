@@ -26,6 +26,7 @@ class Build {
         my $destdir = 'resources/lib';
         mkdir $destdir;
         make($workdir, "$destdir", :libname<pdf>);
+        True;
     }
 }
 
