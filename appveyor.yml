@@ -16,13 +16,14 @@ install:
   - rakudobrew build moar %TEST_MOAR%
   - rakudobrew build zef
   - cd %APPVEYOR_BUILD_FOLDER%
-  - zef build .
   - zef --depsonly install .
+  - zef build .
 
 build: off
 
 test_script:
   - set AUTHOR_TESTING=1 && prove -ve "perl6 -I."
+  - zef --depsonly install .
   - zef build .
   - zef install .
 
