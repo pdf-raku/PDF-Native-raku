@@ -4,7 +4,7 @@ platform: x64
 
 environment:
         matrix:
-        - test_moar: 2017.07
+        - test_moar: '2018.01'
         - test_moar: '' #latest
 
 install:
@@ -16,12 +16,14 @@ install:
   - rakudobrew build moar %TEST_MOAR%
   - rakudobrew build zef
   - cd %APPVEYOR_BUILD_FOLDER%
+  - zef build .
   - zef --depsonly install .
 
 build: off
 
 test_script:
   - set AUTHOR_TESTING=1 && prove -ve "perl6 -I."
+  - zef build .
   - zef install .
 
 shallow_clone: true
