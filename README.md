@@ -59,7 +59,7 @@ Also handles variable byte packing and unpacking. As seen in the `/W` parameter 
 
 ### `Lib::PDF::Reader`
 
-Reading of PDF content. Only method so far implemented is `read-entries` for the reading of cross reference segments.
+Reading of PDF content. Only method so far implemented is `read-xref` for the fast reading of cross reference indices.
 ```
 use Lib::PDF::Reader;
 
@@ -68,6 +68,7 @@ given Lib::PDF::Reader {
      enum <free inuse>;
 
      my Str $xref = (
+         '10 4',
          '0000000000 65535 f ',
          '0000000042 00000 n ',
          '0000000069 00000 n ',
@@ -76,7 +77,7 @@ given Lib::PDF::Reader {
      ).join(10.chr);
      my Blob $buf = $xref.encode('latin-1');
 
-     my array $entries = .read-entries($buf,4);
+     my array $entries = .read-xref($buf);
 }
 ```
 
