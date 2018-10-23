@@ -32,6 +32,6 @@ DLLEXPORT size_t pdf_write_name(uint32_t *val, size_t in_len, PDF_STRING out, si
      0000000069 00000 n 
      0000000100 00002 n
 */
-DLLEXPORT size_t pdf_write_entries(PDF_UINT64 *xref, PDF_UINT length, uint8_t *out, size_t out_len);
+DLLEXPORT size_t pdf_write_xref_seg(PDF_UINT64 *xref, PDF_UINT length, PDF_STRING buf, size_t buf_len);
 
 #endif

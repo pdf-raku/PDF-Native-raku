@@ -5,8 +5,7 @@
  <a href="https://ci.appveyor.com/project/p6-pdf/libpdf-p6/branch/master"><img src="https://ci.appveyor.com/api/projects/status/github/p6-pdf/libpdf-p6?branch=master&passingText=Windows%20-%20OK&failingText=Windows%20-%20FAIL&pendingText=Windows%20-%20pending&svg=true"></a>
 Low level native library of PDF support functions.
 
-The main aim is to optionally boost performance in the PDF tool-chain including
-PDF stream and filter functions and PDF::Content image processing and encoding functions.
+The main aim is to optionally boost performance in the PDF tool-chain including encryption, PDF reading, writing, stream and filter functions and PDF::Content image processing and encoding functions.
 
 So far covered are:
 
@@ -56,6 +55,29 @@ Also handles variable byte packing and unpacking. As seen in the `/W` parameter 
     my uint32 @in[4;3] = ([1, 16, 0], [1, 741, 0], [1, 1030, 0], [1, 1446, 0]);
     my $W = [1, 2, 1];
     $bytes = pack(@in, $W);
+```
+
+### `Lib::PDF::Reader`
+
+Reading of PDF content. Only method so far implemented is `read-entries` for the reading of cross reference segments.
+```
+use Lib::PDF::Reader;
+
+given Lib::PDF::Reader {
+
+     enum <free inuse>;
+
+     my Str $xref = (
+         '0000000000 65535 f ',
+         '0000000042 00000 n ',
+         '0000000069 00000 n ',
+         '9000000100 00002 n ',
+         ''
+     ).join(10.chr);
+     my Blob $buf = $xref.encode('latin-1');
+
+     my array $entries = .read-entries($buf,4);
+}
 ```
 
 ### `Lib::PDF::Writer`

@@ -4,4 +4,5 @@ filt_predict.o: filt_predict.c ../pdf.h ../pdf/filt_predict.h \
 filt_predict_png.o: filt_predict_png.c ../pdf.h ../pdf/filt_predict_png.h
 filt_predict_tiff.o: filt_predict_tiff.c ../pdf.h \
  ../pdf/filt_predict_tiff.h
+read.o: read.c ../pdf.h ../pdf/types.h ../pdf/read.h
 write.o: write.c ../pdf.h ../pdf/types.h ../pdf/write.h

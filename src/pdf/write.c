@@ -113,10 +113,10 @@ DLLEXPORT size_t pdf_write_hex_string(PDF_STRING val, size_t in_len, PDF_STRING 
   return (size_t) (out_p - out);
 }
 
-DLLEXPORT size_t pdf_write_entries(PDF_UINT64 *xref, PDF_UINT length, uint8_t *out, size_t out_len) {
-  PDF_STRING out_p = out;
-  PDF_STRING out_end = out + out_len;
-  uint8_t buf[24];
+DLLEXPORT size_t pdf_write_xref_seg(PDF_UINT64 *xref, PDF_UINT length, PDF_STRING buf, size_t buf_len) {
+  PDF_STRING buf_p = buf;
+  PDF_STRING buf_end = buf + buf_len;
+  uint8_t entry[24];
   PDF_UINT i;
 
   for (i = 0; i < length; i++) {
@@ -124,11 +124,11 @@ DLLEXPORT size_t pdf_write_entries(PDF_UINT64 *xref, PDF_UINT length, uint8_t *o
       uint64_t gen_num = *(xref++);
       uint8_t type     = *(xref++) ? 'n' : 'f';
 
-      sprintf(buf, "%010d %05d %c \n", offset, gen_num, type);
-      concat(&out_p, out_end, buf);
+      sprintf(entry, "%010d %05d %c \n", offset, gen_num, type);
+      concat(&buf_p, buf_end, entry);
   }
 
-  return (size_t) (out_p - out);
+  return (size_t) (buf_p - buf);
 }
 
 static uint8_t utf8_encode(uint8_t *bp, uint32_t cp) {
