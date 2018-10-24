@@ -63,11 +63,12 @@ Reading of PDF content. Only method so far implemented is `read-xref` for the fa
 ```
 use Lib::PDF::Reader;
 
-given Lib::PDF::Reader {
+given Lib::PDF::Reader.new {
 
      enum <free inuse>;
 
      my Str $xref = (
+         'xref',
          '10 4',
          '0000000000 65535 f ',
          '0000000042 00000 n ',

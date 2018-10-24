@@ -4,7 +4,7 @@ plan 5;
 
 use Lib::PDF::Reader;
 
-given Lib::PDF::Reader {
+given Lib::PDF::Reader.new {
 
     enum <free inuse>;
     constant Lf = 10.chr;
@@ -34,8 +34,10 @@ given Lib::PDF::Reader {
          0, 0, 0, 0,
      );
      is-deeply .read-entries($buf, :obj-first-num(10)), @xref, '.read-entries';
-
-     my $xref = (('20 4' ~ Lf ~ $xref-seg) x 2).subst('20', '10').encode('latin-1');
+     my $xref-str = ('xref', Lf,
+                     '10 4', Lf, $xref-seg,
+                     '20 4', Lf, $xref-seg).join;
+     my $xref = $xref-str.encode('latin-1');
      is .count-entries($xref), 8, '.count-entries';
      @xref = (
          10, 0, 65535, free,

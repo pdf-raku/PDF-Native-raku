@@ -44,6 +44,16 @@ static uint8_t scan_num(PDF_STRING buf_p, uint8_t n, uint64_t *num) {
     return ok;
 }
 
+static size_t skip_xref(PDF_STRING buf_p, PDF_STRING buf_end) {
+  size_t bytes = 0;
+  if ((buf_end - buf_p > 5)
+      && strncmp(buf_p, "xref", 4)==0) {
+    // skip 'xref' line
+    bytes = line_length(buf_p, buf_end);
+  }
+  return bytes;
+}
+
 /*
  * prescan index segments to find the number of entrys
  */
@@ -54,6 +64,8 @@ DLLEXPORT size_t pdf_read_xref_entry_count(PDF_STRING buf, size_t buf_len) {
   uint64_t obj_first_num;
   uint64_t obj_count;
   uint8_t line_len;
+
+  buf_p += skip_xref(buf_p, buf_end);
 
   while ((buf_end - buf_p > 20)
          && (sscanf(buf_p, "%ld %ld", &obj_first_num, &obj_count) == 2)
@@ -100,6 +112,8 @@ DLLEXPORT size_t pdf_read_xref(PDF_UINT64 *xref, PDF_STRING buf, size_t buf_len)
   uint64_t obj_count;
   uint8_t line_len;
 
+  buf_p += skip_xref(buf_p, buf_end);
+
   while ((buf_end - buf_p > 20)
          && (sscanf(buf_p, "%ld %ld", &obj_first_num, &obj_count) == 2)
          && (line_len = line_length(buf_p, buf_end))) {
@@ -109,5 +123,5 @@ DLLEXPORT size_t pdf_read_xref(PDF_UINT64 *xref, PDF_STRING buf, size_t buf_len)
     buf_p += 20 * obj_count;
     xref += 4 * obj_count;
   }
-  return entries;
+  return (size_t) (buf_p - buf);
 }

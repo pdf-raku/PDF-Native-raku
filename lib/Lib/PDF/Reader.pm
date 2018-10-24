@@ -1,6 +1,7 @@
 use v6;
 
 class Lib::PDF::Reader {
+    has UInt $.xref-bytes;
     use NativeCall;
     use Lib::PDF :libpdf, :types;
 
@@ -32,7 +33,7 @@ class Lib::PDF::Reader {
         my $rows = $.count-entries($buf);
         my $xref //= array[uint64].new;
         $xref[($rows||1) * 4  -  1] ||= 0;
-        pdf_read_xref($xref, $buf, $buf.bytes);
+        $!xref-bytes = pdf_read_xref($xref, $buf, $buf.bytes);
         $xref;
     }
 }
