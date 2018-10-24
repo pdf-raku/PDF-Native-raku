@@ -1,6 +1,6 @@
 use v6;
 
-class Lib::PDF:ver<0.0.1> {
+class PDF::Native:ver<0.0.1> {
     use LibraryMake;
     use NativeCall;
     # Find our compiled library.

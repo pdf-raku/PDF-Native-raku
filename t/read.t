@@ -2,9 +2,9 @@ use v6;
 use Test;
 plan 5;
 
-use Lib::PDF::Reader;
+use PDF::Native::Reader;
 
-given Lib::PDF::Reader.new {
+given PDF::Native::Reader.new {
 
     enum <free inuse>;
     constant Lf = 10.chr;

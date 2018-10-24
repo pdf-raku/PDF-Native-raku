@@ -2,9 +2,9 @@ use v6;
 use Test;
 plan 28;
 
-use Lib::PDF::Writer;
+use PDF::Native::Writer;
 
-given Lib::PDF::Writer {
+given PDF::Native::Writer {
      is .write-bool(0), "false";
      is .write-bool(1), "true";
      is .write-bool(0, Blob[uint8].allocate(4)), "fals";

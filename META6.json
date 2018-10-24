@@ -1,15 +1,15 @@
 {
   "authors" : [ "David Warring" ],
-  "description" : "Performance booster for the PDF tool-chain",
-  "name" : "Lib::PDF",
+  "description" : "Low level PDF routines (experimental)",
+  "name" : "PDF::Native",
   "license" : "Artistic-2.0",
   "perl" : "6.c",
   "provides" : {
-      "Lib::PDF" : "lib/Lib/PDF.pm",
-      "Lib::PDF::Buf" : "lib/Lib/PDF/Buf.pm",
-      "Lib::PDF::Filter::Predictors" : "lib/Lib/PDF/Filter/Predictors.pm",
-      "Lib::PDF::Reader" : "lib/Lib/PDF/Reader.pm",
-      "Lib::PDF::Writer" : "lib/Lib/PDF/Writer.pm"
+      "PDF::Native" : "lib/PDF/Native.pm",
+      "PDF::Native::Buf" : "lib/PDF/Native/Buf.pm",
+      "PDF::Native::Filter::Predictors" : "lib/PDF/Native/Filter/Predictors.pm",
+      "PDF::Native::Reader" : "lib/PDF/Native/Reader.pm",
+      "PDF::Native::Writer" : "lib/PDF/Native/Writer.pm"
   },
   "resources" : [
     "lib/libpdf.so",

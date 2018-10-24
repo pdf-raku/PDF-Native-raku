@@ -1,25 +1,26 @@
-# libpdf-p6
+# PDF-Native-p6
 
-[![Build Status](https://travis-ci.org/p6-pdf/libpdf-p6.svg?branch=master)](https://travis-ci.org/p6-pdf/libpdf-p6) [![codecov](https://codecov.io/gh/p6-pdf/libpdf-p6/branch/master/graph/badge.svg)](https://codecov.io/gh/p6-pdf/libpdf-p6)
+[![Build Status](https://travis-ci.org/p6-pdf/PDF-Native-p6.svg?branch=master)](https://travis-ci.org/p6-pdf/PDF-Native-p6) [![codecov](https://codecov.io/gh/p6-pdf/PDF-Native-p6/branch/master/graph/badge.svg)](https://codecov.io/gh/p6-pdf/PDF-Native-p6)
 
- <a href="https://ci.appveyor.com/project/p6-pdf/libpdf-p6/branch/master"><img src="https://ci.appveyor.com/api/projects/status/github/p6-pdf/libpdf-p6?branch=master&passingText=Windows%20-%20OK&failingText=Windows%20-%20FAIL&pendingText=Windows%20-%20pending&svg=true"></a>
+ <a href="https://ci.appveyor.com/project/p6-pdf/PDF-Native-p6/branch/master"><img src="https://ci.appveyor.com/api/projects/status/github/p6-pdf/PDF-Native-p6?branch=master&passingText=Windows%20-%20OK&failingText=Windows%20-%20FAIL&pendingText=Windows%20-%20pending&svg=true"></a>
 Low level native library of PDF support functions.
 
-The main aim is to optionally boost performance in the PDF tool-chain including encryption, PDF reading, writing, stream and filter functions and PDF::Content image processing and encoding functions.
+The immediate aim is to optionally boost performance in the PDF tool-chain including encryption, reading, writing, stream and filter functions and PDF::Content image processing and encoding functions.
 
 So far covered are:
 
 - the PDF::IO::Filter::Predictor `decode` and `encode` functions.
 - the widely used PDF::IO::Util `pack` and `unpack` functions.
-- writing of strings and numerics
+- reading of xrefs
+- writing of strings, numerics and xrefs
 
-### `Lib::PDF::Filter::Predictors`
+### `PDF::Native::Filter::Predictors`
 
 These functions implements the predictor stage of TIFF [1] and PNG [2] decoding and encoding.
 ```
-    use Lib::PDF::Filter::Predictors;
+    use PDF::Native::Filter::Predictors;
     # PNG samples. First bit on each row, is an indicator in the range 0 .. 4
-    my $Predictor = Lib::PDF::Filter::Predictors::PNG;
+    my $Predictor = PDF::Native::Filter::Predictors::PNG;
     my $Columns = 4;
     my $encoded = buf8.new: [
         2,  0x1, 0x0, 0x10, 0x0,
@@ -30,7 +31,7 @@ These functions implements the predictor stage of TIFF [1] and PNG [2] decoding 
         0,  0x1, 0x2, 0x3,  0x4,
     ];
 
-    my buf8 $decoded = Lib::PDF::Filter::Predictors.decode(
+    my buf8 $decoded = PDF::Native::Filter::Predictors.decode(
                                         $encoded,
                                         :$Columns,
                                         :$Predictor, );
@@ -39,7 +40,7 @@ These functions implements the predictor stage of TIFF [1] and PNG [2] decoding 
 [1] [TIFF Predictors](http://www.fileformat.info/format/tiff/corion-lzw.htm)
 [2] [PNG Predictors](https://www.w3.org/TR/PNG-Filters.html)
 
-### `Lib::PDF::Buf`
+### `PDF::Native::Buf`
 
 Handles the packing and unpacking of multi-byte quantities as network words. Such as `/BitsPerComponent` in `/Filter` `/DecodeParms`.
 
@@ -47,7 +48,7 @@ Also handles variable byte packing and unpacking. As seen in the `/W` parameter 
 
 ```
     # pack two 4-byte words into an 8 byte buffer
-    use Lib::PDF::Buf :pack;
+    use PDF::Native::Buf :pack;
     my buf32 $words .= new(660510, 2634300);
     my buf8 $bytes = pack($words, 24);
 
@@ -57,13 +58,13 @@ Also handles variable byte packing and unpacking. As seen in the `/W` parameter 
     $bytes = pack(@in, $W);
 ```
 
-### `Lib::PDF::Reader`
+### `PDF::Native::Reader`
 
 Reading of PDF content. Only method so far implemented is `read-xref` for the fast reading of cross reference indices.
 ```
-use Lib::PDF::Reader;
+use PDF::Native::Reader;
 
-given Lib::PDF::Reader.new {
+given PDF::Native::Reader.new {
 
      enum <free inuse>;
 
@@ -82,16 +83,16 @@ given Lib::PDF::Reader.new {
 }
 ```
 
-### `Lib::PDF::Writer`
+### `PDF::Native::Writer`
 
 Serialization functions have been implemented for a few PDF data-types:
 
 - boolean, real, integers, literal-strings, hex-strings, names and cross reference tables.
 
 ```
-use Lib::PDF::Writer;
+use PDF::Native::Writer;
 
-given Lib::PDF::Writer {
+given PDF::Native::Writer {
      say .write-bool(0);    # false
      say .write-bool(1);    # true
      say .write-real(pi);   # 3.14159

@@ -1,9 +1,9 @@
 use v6;
 
-class Lib::PDF::Reader {
+class PDF::Native::Reader {
     has UInt $.xref-bytes;
     use NativeCall;
-    use Lib::PDF :libpdf, :types;
+    use PDF::Native :libpdf, :types;
 
     sub pdf_read_xref_entry_count(Blob[uint8] $buf, size_t $buflen)
         returns size_t

@@ -1,9 +1,9 @@
 use v6;
 
-module Lib::PDF::Buf {
+module PDF::Native::Buf {
 
     use NativeCall;
-    use Lib::PDF :libpdf;
+    use PDF::Native :libpdf;
 
     our proto sub unpack( $, $ --> Buf) is export(:pack) {*};
     our proto sub pack( $, $ --> Buf) is export(:pack) {*};

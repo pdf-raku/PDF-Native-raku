@@ -2,7 +2,7 @@ use v6;
 use Test;
 plan 1;
 
-use Lib::PDF;
+use PDF::Native;
 
-is-deeply Lib::PDF.lib-version , Lib::PDF.^ver, 'version';
+is-deeply PDF::Native.lib-version , PDF::Native.^ver, 'version';
 done-testing;

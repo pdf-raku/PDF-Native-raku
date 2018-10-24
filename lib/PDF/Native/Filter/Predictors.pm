@@ -1,10 +1,10 @@
 use v6;
 
-class Lib::PDF::Filter::Predictors {
+class PDF::Native::Filter::Predictors {
 
     use NativeCall;
-    use Lib::PDF :libpdf;
-    use Lib::PDF::Buf :pack;
+    use PDF::Native :libpdf;
+    use PDF::Native::Buf :pack;
 
     my subset BPC of UInt where 1|2|4|8|16|32;
 

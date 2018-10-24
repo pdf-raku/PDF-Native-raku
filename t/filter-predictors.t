@@ -2,7 +2,7 @@ use v6;
 use Test;
 plan 49;
 
-use Lib::PDF::Filter::Predictors;
+use PDF::Native::Filter::Predictors;
 
 my $encode-in = buf8.new: [
     0x2, 0x1, 0x0, 0x10, 0x0,
@@ -28,7 +28,7 @@ my $png-decode = buf8.new: [
     1,   2,   3,    4,
     ];
 
-is-deeply Lib::PDF::Filter::Predictors.decode( $encode-in,
+is-deeply PDF::Native::Filter::Predictors.decode( $encode-in,
                                                :Columns(4),
                                                :Colors(3),
                                                :Predictor(1), ),
@@ -36,14 +36,14 @@ is-deeply Lib::PDF::Filter::Predictors.decode( $encode-in,
     "NOOP predictive filter sanity";
 
 my $tiff-in = buf8.new: $encode-in.head(24);
-is-deeply Lib::PDF::Filter::Predictors.decode( $tiff-in,
+is-deeply PDF::Native::Filter::Predictors.decode( $tiff-in,
                                                :Columns(4),
                                                :Colors(3),
                                                :Predictor(2), ),
     $tiff-decode,
     "TIFF predictive filter sanity";
 
-is-deeply Lib::PDF::Filter::Predictors.decode( $encode-in,
+is-deeply PDF::Native::Filter::Predictors.decode( $encode-in,
                                                :Columns(4),
                                                :Predictor(12), ),
     $png-decode,
@@ -75,18 +75,18 @@ my %expected-bpc-pref := {
 for flat 1, 2, 10 .. 15 -> $Predictor {
     my $desc = do given $Predictor { when 2 { 'TIFF' }; when 1 { 'no-op'}; default {'PNG'} };
 
-    my $encode = Lib::PDF::Filter::Predictors.encode( $rand-data,
+    my $encode = PDF::Native::Filter::Predictors.encode( $rand-data,
                                                       :Columns(4),
                                                       :$Predictor, );
 
-    my $decode = Lib::PDF::Filter::Predictors.decode( $encode,
+    my $decode = PDF::Native::Filter::Predictors.decode( $encode,
                                                       :Columns(4),
                                                       :$Predictor, );
 
     is-deeply $decode, $rand-data, "$desc predictor ($Predictor) - appears lossless";
 
     for 4, 8, 16, 32 -> $BitsPerComponent {
-        my $encode2c = Lib::PDF::Filter::Predictors.encode( $rand-data,
+        my $encode2c = PDF::Native::Filter::Predictors.encode( $rand-data,
 						       :Columns(4),
 						       :Colors(2),
                                                        :$BitsPerComponent,
@@ -94,7 +94,7 @@ for flat 1, 2, 10 .. 15 -> $Predictor {
 
         is-deeply($encode2c, $_, "$desc predictor ($Predictor) multi-channel $BitsPerComponent bpc - encoding")
             with  %expected-bpc-pref{$BitsPerComponent}{$Predictor};
-        my $decode2c = Lib::PDF::Filter::Predictors.decode( $encode2c,
+        my $decode2c = PDF::Native::Filter::Predictors.decode( $encode2c,
 						           :Columns(4),
 						           :Colors(2),
                                                            :$BitsPerComponent,
@@ -109,10 +109,10 @@ my %params := { :Predictor(12), :Columns(4) };
 my $rand = buf8.new: [$rand-data.list.grep({ $_ <= 0xFF })];
 
 my $encoded;
-lives-ok {$encoded = Lib::PDF::Filter::Predictors.encode($rand, |%params)}, "%params encode with prediction";
+lives-ok {$encoded = PDF::Native::Filter::Predictors.encode($rand, |%params)}, "%params encode with prediction";
 
 my $decoded;
-lives-ok {$decoded = Lib::PDF::Filter::Predictors.decode($encoded, |%params)}, "%params encode with prediction";
+lives-ok {$decoded = PDF::Native::Filter::Predictors.decode($encoded, |%params)}, "%params encode with prediction";
 
 is-deeply $decoded, $rand, "%params round-trip with prediction";
 

@@ -2,7 +2,7 @@ use v6;
 use Test;
 plan 15;
 
-use Lib::PDF::Buf :pack;
+use PDF::Native::Buf :pack;
 use NativeCall;
 
 my $buf;

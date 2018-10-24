@@ -1,8 +1,8 @@
 use v6;
 
-class Lib::PDF::Writer {
+class PDF::Native::Writer {
     use NativeCall;
-    use Lib::PDF :libpdf, :types;
+    use PDF::Native :libpdf, :types;
 
     sub pdf_write_bool(PDF_BOOL $val, Blob[uint8] $buf, size_t $buf-len)
         returns size_t
