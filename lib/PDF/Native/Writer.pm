@@ -6,31 +6,31 @@ class PDF::Native::Writer {
 
     sub pdf_write_bool(PDF_BOOL $val, Blob[uint8] $buf, size_t $buf-len)
         returns size_t
-        is native(&libpdf) {*};
+        is native(libpdf) {*};
 
     sub pdf_write_int(PDF_INT $val, Blob[uint8] $buf, size_t $buf-len)
         returns size_t
-        is native(&libpdf) {*};
+        is native(libpdf) {*};
 
     sub pdf_write_real(PDF_REAL $val, Blob[uint8] $buf, size_t $buf-len)
         returns size_t
-        is native(&libpdf) {*};
+        is native(libpdf) {*};
 
     sub pdf_write_literal(Blob[uint8] $val, size_t $val-len, Blob[uint8] $buf, size_t $buf-len)
         returns size_t
-        is native(&libpdf) {*};
+        is native(libpdf) {*};
 
     sub pdf_write_hex_string(Blob[uint8] $val, size_t $val-len, Blob[uint8] $buf, size_t $buf-len)
         returns size_t
-        is native(&libpdf) {*};
+        is native(libpdf) {*};
 
     sub pdf_write_xref_seg(Blob[uint64] $val, size_t $rows, Blob[uint8] $buf, size_t $buf-len)
         returns size_t
-        is native(&libpdf) {*};
+        is native(libpdf) {*};
 
     sub pdf_write_name(Blob[32] $val, size_t $val-len, Blob[uint8] $buf, size_t $buf-len)
         returns size_t
-        is native(&libpdf) {*};
+        is native(libpdf) {*};
 
     method !decode(Blob[uint8] $buf, $len --> Str) {
         $buf.subbuf(0, $len).decode: "latin-1";

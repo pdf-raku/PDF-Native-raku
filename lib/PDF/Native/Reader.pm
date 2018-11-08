@@ -7,15 +7,15 @@ class PDF::Native::Reader {
 
     sub pdf_read_xref_entry_count(Blob[uint8] $buf, size_t $buflen)
         returns size_t
-        is native(&libpdf) {*};
+        is native(libpdf) {*};
 
     sub pdf_read_xref_seg(array $val, size_t $rows, Blob[uint8] $buf, size_t $buflen, size_t $obj-first-num)
         returns size_t
-        is native(&libpdf) {*};
+        is native(libpdf) {*};
 
     sub pdf_read_xref(array $val, Blob[uint8] $buf, size_t $buflen)
         returns size_t
-        is native(&libpdf) {*};
+        is native(libpdf) {*};
 
     multi method read-entries(array $xref is copy, Blob $buf, UInt $rows = +$buf div 20, UInt :$obj-first-num = 0) {
         $xref //= array[uint64].new;

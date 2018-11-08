@@ -8,21 +8,21 @@ module PDF::Native::Buf {
     our proto sub unpack( $, $ --> Buf) is export(:pack) {*};
     our proto sub pack( $, $ --> Buf) is export(:pack) {*};
 
-    sub pdf_buf_unpack_1(Blob, Blob, size_t)  is native(&libpdf) { * }
-    sub pdf_buf_unpack_2(Blob, Blob, size_t)  is native(&libpdf) { * }
-    sub pdf_buf_unpack_4(Blob, Blob, size_t)  is native(&libpdf) { * }
-    sub pdf_buf_unpack_16(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_unpack_24(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_unpack_32(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_unpack_32_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_unpack_1(Blob, Blob, size_t)  is native(libpdf) { * }
+    sub pdf_buf_unpack_2(Blob, Blob, size_t)  is native(libpdf) { * }
+    sub pdf_buf_unpack_4(Blob, Blob, size_t)  is native(libpdf) { * }
+    sub pdf_buf_unpack_16(Blob, Blob, size_t) is native(libpdf) { * }
+    sub pdf_buf_unpack_24(Blob, Blob, size_t) is native(libpdf) { * }
+    sub pdf_buf_unpack_32(Blob, Blob, size_t) is native(libpdf) { * }
+    sub pdf_buf_unpack_32_W(Blob, Blob, size_t, Blob, size_t) is native(libpdf) { * }
 
-    sub pdf_buf_pack_1(Blob, Blob, size_t)  is native(&libpdf) { * }
-    sub pdf_buf_pack_2(Blob, Blob, size_t)  is native(&libpdf) { * }
-    sub pdf_buf_pack_4(Blob, Blob, size_t)  is native(&libpdf) { * }
-    sub pdf_buf_pack_16(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_pack_24(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_pack_32(Blob, Blob, size_t) is native(&libpdf) { * }
-    sub pdf_buf_pack_32_W(Blob, Blob, size_t, Blob, size_t) is native(&libpdf) { * }
+    sub pdf_buf_pack_1(Blob, Blob, size_t)  is native(libpdf) { * }
+    sub pdf_buf_pack_2(Blob, Blob, size_t)  is native(libpdf) { * }
+    sub pdf_buf_pack_4(Blob, Blob, size_t)  is native(libpdf) { * }
+    sub pdf_buf_pack_16(Blob, Blob, size_t) is native(libpdf) { * }
+    sub pdf_buf_pack_24(Blob, Blob, size_t) is native(libpdf) { * }
+    sub pdf_buf_pack_32(Blob, Blob, size_t) is native(libpdf) { * }
+    sub pdf_buf_pack_32_W(Blob, Blob, size_t, Blob, size_t) is native(libpdf) { * }
 
     my subset PackingSize where 1|2|4|8|16|24|32;
     sub container(PackingSize $bits) {

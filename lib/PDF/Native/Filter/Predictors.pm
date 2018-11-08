@@ -22,7 +22,7 @@ class PDF::Native::Filter::Predictors {
         uint8 $bpc where BPC,
         uint16 $columns,
         uint16 $rows,
-    )  returns uint32 is native(&libpdf) { * }
+    )  returns uint32 is native(libpdf) { * }
 
     sub pdf_filt_predict_encode(
         Blob $in, Blob $out,
@@ -31,7 +31,7 @@ class PDF::Native::Filter::Predictors {
         uint8 $bpc where BPC,
         uint16 $columns,
         uint16 $rows,
-    )  returns uint32 is native(&libpdf) { * }
+    )  returns uint32 is native(libpdf) { * }
 
     # post prediction functions as described in the PDF 1.7 spec, table 3.8
 
