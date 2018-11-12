@@ -4,10 +4,7 @@ class PDF::Native:ver<0.0.1> {
     use LibraryMake;
     use NativeCall;
     # Find our compiled library.
-    constant libpdf is export(:libpdf) = do {
-        my $so = get-vars('')<SO>;
-        ~(%?RESOURCES{"lib/libpdf$so"});
-    }
+    constant libpdf is export(:libpdf) = %?RESOURCES<libraries/pdf>;
 
     sub pdf_version
         returns Str

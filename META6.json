@@ -12,9 +12,7 @@
       "PDF::Native::Writer" : "lib/PDF/Native/Writer.pm"
   },
   "resources" : [
-    "lib/libpdf.so",
-    "lib/libpdf.dll",
-    "lib/libpdf.dylib"
+    "libraries/pdf"
   ],
   "source-url" : "git://github.com/p6-pdf/libpdf-p6.git",
   "depends" : [ "LibraryMake" ],
