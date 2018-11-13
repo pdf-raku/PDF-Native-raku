@@ -8,18 +8,16 @@ class Build {
     #| Sets up a C<Makefile> and runs C<make>.  C<$folder> should be
     #| C<"$folder/resources/libraries"> and C<$libname> should be the name of the library
     #| without any prefixes or extensions.
-    sub make(Str $folder, Str $destfolder, Str :$libname) {
+    sub make(Str $folder, Str $destfolder, IO() :$libname!) {
         my %vars = LibraryMake::get-vars($destfolder);
 
         mkdir($destfolder);
 	LibraryMake::process-makefile($folder, %vars);
 
 	%vars<DEST> = "../../resources/libraries";
+        %vars<LIB_NAME> = ~ $*VM.platform-library-name($libname);
 	LibraryMake::process-makefile($folder~'/src/pdf', %vars);
 	shell(%vars<MAKE>);
-
-        my @fake-lib-exts = <.so .dll .dylib>.grep(* ne %vars<SO>);
-        "resources/libraries/lib$libname$_".IO.open(:w) for @fake-lib-exts;
     }
 
     method build($workdir) {

@@ -1,12 +1,12 @@
 # set COVERAGE to enable coverage reporting
 
-all: %DEST%/libpdf%SO%
+all: %DEST%/%LIB_NAME%
 
 SRCS = buf.c filt_predict.c filt_predict_png.c filt_predict_tiff.c read.c write.c
 OBJS = buf%O% filt_predict%O% filt_predict_png%O% filt_predict_tiff%O% read%O% write%O% version%O%
 
-%DEST%/libpdf%SO%: $(OBJS)
-	%LD% %LDSHARED% %LDFLAGS% %LDOUT%%DEST%/libpdf%SO% $(OBJS) $(LD_COV_OPT)
+%DEST%/%LIB_NAME%: $(OBJS)
+	%LD% %LDSHARED% %LDFLAGS% %LDOUT%%DEST%/%LIB_NAME% $(OBJS) $(LD_COV_OPT)
 
 buf%O% :
 	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ buf.c
@@ -33,8 +33,7 @@ coverage-reports : all
 	gcov *.c
 
 clean :
-	@rm -f *%O% *.gc?? libpdf%SO% \
-	&& rm -f %DEST%/libpdf.dll %DEST%/libpdf.dylib %DEST%/libpdf.so
+	@rm -f *%O% *.gc?? %DEST%/%LIB_NAME%
 
 realclean : clean
 	@rm -f Makefile .depend

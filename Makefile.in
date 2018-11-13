@@ -8,10 +8,10 @@ test-coverage :
 	cd src/pdf && %MAKE% coverage-reports
 
 test : all
-	@prove -e'perl6 -I lib' -v t
+	@prove -e'perl6 -I .' -v t
 
 memtest : all
-	@prove -e'perl6-valgrind-m -I lib' -v t
+	@prove -e'perl6-valgrind-m -I .' -v t
 
 clean :
 	cd src/pdf && %MAKE% $@
