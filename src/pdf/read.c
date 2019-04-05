@@ -11,18 +11,26 @@ static uint8_t eoln_char(uint8_t c) {
   return (c == 10 || c == 13);
 }
 
-static uint8_t line_length(PDF_STRING buf_p, PDF_STRING buf_end) {
-  uint8_t i = 0;
-  while (buf_p + i < buf_end) {
-    if (eoln_char(buf_p[i])) {
-      if (buf_p + i + 1 < buf_end && eoln_char(buf_p[i+1])) {
-        i++;
+static uint8_t _line_length(PDF_STRING buf_start, PDF_STRING buf_end) {
+
+  PDF_STRING buf_p = buf_start;
+  int eoln = 0;
+
+  while (buf_p <= buf_end) {
+    if (eoln_char(buf_p[0])) {
+      // end of line reached
+      eoln++;
+      if (buf_p < buf_end
+          && eoln_char(buf_p[1])
+          && buf_p[0] != buf_p[1]) {
+        // consume \r\n or \n\r
+        eoln++;
       }
       break;
     }
-    i++;
+    buf_p++;
   }
-  return i+1;
+  return buf_p - buf_start + eoln;
 }
 
 static uint8_t scan_num(PDF_STRING buf_p, uint8_t n, uint64_t *num) {
@@ -49,7 +57,7 @@ static size_t skip_xref(PDF_STRING buf_p, PDF_STRING buf_end) {
   if ((buf_end - buf_p > 5)
       && strncmp(buf_p, "xref", 4)==0) {
     // skip 'xref' line
-    bytes = line_length(buf_p, buf_end);
+    bytes = _line_length(buf_p, buf_end);
   }
   return bytes;
 }
@@ -69,7 +77,7 @@ DLLEXPORT size_t pdf_read_xref_entry_count(PDF_STRING buf, size_t buf_len) {
 
   while ((buf_end - buf_p > 20)
          && (sscanf(buf_p, "%ld %ld", &obj_first_num, &obj_count) == 2)
-         && (line_len = line_length(buf_p, buf_end))) {
+         && (line_len = _line_length(buf_p, buf_end))) {
     entries += obj_count;
     buf_p += line_len + 20 * obj_count;
   }
@@ -116,7 +124,7 @@ DLLEXPORT size_t pdf_read_xref(PDF_UINT64 *xref, PDF_STRING buf, size_t buf_len)
 
   while ((buf_end - buf_p > 20)
          && (sscanf(buf_p, "%ld %ld", &obj_first_num, &obj_count) == 2)
-         && (line_len = line_length(buf_p, buf_end))) {
+         && (line_len = _line_length(buf_p, buf_end))) {
     buf_p += line_len;
     pdf_read_xref_seg(xref, obj_count, buf_p, buf_end - buf_p + 1, obj_first_num);
     entries += obj_count;

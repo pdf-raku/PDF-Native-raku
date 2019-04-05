@@ -36,26 +36,26 @@ class PDF::Native::Writer {
         $buf.subbuf(0, $len).decode: "latin-1";
     }
 
-    method write-bool(Bool(Cool) $val, $buf = Blob[uint8].allocate(10)) {
+    method write-bool(Bool() $val, $buf = Blob[uint8].allocate(10)) {
         self!decode: $buf, pdf_write_bool($val, $buf, $buf.bytes);
     }
 
-    method write-int(Int(Cool) $val, $buf = Blob[uint8].allocate(8)) {
+    method write-int(Int() $val, $buf = Blob[uint8].allocate(8)) {
         self!decode: $buf, pdf_write_int($val, $buf, $buf.bytes);
     }
 
-    method write-real(Num(Cool) $val, $buf = Blob[uint8].allocate(32)) {
+    method write-real(Num() $val, $buf = Blob[uint8].allocate(32)) {
         self!decode: $buf, pdf_write_real($val, $buf, $buf.bytes);
     }
 
-    method write-literal(Str(Cool) $val, Blob $buf? is copy) {
+    method write-literal(Str() $val, Blob $buf? is copy) {
        my Blob[uint8] $enc = $val.encode: "latin-1";
        my \bytes = $enc.bytes;
        $buf //= Blob[uint8].allocate(2 * bytes  +  3);
        self!decode: $buf, pdf_write_literal($enc, bytes, $buf, $buf.bytes);
     }
 
-    method write-hex-string(Str(Cool) $val, Blob $buf? is copy) {
+    method write-hex-string(Str() $val, Blob $buf? is copy) {
         my Blob[uint8] $enc = $val.encode: "latin-1";
         my \bytes = $enc.bytes;
         $buf //= Blob[uint8].allocate(2 * bytes  +  3);
@@ -73,7 +73,7 @@ class PDF::Native::Writer {
         self.write-entries(@shaped, |c);
     }
 
-    method write-name(Str(Cool) $val, Blob $buf? is copy) {
+    method write-name(Str() $val, Blob $buf? is copy) {
         my Blob[uint32] $in .= new: $val.ords;
         my \quads = $in.elems;
         $buf //= Blob[uint8].allocate(12 * quads  +  2);
