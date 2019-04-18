@@ -24,11 +24,11 @@ class PDF::Native::Writer {
         returns size_t
         is native(libpdf) {*};
 
-    sub pdf_write_xref_seg(Blob[uint64] $val, size_t $rows, Blob[uint8] $buf, size_t $buf-len)
+    sub pdf_write_xref_seg(PDF_XREF $val, size_t $rows, Blob[uint8] $buf, size_t $buf-len)
         returns size_t
         is native(libpdf) {*};
 
-    sub pdf_write_name(Blob[32] $val, size_t $val-len, Blob[uint8] $buf, size_t $buf-len)
+    sub pdf_write_name(PDF_CODE_POINTS $val, size_t $val-len, Blob[uint8] $buf, size_t $buf-len)
         returns size_t
         is native(libpdf) {*};
 

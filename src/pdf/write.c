@@ -112,7 +112,7 @@ DLLEXPORT size_t pdf_write_hex_string(PDF_STRING val, size_t in_len, char* out, 
   return (size_t) (out_p - out);
 }
 
-DLLEXPORT size_t pdf_write_xref_seg(PDF_UINT64 *xref, PDF_UINT length, PDF_STRING buf, size_t buf_len) {
+DLLEXPORT size_t pdf_write_xref_seg(PDF_XREF xref, PDF_UINT length, PDF_STRING buf, size_t buf_len) {
   PDF_STRING buf_p = buf;
   PDF_STRING buf_end = buf + buf_len;
   char entry[24];

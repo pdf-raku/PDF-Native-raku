@@ -84,7 +84,7 @@ DLLEXPORT size_t pdf_read_xref_entry_count(PDF_STRING buf, size_t buf_len) {
   return entries;
 }
 
-DLLEXPORT size_t pdf_read_xref_seg(PDF_UINT64 *xref, PDF_UINT length, PDF_STRING buf, size_t buf_len, size_t obj_first_num) {
+DLLEXPORT size_t pdf_read_xref_seg(PDF_XREF xref, PDF_UINT length, PDF_STRING buf, size_t buf_len, size_t obj_first_num) {
   PDF_STRING buf_p = buf;
   PDF_STRING buf_end = buf + buf_len;
   PDF_UINT i;
@@ -112,7 +112,7 @@ DLLEXPORT size_t pdf_read_xref_seg(PDF_UINT64 *xref, PDF_UINT length, PDF_STRING
   return (size_t) (buf_p - buf);
 }
 
-DLLEXPORT size_t pdf_read_xref(PDF_UINT64 *xref, PDF_STRING buf, size_t buf_len) {
+DLLEXPORT size_t pdf_read_xref(PDF_XREF xref, PDF_STRING buf, size_t buf_len) {
   size_t entries = 0;
   PDF_STRING buf_p = buf;
   PDF_STRING buf_end = buf + buf_len;
