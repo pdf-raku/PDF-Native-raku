@@ -2,6 +2,10 @@
 
 all: %DEST%/%LIB_NAME%
 
+# 'all', with compilation warnings and debug symbols enabled
+debug :
+	%MAKE% "DBG=-Wall -g"  all
+
 SRCS = buf.c filt_predict.c filt_predict_png.c filt_predict_tiff.c read.c write.c
 OBJS = buf%O% filt_predict%O% filt_predict_png%O% filt_predict_tiff%O% read%O% write%O% version%O%
 
@@ -9,25 +13,25 @@ OBJS = buf%O% filt_predict%O% filt_predict_png%O% filt_predict_tiff%O% read%O% w
 	%LD% %LDSHARED% %LDFLAGS% %LDOUT%%DEST%/%LIB_NAME% $(OBJS) $(LD_COV_OPT)
 
 buf%O% :
-	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ buf.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ buf.c $(DBG)
 
 filt_predict%O% :
-	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ filt_predict.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ filt_predict.c $(DBG)
 
 filt_predict_png%O% :
-	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ filt_predict_png.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ filt_predict_png.c $(DBG)
 
 filt_predict_tiff%O% :
-	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ filt_predict_tiff.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ filt_predict_tiff.c $(DBG)
 
 read%O% :
-	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ read.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ read.c $(DBG)
 
 write%O% :
-	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ write.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ write.c $(DBG)
 
 version%O% :
-	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ version.c
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ version.c $(DBG)
 
 coverage-reports : all
 	gcov *.c

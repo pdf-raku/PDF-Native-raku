@@ -74,7 +74,7 @@ class PDF::Native::Writer {
     }
 
     method write-name(Str() $val, Blob $buf? is copy) {
-        my Blob[uint32] $in .= new: $val.ords;
+        my PDF_CODE_POINTS $in .= new: $val.ords;
         my \quads = $in.elems;
         $buf //= Blob[uint8].allocate(12 * quads  +  2);
         self!decode: $buf, pdf_write_name($in, quads, $buf, $buf.bytes);

@@ -7,7 +7,7 @@
 #include "pdf/types.h"
 #include "pdf/write.h"
 
-static void concat(PDF_STRING *out_p, PDF_STRING end_p, PDF_STRING buf) {
+static void concat(char** out_p, char* end_p, char* buf) {
   uint32_t len = strlen(buf);
   if (len > end_p - *out_p) {
     len = end_p - *out_p;
@@ -16,23 +16,23 @@ static void concat(PDF_STRING *out_p, PDF_STRING end_p, PDF_STRING buf) {
   *out_p += len;
 }
 
-DLLEXPORT size_t pdf_write_bool(PDF_BOOL val, uint8_t *out, size_t out_len) {
+DLLEXPORT size_t pdf_write_bool(PDF_BOOL val, char *out, size_t out_len) {
   strncpy(out,
           val ? "true" : "false",
           out_len);
   return strnlen(out, out_len);
 }
 
-DLLEXPORT size_t pdf_write_int(PDF_INT val, uint8_t *out, size_t out_len) {
-  uint8_t buf[32];
+DLLEXPORT size_t pdf_write_int(PDF_INT val, char *out, size_t out_len) {
+  char buf[32];
   snprintf(buf, sizeof(buf), "%d", val);
   strncpy(out, buf, out_len);
   return strnlen(out, out_len);
 }
 
-DLLEXPORT size_t pdf_write_real(PDF_REAL val, uint8_t *out, size_t out_len) {
-  uint8_t buf[32];
-  uint8_t *t;
+DLLEXPORT size_t pdf_write_real(PDF_REAL val, char *out, size_t out_len) {
+  char buf[32];
+  char *t;
   char *dp;
 
   const char* fmt = (abs(val) > 9999999) ? "%.1f" : "%.5f";
@@ -42,7 +42,7 @@ DLLEXPORT size_t pdf_write_real(PDF_REAL val, uint8_t *out, size_t out_len) {
   if (dp) {
     /* delete an excessive decimal portion. */
     for (t = buf + strlen(buf) - 1
-           ; t >= (uint8_t*) dp && (*t == '0' || *t == '.')
+           ; t >= dp && (*t == '0' || *t == '.')
            ; t--) {
       *t = 0;
     }
@@ -52,19 +52,18 @@ DLLEXPORT size_t pdf_write_real(PDF_REAL val, uint8_t *out, size_t out_len) {
   return strnlen(out, out_len);
 }
 
-DLLEXPORT size_t pdf_write_literal(PDF_STRING val, size_t in_len, PDF_STRING out, size_t out_len) {
+DLLEXPORT size_t pdf_write_literal(PDF_STRING val, size_t in_len, char* out, size_t out_len) {
 
   PDF_STRING in_p = val;
   PDF_STRING in_end = val + in_len;
-  PDF_STRING out_p = out;
-  PDF_STRING out_end = out + out_len;
+  char* out_p = out;
+  char* out_end = out + out_len;
 
   if (out_p < out_end) *(out_p++) = '(';
 
   while (in_p < in_end && out_p < out_end) {
-    uint8_t c = *(in_p++);
-    uint8_t esc[3];
-    uint8_t* esc_p = esc;
+    char c = *(in_p++);
+    char esc[3];
     const char* sym;
 
     if (c && (sym = strchr("\n\r\t\f\b\0nrtfb", c))) {
@@ -94,12 +93,12 @@ static uint8_t hex_char(uint8_t c) {
           );
 }
 
-DLLEXPORT size_t pdf_write_hex_string(PDF_STRING val, size_t in_len, PDF_STRING out, size_t out_len) {
+DLLEXPORT size_t pdf_write_hex_string(PDF_STRING val, size_t in_len, char* out, size_t out_len) {
 
   PDF_STRING in_p = val;
   PDF_STRING in_end = val + in_len;
-  PDF_STRING out_p = out;
-  PDF_STRING out_end = out + out_len;
+  char* out_p = out;
+  char* out_end = out + out_len;
 
   if (out_p < out_end) *(out_p++) = '<';
 
@@ -116,7 +115,7 @@ DLLEXPORT size_t pdf_write_hex_string(PDF_STRING val, size_t in_len, PDF_STRING 
 DLLEXPORT size_t pdf_write_xref_seg(PDF_UINT64 *xref, PDF_UINT length, PDF_STRING buf, size_t buf_len) {
   PDF_STRING buf_p = buf;
   PDF_STRING buf_end = buf + buf_len;
-  uint8_t entry[24];
+  char entry[24];
   PDF_UINT i;
 
   for (i = 0; i < length; i++) {
@@ -161,12 +160,12 @@ static uint8_t utf8_encode(uint8_t *bp, uint32_t cp) {
     return 0;
 }
 
-DLLEXPORT size_t pdf_write_name(uint32_t *val, size_t in_len, PDF_STRING out, size_t out_len) {
+DLLEXPORT size_t pdf_write_name(PDF_CODE_POINTS name, size_t in_len, char* out, size_t out_len) {
 
-  uint32_t* in_p = val;
-  uint32_t* in_end = val + in_len;
-  PDF_STRING out_p = out;
-  PDF_STRING out_end = out + out_len;
+  PDF_CODE_POINTS in_p = name;
+  PDF_CODE_POINTS in_end = name + in_len;
+  char* out_p = out;
+  char* out_end = out + out_len;
 
   if (out_p < out_end) *(out_p++) = '/';
 
@@ -188,9 +187,9 @@ DLLEXPORT size_t pdf_write_name(uint32_t *val, size_t in_len, PDF_STRING out, si
       }
       continue;
     }
-    n = utf8_encode(bp,cp);
+    n = utf8_encode(bp, cp);
     for (i = 0; i < n; i++) {
-      uint8_t buf[4];
+      char buf[4];
       byte = bp[i];
       buf[0] = '#';
       buf[1] = hex_char(byte / 16);

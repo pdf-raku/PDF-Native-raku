@@ -1,6 +1,9 @@
 all :
 	cd src/pdf && %MAKE% all
 
+debug :
+	cd src/pdf && %MAKE% clean debug
+
 test-coverage :
 	export CC_COV_OPT="-fprofile-arcs -ftest-coverage";\
 	export LD_COV_OPT="-coverage -lgcov";\
