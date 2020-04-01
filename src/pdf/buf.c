@@ -46,7 +46,7 @@ DLLEXPORT void pdf_buf_unpack_16(uint8_t *in, uint16_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; j++) {
-    out[j]  = in[i++] << 8;
+    out[j] = in[i++] << 8;
     out[j] += in[i++];
   }
 }
@@ -55,7 +55,7 @@ DLLEXPORT void pdf_buf_unpack_24(uint8_t *in, uint32_t *out, size_t in_len) {
   size_t i;
   size_t j = 0;
   for (i = 0; i < in_len; j++) {
-    out[j] += in[i++] << 16;
+    out[j] = in[i++] << 16;
     out[j] += in[i++] << 8;
     out[j] += in[i++];
   }

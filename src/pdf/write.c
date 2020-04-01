@@ -12,21 +12,21 @@ static void concat(char** out_p, char* end_p, char* buf) {
   if (len > end_p - *out_p) {
     len = end_p - *out_p;
   }
-  strncpy(*out_p, buf, len);
+  memcpy(*out_p, buf, len);
   *out_p += len;
 }
 
 DLLEXPORT size_t pdf_write_bool(PDF_BOOL val, char *out, size_t out_len) {
-  strncpy(out,
-          val ? "true" : "false",
-          out_len);
+  memcpy(out,
+         val ? "true" : "false",
+         out_len);
   return strnlen(out, out_len);
 }
 
 DLLEXPORT size_t pdf_write_int(PDF_INT val, char *out, size_t out_len) {
   char buf[32];
   snprintf(buf, sizeof(buf), "%d", val);
-  strncpy(out, buf, out_len);
+  memcpy(out, buf, out_len);
   return strnlen(out, out_len);
 }
 
@@ -48,7 +48,7 @@ DLLEXPORT size_t pdf_write_real(PDF_REAL val, char *out, size_t out_len) {
     }
   }
 
-  strncpy(out, buf, out_len);
+  memcpy(out, buf, out_len);
   return strnlen(out, out_len);
 }
 
@@ -57,7 +57,7 @@ DLLEXPORT size_t pdf_write_literal(PDF_STRING val, size_t in_len, char* out, siz
   PDF_STRING in_p = val;
   PDF_STRING in_end = val + in_len;
   char* out_p = out;
-  char* out_end = out + out_len;
+  char* out_end = out + out_len - 1;
 
   if (out_p < out_end) *(out_p++) = '(';
 
@@ -75,14 +75,18 @@ DLLEXPORT size_t pdf_write_literal(PDF_STRING val, size_t in_len, char* out, siz
     }
     else {
       if (c && strchr("\\()", c)) {
-        if (out_p < out_end) *(out_p++) = '\\';
+          // escape: '\\', '(', ')'
+          if ((out_p+1) >= out_end) {
+              break;
+          }
+          *(out_p++) = '\\';
       }
 
       if (out_p < out_end) *(out_p++) = c;
     }
   }
 
-  if (out_p < out_end) *(out_p++) = ')';
+  if (out_p <= out_end) *(out_p++) = ')';
   return (size_t) (out_p - out);
 }
 
@@ -98,7 +102,7 @@ DLLEXPORT size_t pdf_write_hex_string(PDF_STRING val, size_t in_len, char* out, 
   PDF_STRING in_p = val;
   PDF_STRING in_end = val + in_len;
   char* out_p = out;
-  char* out_end = out + out_len;
+  char* out_end = out + out_len - 1;
 
   if (out_p < out_end) *(out_p++) = '<';
 
@@ -108,7 +112,7 @@ DLLEXPORT size_t pdf_write_hex_string(PDF_STRING val, size_t in_len, char* out, 
     *(out_p++) = hex_char(c % 16);
   }
 
-  if (out_p < out_end) *(out_p++) = '>';
+  if (out_p <= out_end) *(out_p++) = '>';
   return (size_t) (out_p - out);
 }
 

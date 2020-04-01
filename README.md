@@ -22,7 +22,7 @@ These functions implements the predictor stage of TIFF [1] and PNG [2] decoding 
     # PNG samples. First bit on each row, is an indicator in the range 0 .. 4
     my $Predictor = PDF::Native::Filter::Predictors::PNG;
     my $Columns = 4;
-    my $encoded = buf8.new: [
+    my $encoded = blob8.new: [
         2,  0x1, 0x0, 0x10, 0x0,
         2,  0x0, 0x2, 0xcd, 0x0,
         2,  0x0, 0x1, 0x51, 0x0,
@@ -31,7 +31,7 @@ These functions implements the predictor stage of TIFF [1] and PNG [2] decoding 
         0,  0x1, 0x2, 0x3,  0x4,
     ];
 
-    my buf8 $decoded = PDF::Native::Filter::Predictors.decode(
+    my blob8 $decoded = PDF::Native::Filter::Predictors.decode(
                                         $encoded,
                                         :$Columns,
                                         :$Predictor, );
@@ -49,8 +49,8 @@ Also handles variable byte packing and unpacking. As seen in the `/W` parameter 
 ```
     # pack two 4-byte words into an 8 byte buffer
     use PDF::Native::Buf :pack;
-    my buf32 $words .= new(660510, 2634300);
-    my buf8 $bytes = pack($words, 24);
+    my blob32 $words .= new(660510, 2634300);
+    my blob8 $bytes = pack($words, 24);
 
     # pack triples as 1 byte, 2 bytes, 1 byte
     my uint32 @in[4;3] = ([1, 16, 0], [1, 741, 0], [1, 1030, 0], [1, 1446, 0]);
