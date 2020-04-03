@@ -99,9 +99,9 @@ DLLEXPORT size_t pdf_read_xref_seg(PDF_XREF xref, PDF_UINT length, PDF_STRING bu
         && scan_num(buf_p+11, 5, &gen_num)
         ) {
       *(xref++) = obj_first_num++;
+      *(xref++) = (uint64_t) (type == 'n' ? 1 : 0);
       *(xref++) = offset;
       *(xref++) = gen_num;
-      *(xref++) = (uint64_t) (type == 'n' ? 1 : 0);
       buf_p += 20;
     }
     else {

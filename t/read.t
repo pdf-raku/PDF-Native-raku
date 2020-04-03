@@ -10,10 +10,10 @@ given PDF::Native::Reader.new {
     constant Lf = 10.chr;
 
      my uint64 @xref = (
-        0, 0, 65535, free,
-        1, 42, 0, inuse,
-        2, 69, 0, inuse,
-        3, 9000000100, 2, inuse,
+        0, free, 0, 65535,
+        1, inuse, 42, 0,
+        2, inuse, 69, 0,
+        3, inuse, 9000000100, 2,
      );
      my Str $xref-seg = (
          '0000000000 65535 f ',
@@ -28,8 +28,8 @@ given PDF::Native::Reader.new {
      is-deeply .read-entries($buf), @xref;
      $buf = $xref-seg.subst("69", "6x").encode('latin-1');
      @xref = (
-         10, 0, 65535, free,
-         11, 42, 0, inuse,
+         10, free, 0, 65535,
+         11,  inuse, 42, 0,
          0, 0, 0, 0,
          0, 0, 0, 0,
      );
@@ -40,14 +40,14 @@ given PDF::Native::Reader.new {
      my $xref = $xref-str.encode('latin-1');
      is .count-entries($xref), 8, '.count-entries';
      @xref = (
-         10, 0, 65535, free,
-         11, 42, 0, inuse,
-         12, 69, 0, inuse,
-         13, 9000000100, 2, inuse,
-         20, 0, 65535, free,
-         21, 42, 0, inuse,
-         22, 69, 0, inuse,
-         23, 9000000100, 2, inuse,
+         10, free, 0, 65535,
+         11, inuse, 42, 0,
+         12, inuse, 69, 0,
+         13, inuse, 9000000100, 2,
+         20, free, 0, 65535,
+         21, inuse, 42, 0,
+         22, inuse, 69, 0,
+         23, inuse, 9000000100, 2,
      );
      is-deeply .read-xref($xref), @xref, '.read-xref';
 }

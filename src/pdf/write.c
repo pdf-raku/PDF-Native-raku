@@ -122,7 +122,7 @@ DLLEXPORT size_t pdf_write_xref_seg(PDF_XREF xref, PDF_UINT length, PDF_STRING b
   char entry[24];
   PDF_UINT i;
 
-  for (i = 0; i < length; i++) {
+  for (i = 0; i < length && buf_p < buf_end; i++) {
       uint64_t offset  = *(xref++);
       uint64_t gen_num = *(xref++);
       uint8_t type     = *(xref++) ? 'n' : 'f';
