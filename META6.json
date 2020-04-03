@@ -5,11 +5,11 @@
   "license" : "Artistic-2.0",
   "perl" : "6.c",
   "provides" : {
-      "PDF::Native" : "lib/PDF/Native.pm",
-      "PDF::Native::Buf" : "lib/PDF/Native/Buf.pm",
-      "PDF::Native::Filter::Predictors" : "lib/PDF/Native/Filter/Predictors.pm",
-      "PDF::Native::Reader" : "lib/PDF/Native/Reader.pm",
-      "PDF::Native::Writer" : "lib/PDF/Native/Writer.pm"
+      "PDF::Native" : "lib/PDF/Native.rakumod",
+      "PDF::Native::Buf" : "lib/PDF/Native/Buf.rakumod",
+      "PDF::Native::Filter::Predictors" : "lib/PDF/Native/Filter/Predictors.rakumod",
+      "PDF::Native::Reader" : "lib/PDF/Native/Reader.rakumod",
+      "PDF::Native::Writer" : "lib/PDF/Native/Writer.rakumod"
   },
   "resources" : [
     "libraries/pdf"

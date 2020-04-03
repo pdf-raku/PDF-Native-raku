@@ -13,3 +13,6 @@ script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then make test-coverage; else make test; fi
 after_success:
   - if [ "$TRAVIS_OS_NAME" == "linux" ] ; then bash <(curl -s https://codecov.io/bash); fi
+script:
+  - prove -ve "perl6 -I."
+  - zef install .
