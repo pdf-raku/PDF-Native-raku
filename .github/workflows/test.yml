@@ -30,6 +30,7 @@ jobs:
           raku-version: ${{ matrix.raku-version }}
       - name: Install Dependencies
         run: |
+          zef install --/test LibraryMake
           zef install --/test App::Prove6
           zef install --deps-only .
           zef build .
