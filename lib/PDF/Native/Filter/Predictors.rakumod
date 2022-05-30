@@ -66,7 +66,7 @@ class PDF::Native::Filter::Predictors {
         my uint $row-size = ($colors * $bpc * $Columns + 7) div 8;
         my $rows = +$buf div $row-size;
         # preallocate, allowing room for per-row data + tag + padding
-        my buf8 $out = buf8.allocate($rows * ($row-size + 1));
+        my blob8 $out .= allocate($rows * ($row-size + 1));
 
         pdf_filt_predict_encode($buf, $out, $Predictor, $colors, $bpc, $Columns, $rows);
 
@@ -112,7 +112,7 @@ class PDF::Native::Filter::Predictors {
 
         my uint $row-size = ($colors * $bpc * $Columns + 7) div 8;
         my $rows = +$buf div ($row-size + 1);
-        my buf8 $out = buf8.allocate($rows * $row-size);
+        my blob8 $out .= allocate($rows * $row-size);
 
         pdf_filt_predict_decode($buf, $out, $Predictor, $colors, $bpc, $Columns, $rows);
 

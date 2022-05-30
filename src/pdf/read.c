@@ -105,6 +105,8 @@ DLLEXPORT size_t pdf_read_xref_seg(PDF_XREF xref, PDF_UINT length, PDF_STRING bu
       buf_p += 20;
     }
     else {
+      // Error
+      buf_p = buf;
       break;
     }
   }
@@ -119,6 +121,7 @@ DLLEXPORT size_t pdf_read_xref(PDF_XREF xref, PDF_STRING buf, size_t buf_len) {
   uint64_t obj_first_num;
   uint64_t obj_count;
   uint8_t line_len;
+  size_t n;
 
   buf_p += skip_xref(buf_p, buf_end);
 
@@ -126,7 +129,11 @@ DLLEXPORT size_t pdf_read_xref(PDF_XREF xref, PDF_STRING buf, size_t buf_len) {
          && (sscanf(buf_p, "%ld %ld", &obj_first_num, &obj_count) == 2)
          && (line_len = _line_length(buf_p, buf_end))) {
     buf_p += line_len;
-    pdf_read_xref_seg(xref, obj_count, buf_p, buf_end - buf_p + 1, obj_first_num);
+    n = pdf_read_xref_seg(xref, obj_count, buf_p, buf_end - buf_p + 1, obj_first_num);
+    if (n == 0 && obj_count != 0) {
+      // error
+      return 0;
+    }
     entries += obj_count;
     buf_p += 20 * obj_count;
     xref += 4 * obj_count;

@@ -1,18 +1,23 @@
 # PDF-Native-p6
 
-[![Build Status](https://travis-ci.org/p6-pdf/PDF-Native-p6.svg?branch=master)](https://travis-ci.org/p6-pdf/PDF-Native-p6) [![codecov](https://codecov.io/gh/p6-pdf/PDF-Native-p6/branch/master/graph/badge.svg)](https://codecov.io/gh/p6-pdf/PDF-Native-p6)
 
  <a href="https://ci.appveyor.com/project/p6-pdf/PDF-Native-p6/branch/master"><img src="https://ci.appveyor.com/api/projects/status/github/p6-pdf/PDF-Native-p6?branch=master&passingText=Windows%20-%20OK&failingText=Windows%20-%20FAIL&pendingText=Windows%20-%20pending&svg=true"></a>
+
 Low level native library of PDF support functions.
 
-The immediate aim is to optionally boost performance in the PDF tool-chain including encryption, reading, writing, stream and filter functions and PDF::Content image processing and encoding functions.
+The immediate aim is to optionally boost performance in the PDF tool-chain.
 
-So far covered are:
+Potential areas include encryption, reading, writing, stream and filter functions and PDF::Content image processing and encoding functions.
+
+So far just a few areas are covered, including:
 
 - the PDF::IO::Filter::Predictor `decode` and `encode` functions.
 - the widely used PDF::IO::Util `pack` and `unpack` functions.
-- reading of xrefs
+- writing of cross reference tables
 - writing of strings, numerics and xrefs
+
+Just installing this module along with PDF v0.5.7+ should provide some performance
+boost for larger PDF files.
 
 ### `PDF::Native::Filter::Predictors`
 

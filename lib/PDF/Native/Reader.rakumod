@@ -34,6 +34,8 @@ class PDF::Native::Reader {
         my $xref //= array[uint64].new;
         $xref[($rows||1) * 4  -  1] ||= 0;
         $!xref-bytes = pdf_read_xref($xref, $buf, $buf.bytes);
+        $xref = Nil
+            if $rows && $!xref-bytes == 0;
         $xref;
     }
 }
