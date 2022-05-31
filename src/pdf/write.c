@@ -36,7 +36,7 @@ DLLEXPORT size_t pdf_write_real(PDF_REAL val, char *out, size_t out_len) {
   char *t;
   char *dp;
 
-  const char* fmt = (abs(val) > 9999999) ? "%.1f" : "%.5f";
+  const char* fmt = (val > 9999999 || -val > 9999999) ? "%.1f" : "%.5f";
   snprintf(buf, sizeof(buf), fmt, val);
 
   dp = strchr(buf, '.');
@@ -128,7 +128,7 @@ DLLEXPORT size_t pdf_write_xref_seg(PDF_XREF xref, PDF_UINT length, PDF_STRING b
       uint64_t gen_num = *(xref++);
       uint8_t type     = *(xref++) ? 'n' : 'f';
 
-      sprintf(entry, PRIu64 " " PRIu64 " %c \n", offset, gen_num, type);
+      sprintf(entry, "%010"PRIu64" %05" PRIu64" %c \n", offset, gen_num, type);
       concat(&buf_p, buf_end, entry);
   }
 

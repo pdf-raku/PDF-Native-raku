@@ -3,6 +3,7 @@
 *.o
 *.so
 *.dll
+*.obj
 *.dylib
 *.bak
 *.gcov

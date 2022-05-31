@@ -25,6 +25,7 @@ jobs:
           refreshenv
       - name: Update DLL
         run: |
+          zef install LibraryMake
           raku Build.pm6 --rebuild
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
