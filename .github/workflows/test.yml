@@ -12,7 +12,6 @@ jobs:
   build-libraries:
     runs-on: windows-latest
     steps:
-      - name: Setup Build Environment
       - uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x86
