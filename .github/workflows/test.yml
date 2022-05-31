@@ -12,17 +12,16 @@ jobs:
   build-libraries:
     runs-on: windows-latest
     steps:
+      - name: Setup Build Environment
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - uses: actions/checkout@v2
       - uses: Raku/setup-raku@v1
         with:
           raku-version: '2022.04'
       - uses: actions/checkout@v2
       - uses: chetan/git-restore-mtime-action@v1
-      - name: Setup Build Environment
-        run: |
-          choco install make
-          choco install mingw
-          refreshenv
       - name: Update DLL
         run: |
           zef install --/test LibraryMake
