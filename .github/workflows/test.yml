@@ -30,6 +30,7 @@ jobs:
           commit_message: Automated Windows DLL save
           file_pattern: resources/libraries/pdf.dll
   raku:
+    needs: build-libraries
     strategy:
       matrix:
         os:
