@@ -53,7 +53,7 @@ jobs:
           zef build .
       - name: Run Tests
         run: |
-        prove6 -I. t
-        # also verify compatibility with last PDF version
-        zef install .
-        zef --verbose install PDF
+          prove6 -I. t
+          # also verify compatibility with last PDF version
+          zef install .
+          zef --verbose install PDF
