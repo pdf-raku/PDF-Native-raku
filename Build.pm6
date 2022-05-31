@@ -29,6 +29,11 @@ class Build {
 }
 
 # Build.pm can also be run standalone
-sub MAIN(Str $working-directory = '.' ) {
-    Build.new.build($working-directory);
+sub MAIN(Str $working-directory = '.', :$rebuild = !Rakudo::Internals.IS-WIN ) {
+    if $rebuild {
+        Build.new.build($working-directory);
+    }
+    else {
+        note "Using pre-built Binaries";
+    }
 }

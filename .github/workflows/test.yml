@@ -21,7 +21,7 @@ jobs:
           refreshenv
       - name: Update DLL
         run: |
-          make -f build\makefile-windows dll # build distribution dll
+          raku Build.pm6 --rebuild
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Automated Windows DLL save
