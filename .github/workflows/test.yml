@@ -13,8 +13,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x86
       - uses: actions/checkout@v2
       - uses: Raku/setup-raku@v1
         with:
@@ -55,6 +53,9 @@ jobs:
           zef install --/test App::Prove6
           zef install --deps-only .
           zef build .
+      - name: Install Prerequisite Libraries (MacOS)
+        if: matrix.os == 'macOS-latest'
+        run: brew install openssl
       - name: Run Tests
         run: |
           prove6 -I. t
