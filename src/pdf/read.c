@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include "pdf.h"
 #include "pdf/types.h"
 #include "pdf/read.h"
@@ -76,7 +77,7 @@ DLLEXPORT size_t pdf_read_xref_entry_count(PDF_STRING buf, size_t buf_len) {
   buf_p += skip_xref(buf_p, buf_end);
 
   while ((buf_end - buf_p > 20)
-         && (sscanf(buf_p, "%lld %lld", &obj_first_num, &obj_count) == 2)
+         && (sscanf(buf_p, PRIu64 " " PRIu64, &obj_first_num, &obj_count) == 2)
          && (line_len = _line_length(buf_p, buf_end))) {
     entries += obj_count;
     buf_p += line_len + 20 * obj_count;
