@@ -49,17 +49,18 @@ class PDF::Native::Writer {
     }
 
     method write-literal(Str() $val, Blob $buf? is copy) {
-       my Blob[uint8] $enc = $val.encode: "latin-1";
-       my \bytes = $enc.bytes;
-       $buf //= Blob[uint8].allocate(2 * bytes  +  3);
-       self!decode: $buf, pdf_write_literal($enc, bytes, $buf, $buf.bytes);
+
+        my Blob[uint8] $enc = $val.encode: "latin-1";
+        my \bytes-in = $enc.bytes;
+        $buf //= Blob[uint8].allocate(2 * bytes-in  +  3);
+        self!decode: $buf, pdf_write_literal($enc, bytes-in, $buf, $buf.bytes);
     }
 
     method write-hex-string(Str() $val, Blob $buf? is copy) {
         my Blob[uint8] $enc = $val.encode: "latin-1";
-        my \bytes = $enc.bytes;
-        $buf //= Blob[uint8].allocate(2 * bytes  +  3);
-        self!decode: $buf, pdf_write_hex_string($enc, bytes, $buf, $buf.bytes);
+        my \bytes-in = $enc.bytes;
+        $buf //= Blob[uint8].allocate(2 * bytes-in  +  3);
+        self!decode: $buf, pdf_write_hex_string($enc, bytes-in, $buf, $buf.bytes);
     }
 
     multi method write-entries(array $xref, Blob $buf? is copy) {

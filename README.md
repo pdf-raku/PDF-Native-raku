@@ -1,11 +1,8 @@
-# PDF-Native-p6
-
-
- <a href="https://ci.appveyor.com/project/p6-pdf/PDF-Native-p6/branch/master"><img src="https://ci.appveyor.com/api/projects/status/github/p6-pdf/PDF-Native-p6?branch=master&passingText=Windows%20-%20OK&failingText=Windows%20-%20FAIL&pendingText=Windows%20-%20pending&svg=true"></a>
+# PDF-Native-raku
 
 Low level native library of PDF support functions.
 
-The immediate aim is to optionally boost performance in the PDF tool-chain.
+The immediate aim is to boost performance in the PDF tool-chain.
 
 Potential areas include encryption, reading, writing, stream and filter functions and PDF::Content image processing and encoding functions.
 
@@ -13,7 +10,7 @@ So far just a few areas are covered, including:
 
 - the PDF::IO::Filter::Predictor `decode` and `encode` functions.
 - the widely used PDF::IO::Util `pack` and `unpack` functions.
-- writing of cross reference tables
+- reading and writing of cross reference tables
 - writing of strings, numerics and xrefs
 
 Just installing this module along with PDF v0.5.7+ should provide some performance
@@ -58,7 +55,7 @@ Also handles variable byte packing and unpacking. As seen in the `/W` parameter 
     my blob8 $bytes = pack($words, 24);
 
     # pack triples as 1 byte, 2 bytes, 1 byte
-    my uint32 @in[4;3] = ([1, 16, 0], [1, 741, 0], [1, 1030, 0], [1, 1446, 0]);
+    my uint32 @in[4;3] = [1, 16, 0], [1, 741, 0], [1, 1030, 0], [1, 1446, 0];
     my $W = [1, 2, 1];
     $bytes = pack(@in, $W);
 ```
@@ -132,10 +129,6 @@ Some other areas under consideration:
 
 There's sure to be others.
 
-** Experimental Only **, at this stage.
-
-Currently giving some benefits on work in development on larger PDFs.
-
-This module will not be deployed until there as been significant advancement on Rakudo/MoarVM JIT, and I've had a chance to benchmark this.
+Currently giving noticeable benefits on larger PDFs.
 
 
