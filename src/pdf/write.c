@@ -127,7 +127,7 @@ DLLEXPORT size_t pdf_write_xref_seg(PDF_XREF xref, PDF_UINT length, PDF_STRING b
       uint64_t gen_num = *(xref++);
       uint8_t type     = *(xref++) ? 'n' : 'f';
 
-      sprintf(entry, "%010ld %05ld %c \n", offset, gen_num, type);
+      sprintf(entry, "%010lld %05lld %c \n", offset, gen_num, type);
       concat(&buf_p, buf_end, entry);
   }
 
