@@ -20,20 +20,20 @@ class Build {
 	shell(%vars<MAKE>);
     }
 
-    method build($workdir) {
-        my $destdir = 'resources/libraries';
-        mkdir $destdir;
-        make($workdir, "$destdir", :libname<pdf>);
+    method build($workdir, :$rebuild) {
+        if $rebuild {
+            my $destdir = 'resources/libraries';
+            mkdir $destdir;
+            make($workdir, "$destdir", :libname<pdf>);
+        }
+        else {
+            note "Using pre-built Binaries";
+        }
         True;
     }
 }
 
 # Build.pm can also be run standalone
 sub MAIN(Str $working-directory = '.', :$rebuild = !Rakudo::Internals.IS-WIN ) {
-    if $rebuild {
-        Build.new.build($working-directory);
-    }
-    else {
-        note "Using pre-built Binaries";
-    }
+    Build.new.build($working-directory, :$rebuild);
 }
