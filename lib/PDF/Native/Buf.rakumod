@@ -14,7 +14,7 @@ module PDF::Native::Buf {
     sub pdf_buf_unpack_16(Blob, Blob, size_t) is native(libpdf) { * }
     sub pdf_buf_unpack_24(Blob, Blob, size_t) is native(libpdf) { * }
     sub pdf_buf_unpack_32(Blob, Blob, size_t) is native(libpdf) { * }
-    sub pdf_buf_unpack_64_W(Blob, Blob, size_t, Blob, size_t) is native(libpdf) { * }
+    sub pdf_buf_unpack_W_64(Blob, Blob, size_t, Blob, size_t) is native(libpdf) { * }
 
     sub pdf_buf_pack_1(Blob, Blob, size_t)  is native(libpdf) { * }
     sub pdf_buf_pack_2(Blob, Blob, size_t)  is native(libpdf) { * }
@@ -22,7 +22,8 @@ module PDF::Native::Buf {
     sub pdf_buf_pack_16(Blob, Blob, size_t) is native(libpdf) { * }
     sub pdf_buf_pack_24(Blob, Blob, size_t) is native(libpdf) { * }
     sub pdf_buf_pack_32(Blob, Blob, size_t) is native(libpdf) { * }
-    sub pdf_buf_pack_64_W(Blob, Blob, size_t, Blob, size_t) is native(libpdf) { * }
+    sub pdf_buf_pack_compute_W_64(Blob, size_t, Blob, size_t) is native(libpdf) { * }
+    sub pdf_buf_pack_W_64(Blob, Blob, size_t, Blob, size_t --> size_t) is native(libpdf) { * }
 
     my subset PackingSize where 1|2|4|8|16|24|32;
     sub container(PackingSize $bits) {
@@ -71,7 +72,7 @@ module PDF::Native::Buf {
         my blob8 $W-buf .= new($W);
         my size_t $out-len = ($in-len * +$W) div $W.sum;
         my $out-buf := buf64.allocate($out-len);
-        pdf_buf_unpack_64_W($in-buf, $out-buf, $in-len, $W-buf, +$W);
+        pdf_buf_unpack_W_64($in-buf, $out-buf, $in-len, $W-buf, +$W);
 	my uint64 @shaped[$out-len div +$W;+$W] Z= $out-buf;
         @shaped;
     }
@@ -84,8 +85,15 @@ module PDF::Native::Buf {
         my blob64 $in-buf = $in ~~ blob64 ?? $in !! blob64.new($in);
         my blob8 $W-buf .= new($W);
         my size_t $out-len = $rows * $cols-in;
-        pdf_buf_pack_64_W($in-buf, $out, $out-len, $W-buf, +$W);
+        pdf_buf_pack_W_64($in-buf, $out, $out-len, $W-buf, +$W);
         $out;
+    }
+
+    sub packing-widths($in, UInt:D $n) is export(:pack) {
+        my buf8 $W-buf .= allocate($n);
+        my blob64 $in-buf = $in ~~ blob64 ?? $in !! blob64.new($in);
+        pdf_buf_pack_compute_W_64($in-buf, +$in-buf, $W-buf, $n);
+        $W-buf.List;
     }
 
     multi sub pack(Blob $buf, 8) { $buf }

@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 15;
+plan 16;
 
 use PDF::Native::Buf :pack;
 use NativeCall;
@@ -31,6 +31,7 @@ my uint64 @in1[1;3] = ([10, 1318440, 12860],);
 my $idx;
 my $W = [1, 3, 2];
 is-deeply ($idx = unpack($bytes, $W)).values, @in1.values, '8 => [1, 3, 2] unpack';
+is-deeply packing-widths($idx, 3), (1, 3, 2), 'packing widths';
 is-deeply pack($idx, [1, 3, 2]), buf8.new(@bytes[0..5]), '8 => [1, 3, 2] => 8 round-trip';
 
 my uint64 @in[4;3] = ([1, 16, 0], [1, 741, 0], [1, 1030, 0], [1, 1446, 0]);
