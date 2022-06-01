@@ -1,10 +1,12 @@
 # PDF-Native-raku
 
-Low level native library of PDF support functions.
+Low level native library of selected PDF functions.
 
-The immediate aim is to boost performance in the PDF tool-chain.
+Just installing this module along with PDF v0.5.7+ provides some
+performance boost. Currently for reading and writing larger PDF files.
 
-Potential areas include encryption, reading, writing, stream and filter functions and PDF::Content image processing and encoding functions.
+Potential areas include encryption, reading, writing, stream and filter
+functions and PDF::Content image processing and encoding functions.
 
 So far just a few areas are covered, including:
 
@@ -13,8 +15,6 @@ So far just a few areas are covered, including:
 - reading and writing of cross reference tables
 - writing of strings, numerics and xrefs
 
-Just installing this module along with PDF v0.5.7+ should provide some performance
-boost for larger PDF files.
 
 ### `PDF::Native::Filter::Predictors`
 

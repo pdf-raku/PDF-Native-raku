@@ -27,7 +27,7 @@ class Build {
             make($workdir, "$destdir", :libname<pdf>);
         }
         else {
-            note "Using pre-built Binaries";
+            note "Using pre-built library ('{$?FILE.IO.basename} --rebuild' to override)";
         }
         True;
     }

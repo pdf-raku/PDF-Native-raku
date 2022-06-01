@@ -77,7 +77,7 @@ class PDF::Native::Filter::Predictors {
     multi method encode($buf where Blob, Predictor :$Predictor = None,
 			UInt :$Columns=1, UInt :$Colors=1,
 			BPC :$BitsPerComponent=8,
-        ) is default {
+        ) {
         $buf;
     }
 
@@ -121,7 +121,7 @@ class PDF::Native::Filter::Predictors {
 
     multi method decode($buf, Predictor :$Predictor = None,
 			UInt :$Columns=1, UInt :$Colors=8,
-			BPC :$BitsPerComponent=8 ) is default {
+			BPC :$BitsPerComponent=8 ) {
         $buf;
     }
 

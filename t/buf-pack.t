@@ -30,10 +30,10 @@ is-deeply ($buf = pack([2 ** 32 - 1415192289 - 1,], 32)), blob8.new(255-84, 255-
 my uint32 @in1[1;3] = ([10, 1318440, 12860],);
 my $idx;
 is-deeply ($idx = unpack($bytes, [1, 3, 2])).values, @in1.values, '8 => [1, 3, 2] unpack';
-is-deeply pack($idx, [1, 3, 2]), blob8.new(@bytes[0..5]), '8 => [1, 3, 2] => 8 round-trip';
+is-deeply pack($idx, [1, 3, 2]), buf8.new(@bytes[0..5]), '8 => [1, 3, 2] => 8 round-trip';
 
 my uint32 @in[4;3] = ([1, 16, 0], [1, 741, 0], [1, 1030, 0], [1, 1446, 0]);
 my $W = [1, 2, 1];
-my $out = blob8.new(1, 0, 16, 0,  1, 2, 229, 0,  1, 4, 6, 0,  1, 5, 166, 0);
+my $out = buf8.new(1, 0, 16, 0,  1, 2, 229, 0,  1, 4, 6, 0,  1, 5, 166, 0);
 
 is-deeply pack(@in, $W), $out, '$W[1, 2, 1] pack';

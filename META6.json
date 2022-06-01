@@ -1,6 +1,7 @@
 {
+  "auth" : "zef:dwarring",
   "authors" : [ "David Warring" ],
-  "description" : "Low level PDF routines (experimental)",
+  "description" : "Native drop-in routines for PDF",
   "name" : "PDF::Native",
   "license" : "Artistic-2.0",
   "perl" : "6.c",
@@ -14,7 +15,7 @@
   "resources" : [
     "libraries/pdf"
   ],
-  "source-url" : "git://github.com/p6-pdf/libpdf-p6.git",
+  "source-url" : "git://github.com/pdf-raku/PDF-Native-raku.git",
   "depends" : [ "LibraryMake" ],
   "build-depends" : [ ],
   "test-depends" : [ ],

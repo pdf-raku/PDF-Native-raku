@@ -69,7 +69,7 @@ class PDF::Native::Writer {
         $buf //= Blob[uint8].allocate(rows * 22 + 1);
         self!decode: $buf, pdf_write_xref_seg(buf64.new($xref), rows, $buf, $buf.bytes);
     }
-    multi method write-entries(List $_, |c) is default {
+    multi method write-entries(List $_, |c) {
         my uint64 @shaped[.elems;3] = .List;
         self.write-entries(@shaped, |c);
     }

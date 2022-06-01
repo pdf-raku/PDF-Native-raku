@@ -82,7 +82,7 @@ module PDF::Native::Buf {
         my $rows = $in.elems;
         my $cols-in = +$W;
         my $cols-out = $W.sum;
-	my $out = blob8.allocate($rows * $cols-out);
+	my $out = buf8.allocate($rows * $cols-out);
         my buf32 $in-buf = $in ~~ buf32 ?? $in !! buf32.new($in);
         my buf8 $W-buf .= new($W);
         pdf_buf_pack_32_W($in-buf, $out, $rows * $cols-in, $W-buf, +$W);
@@ -90,7 +90,7 @@ module PDF::Native::Buf {
     }
 
     multi sub pack(Blob $buf, 8) { $buf }
-    multi sub pack($nums, 8) { buf8.new: $nums }
+    multi sub pack($nums, 8) { blob8.new: $nums }
     multi sub unpack(Blob $b, 8) { $b }
-    multi sub unpack($nums, 8) { buf8.new: $nums }
+    multi sub unpack($nums, 8) { blob8.new: $nums }
 }
