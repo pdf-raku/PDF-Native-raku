@@ -89,7 +89,7 @@ module PDF::Native::Buf {
         $out;
     }
 
-    sub packing-widths($in, UInt:D $n) is export(:pack) {
+    our sub packing-widths($in, UInt:D $n) is export(:pack) {
         my buf8 $W-buf .= allocate($n);
         my blob64 $in-buf = $in ~~ blob64 ?? $in !! blob64.new($in);
         pdf_buf_pack_compute_W_64($in-buf, +$in-buf, $W-buf, $n);

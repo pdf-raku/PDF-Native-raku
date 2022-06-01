@@ -1,7 +1,7 @@
 # PDF-Native-raku
 
-This module provides a selection of native PDF functions as alternatives
-to pure Raku implementations in the PDF module.
+This module provides a selection of native implementations of
+PDF functions.
 
 Just installing this module along with PDF v0.5.7+ provides some
 increase in performance.
@@ -125,7 +125,6 @@ given PDF::Native::Writer {
 
 Some other areas under consideration:
 
-- PDF 1.5+ cross reference stream transcoding (PDF::COS::Type::XRef)
 - C equivalents for other PDF::IO::Filter encoding functions, including predictors, ASCII-Hex, ASCII-85 and run-length encoding
 - Support for type-1 character transcoding (PDF::Content::Font::Enc::Glyphic)
 - Support for PDF::Content::Image, including color-channel separation and (de)multiplexing. GIF decompression de-interlacing.

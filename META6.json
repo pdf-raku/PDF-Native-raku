@@ -1,23 +1,31 @@
 {
-  "auth" : "zef:dwarring",
-  "authors" : [ "David Warring" ],
-  "description" : "Native drop-in routines for PDF",
-  "name" : "PDF::Native",
-  "license" : "Artistic-2.0",
-  "perl" : "6.c",
-  "provides" : {
-      "PDF::Native" : "lib/PDF/Native.rakumod",
-      "PDF::Native::Buf" : "lib/PDF/Native/Buf.rakumod",
-      "PDF::Native::Filter::Predictors" : "lib/PDF/Native/Filter/Predictors.rakumod",
-      "PDF::Native::Reader" : "lib/PDF/Native/Reader.rakumod",
-      "PDF::Native::Writer" : "lib/PDF/Native/Writer.rakumod"
+  "auth": "zef:dwarring",
+  "authors": [
+    "David Warring"
+  ],
+  "build-depends": [
+  ],
+  "depends": [
+    "LibraryMake"
+  ],
+  "description": "Native drop-in routines for PDF",
+  "license": "Artistic-2.0",
+  "name": "PDF::Native",
+  "perl": "6.c",
+  "provides": {
+    "PDF::Native": "lib/PDF/Native.rakumod",
+    "PDF::Native::Buf": "lib/PDF/Native/Buf.rakumod",
+    "PDF::Native::Filter::Predictors": "lib/PDF/Native/Filter/Predictors.rakumod",
+    "PDF::Native::Reader": "lib/PDF/Native/Reader.rakumod",
+    "PDF::Native::Writer": "lib/PDF/Native/Writer.rakumod"
   },
-  "resources" : [
+  "resources": [
     "libraries/pdf"
   ],
-  "source-url" : "git://github.com/pdf-raku/PDF-Native-raku.git",
-  "depends" : [ "LibraryMake" ],
-  "build-depends" : [ ],
-  "test-depends" : [ ],
-  "version" : "0.0.1"
+  "source-url": "git://github.com/pdf-raku/PDF-Native-raku.git",
+  "tags": [
+  ],
+  "test-depends": [
+  ],
+  "version": "0.0.1"
 }
