@@ -1,20 +1,22 @@
 # PDF-Native-raku
 
-Low level native library of selected PDF functions.
+This module provides a selection of native PDF functions as alternatives
+to pure Raku implementations in the PDF module.
 
 Just installing this module along with PDF v0.5.7+ provides some
-performance boost. Currently for reading and writing larger PDF files.
+increase in performance.
 
-Potential areas include encryption, reading, writing, stream and filter
-functions and PDF::Content image processing and encoding functions.
+Currently, this module implements a hand-full of functions, mostly
+related to reading and writing larger PDF files.
 
-So far just a few areas are covered, including:
+So far, just a subset of potential areas are covered:
 
 - the PDF::IO::Filter::Predictor `decode` and `encode` functions.
 - the widely used PDF::IO::Util `pack` and `unpack` functions.
-- reading and writing of cross reference tables
-- writing of strings, numerics and xrefs
+- reading and writing of cross reference tables (pre PDF-1.5 format).
+- writing of strings, numerics and cross-reference tables.
 
+## Classes in this Distribution
 
 ### `PDF::Native::Filter::Predictors`
 
@@ -123,8 +125,9 @@ given PDF::Native::Writer {
 
 Some other areas under consideration:
 
+- PDF 1.5+ cross reference stream transcoding (PDF::COS::Type::XRef)
 - C equivalents for other PDF::IO::Filter encoding functions, including predictors, ASCII-Hex, ASCII-85 and run-length encoding
-
+- Support for type-1 character transcoding (PDF::Content::Font::Enc::Glyphic)
 - Support for PDF::Content::Image, including color-channel separation and (de)multiplexing. GIF decompression de-interlacing.
 
 There's sure to be others.

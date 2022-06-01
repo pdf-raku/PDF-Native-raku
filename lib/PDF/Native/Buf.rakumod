@@ -14,7 +14,7 @@ module PDF::Native::Buf {
     sub pdf_buf_unpack_16(Blob, Blob, size_t) is native(libpdf) { * }
     sub pdf_buf_unpack_24(Blob, Blob, size_t) is native(libpdf) { * }
     sub pdf_buf_unpack_32(Blob, Blob, size_t) is native(libpdf) { * }
-    sub pdf_buf_unpack_32_W(Blob, Blob, size_t, Blob, size_t) is native(libpdf) { * }
+    sub pdf_buf_unpack_64_W(Blob, Blob, size_t, Blob, size_t) is native(libpdf) { * }
 
     sub pdf_buf_pack_1(Blob, Blob, size_t)  is native(libpdf) { * }
     sub pdf_buf_pack_2(Blob, Blob, size_t)  is native(libpdf) { * }
@@ -22,7 +22,7 @@ module PDF::Native::Buf {
     sub pdf_buf_pack_16(Blob, Blob, size_t) is native(libpdf) { * }
     sub pdf_buf_pack_24(Blob, Blob, size_t) is native(libpdf) { * }
     sub pdf_buf_pack_32(Blob, Blob, size_t) is native(libpdf) { * }
-    sub pdf_buf_pack_32_W(Blob, Blob, size_t, Blob, size_t) is native(libpdf) { * }
+    sub pdf_buf_pack_64_W(Blob, Blob, size_t, Blob, size_t) is native(libpdf) { * }
 
     my subset PackingSize where 1|2|4|8|16|24|32;
     sub container(PackingSize $bits) {
@@ -66,15 +66,13 @@ module PDF::Native::Buf {
     #| variable resampling, e.g. to decode/encode:
     #|   obj 123 0 << /Type /XRef /W [1, 3, 1]
     multi sub unpack( $in!, Array $W!)  {
-        my uint32 $in-len = +$in;
+        my size_t $in-len = +$in;
         my blob8 $in-buf = $in ~~ blob8 ?? $in !! blob8.new($in);
         my blob8 $W-buf .= new($W);
-        my $out-buf := buf32.new;
-        my $out-len = ($in-len * +$W) div $W.sum;
-        $out-buf[$out-len - 1] = 0
-           if $out-len;
-        pdf_buf_unpack_32_W($in-buf, $out-buf, $in-len, $W-buf, +$W);
-	my uint32 @shaped[$out-len div +$W;+$W] Z= $out-buf;
+        my size_t $out-len = ($in-len * +$W) div $W.sum;
+        my $out-buf := buf64.allocate($out-len);
+        pdf_buf_unpack_64_W($in-buf, $out-buf, $in-len, $W-buf, +$W);
+	my uint64 @shaped[$out-len div +$W;+$W] Z= $out-buf;
         @shaped;
     }
 
@@ -83,9 +81,10 @@ module PDF::Native::Buf {
         my $cols-in = +$W;
         my $cols-out = $W.sum;
 	my $out = buf8.allocate($rows * $cols-out);
-        my buf32 $in-buf = $in ~~ buf32 ?? $in !! buf32.new($in);
-        my buf8 $W-buf .= new($W);
-        pdf_buf_pack_32_W($in-buf, $out, $rows * $cols-in, $W-buf, +$W);
+        my blob64 $in-buf = $in ~~ blob64 ?? $in !! blob64.new($in);
+        my blob8 $W-buf .= new($W);
+        my size_t $out-len = $rows * $cols-in;
+        pdf_buf_pack_64_W($in-buf, $out, $out-len, $W-buf, +$W);
         $out;
     }
 
