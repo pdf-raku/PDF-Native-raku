@@ -9,4 +9,5 @@
 *.gcda
 *.gcno
 Makefile
+PDF-Native-*
 blib/

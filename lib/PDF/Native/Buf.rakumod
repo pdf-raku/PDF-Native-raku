@@ -23,7 +23,7 @@ module PDF::Native::Buf {
     sub pdf_buf_pack_24(Blob, Blob, size_t) is native(libpdf) { * }
     sub pdf_buf_pack_32(Blob, Blob, size_t) is native(libpdf) { * }
     sub pdf_buf_pack_compute_W_64(Blob, size_t, Blob, size_t) is native(libpdf) { * }
-    sub pdf_buf_pack_W_64(Blob, Blob, size_t, Blob, size_t --> size_t) is native(libpdf) { * }
+    sub pdf_buf_pack_W_64(Blob, Blob, size_t, Blob, size_t) is native(libpdf) { * }
 
     my subset PackingSize where 1|2|4|8|16|24|32;
     sub container(PackingSize $bits) {
