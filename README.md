@@ -58,8 +58,8 @@ Also handles variable byte packing and unpacking. As seen in the `/W` parameter 
 
     # pack triples as 1 byte, 2 bytes, 1 byte
     my uint32 @in[4;3] = [1, 16, 0], [1, 741, 0], [1, 1030, 0], [1, 1446, 0];
-    my $W = [1, 2, 1];
-    $bytes = pack(@in, $W);
+    my @W = packing-widths(@in, 3);    # [1, 2, 0];
+    $bytes = pack(@in, @W);
 ```
 
 ### `PDF::Native::Reader`

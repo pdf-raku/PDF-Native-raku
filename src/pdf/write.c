@@ -4,11 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <assert.h>
 #include "pdf.h"
 #include "pdf/types.h"
 #include "pdf/write.h"
 
-static void concat(char** out_p, char* end_p, char* buf) {
+static void _concat(char** out_p, char* end_p, char* buf) {
   uint32_t len = strlen(buf);
   if (len > end_p - *out_p) {
     len = end_p - *out_p;
@@ -18,39 +19,42 @@ static void concat(char** out_p, char* end_p, char* buf) {
 }
 
 DLLEXPORT size_t pdf_write_bool(PDF_BOOL val, char *out, size_t out_len) {
-  memcpy(out,
-         val ? "true" : "false",
-         out_len);
+  strncpy(out, val ? "true" : "false", out_len);
   return strnlen(out, out_len);
 }
 
 DLLEXPORT size_t pdf_write_int(PDF_INT val, char *out, size_t out_len) {
   char buf[32];
   snprintf(buf, sizeof(buf), "%d", val);
-  memcpy(out, buf, out_len);
+  strncpy(out, buf, out_len);
   return strnlen(out, out_len);
 }
 
 DLLEXPORT size_t pdf_write_real(PDF_REAL val, char *out, size_t out_len) {
-  char buf[32];
-  char *t;
-  char *dp;
+  char   buf[32];
+  char   *t;
+  char   *dp;
+  size_t len;
 
   const char* fmt = (val > 9999999 || -val > 9999999) ? "%.1f" : "%.5f";
   snprintf(buf, sizeof(buf), fmt, val);
 
   dp = strchr(buf, '.');
   if (dp) {
-    /* delete an excessive decimal portion. */
-    for (t = buf + strlen(buf) - 1
-           ; t >= dp && (*t == '0' || *t == '.')
+    /* omit trailing zeros and maybe '.' */
+    for (t = dp + strlen(dp) - 1
+           ; t >= dp && (*t == '0' || t == dp)
            ; t--) {
-      *t = 0;
     }
+    len = t - buf + 1;
+  }
+  else {
+      len = strnlen(buf, sizeof(buf));
   }
 
-  memcpy(out, buf, out_len);
-  return strnlen(out, out_len);
+  if (len > out_len) len = out_len;
+  memcpy(out, buf, len);
+  return len;
 }
 
 DLLEXPORT size_t pdf_write_literal(PDF_STRING val, size_t in_len, char* out, size_t out_len) {
@@ -72,7 +76,7 @@ DLLEXPORT size_t pdf_write_literal(PDF_STRING val, size_t in_len, char* out, siz
       esc[0] = '\\';
       esc[1] = sym[6];
       esc[2] = 0;
-      concat(&out_p, out_end, esc);
+      _concat(&out_p, out_end, esc);
     }
     else {
       if (c && strchr("\\()", c)) {
@@ -92,6 +96,7 @@ DLLEXPORT size_t pdf_write_literal(PDF_STRING val, size_t in_len, char* out, siz
 }
 
 static uint8_t hex_char(uint8_t c) {
+  assert(c < 16);
   return ((c < 10)
           ? ('0' + c)
           : ('a' + (c - 10))
@@ -129,7 +134,7 @@ DLLEXPORT size_t pdf_write_xref_seg(PDF_XREF xref, PDF_UINT length, PDF_STRING b
       uint8_t type     = *(xref++) ? 'n' : 'f';
 
       sprintf(entry, "%010"PRIu64" %05" PRIu64" %c \n", offset, gen_num, type);
-      concat(&buf_p, buf_end, entry);
+      _concat(&buf_p, buf_end, entry);
   }
 
   return (size_t) (buf_p - buf);
@@ -185,7 +190,7 @@ DLLEXPORT size_t pdf_write_name(PDF_CODE_POINTS name, size_t in_len, char* out, 
       // regular printable ascii character
       uint8_t c = (uint8_t) cp;
       if (c == '#') {
-        concat(&out_p, out_end, "##");
+        _concat(&out_p, out_end, "##");
       }
       else {
         if (out_p < out_end) *(out_p++) = c;
@@ -200,7 +205,7 @@ DLLEXPORT size_t pdf_write_name(PDF_CODE_POINTS name, size_t in_len, char* out, 
       buf[1] = hex_char(byte / 16);
       buf[2] = hex_char(byte % 16);
       buf[3] = 0;
-      concat(&out_p, out_end, buf);
+      _concat(&out_p, out_end, buf);
     }
   }
 
