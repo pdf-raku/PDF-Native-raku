@@ -25,6 +25,9 @@ module PDF::Native::Buf {
     sub pdf_buf_pack_compute_W_64(Blob, size_t, Blob, size_t) is native(libpdf) { * }
     sub pdf_buf_pack_W_64(Blob, Blob, size_t, Blob, size_t) is native(libpdf) { * }
 
+    sub pdf_buf_unpack_xref_stream(Blob, Blob, size_t, Blob, size_t --> size_t) is native(libpdf) { * }
+    sub pdf_buf_pack_xref_stream(Blob, Blob, size_t, Blob, size_t is rw --> uint32) is native(libpdf) { * }
+
     my subset PackingSize where 1|2|4|8|16|24|32;
     sub container(PackingSize $bits) {
         $bits <= 8 ?? uint8 !! ($bits > 16 ?? uint32 !! uint16)
@@ -100,4 +103,35 @@ module PDF::Native::Buf {
     multi sub pack($nums, 8) { blob8.new: $nums }
     multi sub unpack(Blob $b, 8) { $b }
     multi sub unpack($nums, 8) { blob8.new: $nums }
+
+    our sub unpack-xref-stream($in, $index) is export(:pack-xref-stream) {
+        my blob64 $in-buf = $in ~~ blob64 ?? $in !! blob64.new: $in;
+        my blob32 $index-buf = $index ~~ blob32 ?? $index !! blob32.new($index);
+        warn "input XRef input size not a multiple of 3"
+            unless $in-buf.elems %% 3;
+        my $rows = $in-buf.elems div 3;
+        my buf64 $out-buf := buf64.allocate(4 * $rows);
+        my $n = pdf_buf_unpack_xref_stream($in-buf, $out-buf, $rows, $index-buf, +$index-buf);
+        given $n <=> $rows {
+            when Less { die $n; die "insufficent data in XRef stream" }
+            when More { die "XRef stream content overflow" }
+        }
+        my uint64 @out[$rows;4] Z= $out-buf;
+        @out;
+    }
+
+    our sub pack-xref-stream($in, @out, @index) is export(:pack-xref-stream) {
+        my blob64 $in-buf = $in ~~ blob64 ?? $in !! blob64.new: $in;
+        warn "input XRef input size not a multiple of 4"
+            unless $in-buf.elems %% 4;
+        my $rows = $in-buf.elems div 4;
+        my buf64 $out-buf := buf64.allocate(3 * $rows);
+        my buf32 $index-buf := buf32.allocate(2 * $rows);
+        my size_t $index-len;
+        my $size = pdf_buf_pack_xref_stream($in-buf, $out-buf, $rows, $index-buf, $index-len);
+        @out Z= $out-buf;
+        @index = $index-buf.subbuf(0, $index-len).list;
+        $size;
+    }
+
 }

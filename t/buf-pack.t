@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 20;
+plan 21;
 
 use PDF::Native::Buf :pack;
 use NativeCall;
@@ -25,8 +25,8 @@ is-deeply pack($buf, 16), $bytes, 'pack round-trip: 16 => 8 => 16';
 is-deeply ($buf = unpack($bytes[0..5], 24)), blob32.new(660510, 2634300), '16 bit unpack';
 is-deeply pack($buf, 24), blob8.new(@bytes[0..5]), 'pack round-trip: 16 => 8 => 16';
 
-is-deeply ($buf = pack([1415192289,], 32)), blob8.new(84, 90, 30, 225), '32 => 8 pack';
-is-deeply ($buf = pack([2 ** 32 - 1415192289 - 1,], 32)), blob8.new(255-84, 255-90, 255-30, 255-225), '32 => 8 pack (twos comp)';
+is-deeply pack([1415192289,], 32), blob8.new(84, 90, 30, 225), '32 => 8 pack';
+is-deeply pack([2 ** 32 - 1415192289 - 1,], 32), blob8.new(255-84, 255-90, 255-30, 255-225), '32 => 8 pack (twos comp)';
 
 my uint64 @in1[1;3] = ([10, 1318440, 12860],);
 my $idx;
@@ -40,11 +40,24 @@ my uint64 @in[4;3] = [1, 16, 0], [1, 741, 0], [1, 1030, 0], [1, 1446, 0];
 my $out = buf8.new(1, 0,16, 0,  1, 2,229, 0,  1, 4,6, 0,  1, 5,166, 0);
 
 is-deeply pack(@in, @W), $out, '@W[1, 2, 1] pack';
-is-deeply unpack($out, @W).list, @in.list;
+is-deeply unpack($out, @W).list, @in.list, '@W[1, 2, 1] unpack';
 
 @W = packing-widths(@in, 3);
 # zero column is zero-width
 is-deeply @W, [1,2,0], 'packing widths - zero column';
 my $out2 = buf8.new(1, 0,16,  1, 2,229,  1, 4,6,  1, 5,166,);
 is-deeply pack(@in, @W), $out2, '@W[1, 2, 0] pack';
-is-deeply unpack($out2, @W).list, @in.list;
+is-deeply unpack($out2, @W).list, @in.list, '@W[1, 2, 0] unpack';
+
+subtest 'pack-xref-stream', {
+    use PDF::Native::Buf :pack-xref-stream;
+    my @index = [42,1, 69,3];
+    my uint64 @xref-expected[4;4] = [42, 1, 16, 0], [69, 1, 741, 0], [70, 1, 1030, 0], [71, 1, 1446, 0];
+    my @xref := unpack-xref-stream(@in, @index);
+    is-deeply @xref, @xref-expected;
+    my $size = pack-xref-stream(@xref, my uint64 @out[4;3], my @index2);
+    is-deeply @out, @in, 'unpack/pack round-trip';
+    is-deeply @index2, @index;
+    is-deeply $size, 72;
+}
+
