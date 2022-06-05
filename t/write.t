@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 31;
+plan 32;
 
 use PDF::Native::Writer;
 
@@ -49,5 +49,6 @@ given PDF::Native::Writer {
      is .write-name("Zsófia"), '/Zs#c3#b3fia';
      is .write-name("\x10aa"), '/#e1#82#aa';
      is .write-name("\x10aaaa"), '/#f4#8a#aa#aa';
+     is .write-name("42(approx)"), '/42#28approx#29';
      is .write-null(), 'null';
 }

@@ -13,8 +13,8 @@ So far, just a subset of potential areas are covered:
 
 - the PDF::IO::Filter::Predictor `decode` and `encode` functions.
 - the widely used PDF::IO::Util `pack` and `unpack` functions.
-- reading and writing of cross reference tables (pre PDF-1.5 format).
-- writing of strings, numerics and cross-reference tables.
+- reading of cross reference tables and PDF 1.5+ cross reference streams.
+- writing of strings, numerics, cross-reference tables and streams.
 
 ## Classes in this Distribution
 

@@ -185,26 +185,25 @@ DLLEXPORT size_t pdf_write_name(PDF_CODE_POINTS name, size_t in_len, char* out, 
     uint8_t n;
     uint8_t i;
     uint8_t byte;
+    char buf[4] = { '#', ' ', ' ', 0};
 
     if (cp >= (uint32_t) '!' && cp <= (uint32_t) '~') {
       // regular printable ascii character
       uint8_t c = (uint8_t) cp;
       if (c == '#') {
         _concat(&out_p, out_end, "##");
+        continue;
       }
-      else {
+      else if (!strchr("()<>[]{}/%", c)) {
         if (out_p < out_end) *(out_p++) = c;
+        continue;
       }
-      continue;
     }
     n = utf8_encode(bp, cp);
     for (i = 0; i < n; i++) {
-      char buf[4];
       byte = bp[i];
-      buf[0] = '#';
       buf[1] = hex_char(byte / 16);
       buf[2] = hex_char(byte % 16);
-      buf[3] = 0;
       _concat(&out_p, out_end, buf);
     }
   }

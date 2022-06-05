@@ -99,7 +99,7 @@ DLLEXPORT void pdf_filt_predict_png_encode(uint8_t *buf,
       tag -= 10;
   }
   if (tag > 5) {
-    fprintf(stderr, "bad PNG predictor tag: %d\n", tag);
+    fprintf(stderr, __FILE__ ":bad PNG predictor tag: %d\n", tag);
     return;
   }
 

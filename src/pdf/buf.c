@@ -219,7 +219,7 @@ DLLEXPORT size_t pdf_buf_unpack_xref_stream(uint64_t *in, uint64_t *out, size_t 
 }
 
 DLLEXPORT uint32_t pdf_buf_pack_xref_stream(uint64_t *in, uint64_t *out, size_t rows, uint32_t *index, size_t *index_len) {
-    uint32_t size = 0;
+    uint32_t size = rows ? in[0] + 1 : 0;
     uint32_t *pindex = index-1;
 
     while (rows > 0) {

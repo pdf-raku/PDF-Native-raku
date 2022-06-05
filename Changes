@@ -2,5 +2,10 @@ Revision history for PDF-Native
 
 {{$NEXT}}
 
+0.0.2  2022-06-06T09:11:51+12:00
+    - Fix writing of Name Objects.
+    - Add subroutines unpack-xref-stream() unpack-xref-stream() to
+      PDF::Native::Buf
+
 0.0.1  2022-06-02T10:21:42+12:00
     - Initial version
