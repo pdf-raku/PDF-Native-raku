@@ -1,4 +1,7 @@
-# PDF-Native-raku
+[[Raku PDF Project]](https://pdf-raku.github.io)
+ / [PDF::Native](https://pdf-raku.github.io/PDF-Native-raku)
+
+# PDF::Native
 
 This module provides a selection of native implementations of
 PDF functions.
