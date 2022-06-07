@@ -1,4 +1,4 @@
-all :
+all : doc
 	cd src/pdf && %MAKE% all
 
 debug :
@@ -23,3 +23,8 @@ realclean :
 	@rm -f Makefile;\
 	cd src/pdf && %MAKE% $@
 
+
+doc : docs/index.md
+
+docs/index.md : README.md
+	cp $< $@
