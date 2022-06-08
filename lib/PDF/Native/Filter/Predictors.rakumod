@@ -7,7 +7,7 @@ class PDF::Native::Filter::Predictors {
 
 These functions implements the predictor stage of TIFF N<L<TIFF Predictors|http://www.fileformat.info/format/tiff/corion-lzw.htm>> and PNG N<L<PNG Predictors|https://www.w3.org/TR/PNG-Filters.html>> decoding and encoding.
 
-```
+    =begin code :lang<raku>
     use PDF::Native::Filter::Predictors;
     # PNG samples. First bit on each row, is an indicator in the range 0 .. 4
     my $Predictor = PDF::Native::Filter::Predictors::PNG;
@@ -25,7 +25,7 @@ These functions implements the predictor stage of TIFF N<L<TIFF Predictors|http:
                                         $encoded,
                                         :$Columns,
                                         :$Predictor, );
-```
+    =end code
 
 =head2 Methods
 
@@ -64,13 +64,14 @@ These functions implements the predictor stage of TIFF N<L<TIFF Predictors|http:
 
     # post prediction functions as described in the PDF 1.7 spec, table 3.8
 
+    #| Encode predictors
     # TIFF predictor (2)
     multi method encode($buf where Blob,
-                        Predictor :$Predictor! where TIFF, #| predictor function
-                        UInt :$Columns = 1,          #| number of samples per row
-                        UInt :$Colors = 1,           #| number of colors per sample
-                        BPC  :$BitsPerComponent = 8, #| number of bits per color
-                       ) {
+                        Predictor :$Predictor! where TIFF, # predictor function
+                        UInt :$Columns = 1,          # number of samples per row
+                        UInt :$Colors = 1,           # number of colors per sample
+                        BPC  :$BitsPerComponent = 8, # number of bits per color
+                       --> Blob) {
         my $rows = ($buf.bytes * 8) div ($Columns * $Colors * $BitsPerComponent);
         my \nums := unpack( $buf, $BitsPerComponent );
         my $out = nums.WHAT.allocate(nums.elems);
@@ -81,11 +82,11 @@ These functions implements the predictor stage of TIFF N<L<TIFF Predictors|http:
 
     # PNG predictors (10 - 15)
     multi method encode($buf is copy where Blob,
-			Predictor :$Predictor! where PNG-Range, #| predictor function
-			UInt :$Columns = 1,          #| number of samples per row
-			UInt :$Colors = 1,           #| number of colors per sample
-			BPC  :$BitsPerComponent = 8, #| number of bits per color
-        ) {
+			Predictor :$Predictor! where PNG-Range, # predictor function
+			UInt :$Columns = 1,          # number of samples per row
+			UInt :$Colors = 1,           # number of colors per sample
+			BPC  :$BitsPerComponent = 8, # number of bits per color
+                       --> Blob) {
 
         my uint $bpc = $BitsPerComponent;
         my uint $colors = $Colors;
@@ -113,12 +114,13 @@ These functions implements the predictor stage of TIFF N<L<TIFF Predictors|http:
 
     # prediction filters, see PDF 1.7 spec table 3.8
 
+    #| Decode predictors
     # TIFF predictor (2)
     multi method decode($buf where Blob,
-                        Predictor :$Predictor! where TIFF, #| predictor function
-                        UInt :$Columns = 1,          #| number of samples per row
-                        UInt :$Colors = 1,           #| number of colors per sample
-                        BPC :$BitsPerComponent = 8,  #| number of bits per color
+                        Predictor :$Predictor! where TIFF, # predictor function
+                        UInt :$Columns = 1,          # number of samples per row
+                        UInt :$Colors = 1,           # number of colors per sample
+                        BPC :$BitsPerComponent = 8,  # number of bits per color
                        ) {
         my $rows = ($buf.bytes * 8) div ($Columns * $Colors * $BitsPerComponent);
         my \nums := unpack( $buf, $BitsPerComponent );
@@ -129,11 +131,11 @@ These functions implements the predictor stage of TIFF N<L<TIFF Predictors|http:
     }
 
     # PNG predictors (10 - 15)
-    multi method decode(Blob $buf,  #| input stream
-                        Predictor :$Predictor! where PNG-Range, #| predictor function
-                        UInt :$Columns = 1,          #| number of samples per row
-                        UInt :$Colors = 1,           #| number of colors per sample
-                        BPC :$BitsPerComponent = 8,  #| number of bits per color
+    multi method decode(Blob $buf,  # input stream
+                        Predictor :$Predictor! where PNG-Range, # predictor function
+                        UInt :$Columns = 1,          # number of samples per row
+                        UInt :$Colors = 1,           # number of colors per sample
+                        BPC :$BitsPerComponent = 8,  # number of bits per color
         ) {
 
         my uint $bpc = $BitsPerComponent;

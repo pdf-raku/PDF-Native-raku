@@ -9,7 +9,7 @@ Handles the packing and unpacking of multi-byte quantities as network words. Suc
 
 Also handles variable byte packing and unpacking. As seen in the `/W` parameter to XRef streams, and a few other places.
 
-```
+    =begin code :lang<raku>
     # pack two 4-byte words into an 8 byte buffer
     use PDF::Native::Buf :pack;
     my blob32 $words .= new(660510, 2634300);
@@ -19,7 +19,7 @@ Also handles variable byte packing and unpacking. As seen in the `/W` parameter 
     my uint32 @in[4;3] = [1, 16, 0], [1, 741, 0], [1, 1030, 0], [1, 1446, 0];
     my @W = packing-widths(@in, 3);    # [1, 2, 0];
     $bytes = pack(@in, @W);
-```
+    =end code
 
 =head2 Subroutines
 =end pod

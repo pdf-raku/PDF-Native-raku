@@ -8,7 +8,7 @@ Serialization functions have been implemented for a few PDF data-types:
 
 - boolean, real, integers, literal-strings, hex-strings, names and cross reference tables.
 
-```
+=begin code :lang<raku>
 use PDF::Native::Writer;
 
 given PDF::Native::Writer {
@@ -34,7 +34,7 @@ given PDF::Native::Writer {
          # 0000000069 00000 n 
          # 0000000100 00002 n
 }
-```
+=end code
 
 =head2 Methods
 =end pod

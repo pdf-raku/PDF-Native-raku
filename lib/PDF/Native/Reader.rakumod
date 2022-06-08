@@ -6,7 +6,7 @@ class PDF::Native::Reader {
 =begin pod
 
 The only method so far implemented is `read-xref` for the fast reading of cross reference indices.
-```
+=begin code :lang<raku>
 use PDF::Native::Reader;
 
 given PDF::Native::Reader.new {
@@ -26,7 +26,7 @@ given PDF::Native::Reader.new {
 
      my array $entries = .read-xref($buf);
 }
-```
+=end code
 =end pod
 
     has UInt $.xref-bytes;

@@ -10,25 +10,33 @@ Serialization functions have been implemented for a few PDF data-types:
 
 - boolean, real, integers, literal-strings, hex-strings, names and cross reference tables.
 
-``` use PDF::Native::Writer;
+```raku
+use PDF::Native::Writer;
 
-given PDF::Native::Writer { say .write-bool(0); # false say .write-bool(1); # true say .write-real(pi); # 3.14159 say .write-int(42e3), # 42000 say .write-literal("Hi\nthere"); # (Hi\nthere) say .write-hex-string("snoopy"); # <736e6f6f7079> say .write-name('Hi#there'); # /Hi##there
+given PDF::Native::Writer {
+     say .write-bool(0);    # false
+     say .write-bool(1);    # true
+     say .write-real(pi);   # 3.14159
+     say .write-int(42e3),  # 42000
+     say .write-literal("Hi\nthere"); # (Hi\nthere)
+     say .write-hex-string("snoopy"); # <736e6f6f7079>
+     say .write-name('Hi#there');     # /Hi##there
 
-    # xref entries
-    enum <free inuse>;
-    my uint64 @xref[4;3] = (
-       [0, 65535, free],
-       [42, 0, inuse],
-       [69, 0, inuse],
-       [100, 2, inuse],
-    );
-    say .write-entries(@xref).lines;
-        # 0000000000 65535 f 
-        # 0000000042 00000 n 
-        # 0000000069 00000 n 
-        # 0000000100 00002 n
-
-} ```
+     # xref entries
+     enum <free inuse>;
+     my uint64 @xref[4;3] = (
+        [0, 65535, free],
+        [42, 0, inuse],
+        [69, 0, inuse],
+        [100, 2, inuse],
+     );
+     say .write-entries(@xref).lines;
+         # 0000000000 65535 f 
+         # 0000000042 00000 n 
+         # 0000000069 00000 n 
+         # 0000000100 00002 n
+}
+```
 
 Methods
 -------
