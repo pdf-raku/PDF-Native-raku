@@ -1,5 +1,7 @@
 [[Raku PDF Project]](https://pdf-raku.github.io)
- / [[PDF-Class Module]](https://pdf-raku.github.io/PDF-Class-raku)
+ / [[PDF-Native Module]](https://pdf-raku.github.io/PDF-Native-raku)
+ / [PDF::Native](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native)
+ :: [Writer](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Writer)
 
 class PDF::Native::Writer
 -------------------------

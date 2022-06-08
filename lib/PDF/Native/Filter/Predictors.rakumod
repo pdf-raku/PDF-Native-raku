@@ -121,7 +121,7 @@ These functions implements the predictor stage of TIFF N<L<TIFF Predictors|http:
                         UInt :$Columns = 1,          # number of samples per row
                         UInt :$Colors = 1,           # number of colors per sample
                         BPC :$BitsPerComponent = 8,  # number of bits per color
-                       ) {
+                       --> Blob) {
         my $rows = ($buf.bytes * 8) div ($Columns * $Colors * $BitsPerComponent);
         my \nums := unpack( $buf, $BitsPerComponent );
         my $out = nums.WHAT.allocate(nums.elems);
@@ -136,7 +136,7 @@ These functions implements the predictor stage of TIFF N<L<TIFF Predictors|http:
                         UInt :$Columns = 1,          # number of samples per row
                         UInt :$Colors = 1,           # number of colors per sample
                         BPC :$BitsPerComponent = 8,  # number of bits per color
-        ) {
+                       --> Blob) {
 
         my uint $bpc = $BitsPerComponent;
         my uint $colors = $Colors;
@@ -156,7 +156,7 @@ These functions implements the predictor stage of TIFF N<L<TIFF Predictors|http:
 
     multi method decode($buf, Predictor :$Predictor = None,
 			UInt :$Columns=1, UInt :$Colors=8,
-			BPC :$BitsPerComponent=8 ) {
+			BPC :$BitsPerComponent=8) {
         $buf;
     }
 

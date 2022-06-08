@@ -1,5 +1,8 @@
 [[Raku PDF Project]](https://pdf-raku.github.io)
- / [[PDF-Class Module]](https://pdf-raku.github.io/PDF-Class-raku)
+ / [[PDF-Native Module]](https://pdf-raku.github.io/PDF-Native-raku)
+ / [PDF::Native](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native)
+ :: [Filter](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Filter)
+ :: [Predictors](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Filter/Predictors)
 
 class PDF::Native::Filter::Predictors
 -------------------------------------
@@ -54,7 +57,7 @@ multi method decode(
     Int :$Columns where { ... } = 1,
     Int :$Colors where { ... } = 1,
     Int :$BitsPerComponent where { ... } = 8
-) returns Mu
+) returns Blob
 ```
 
 Decode predictors
