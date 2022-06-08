@@ -1,5 +1,6 @@
 use v6;
 
+#| native implementations of PDF functions.
 class PDF::Native:ver<0.0.2> {
     use LibraryMake;
     use NativeCall;

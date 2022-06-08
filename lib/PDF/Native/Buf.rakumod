@@ -1,7 +1,28 @@
 use v6;
 
+#| General packing and unpacking of binary words
 module PDF::Native::Buf {
 
+=begin pod
+
+Handles the packing and unpacking of multi-byte quantities as network words. Such as `/BitsPerComponent` in `/Filter` `/DecodeParms`.
+
+Also handles variable byte packing and unpacking. As seen in the `/W` parameter to XRef streams, and a few other places.
+
+```
+    # pack two 4-byte words into an 8 byte buffer
+    use PDF::Native::Buf :pack;
+    my blob32 $words .= new(660510, 2634300);
+    my blob8 $bytes = pack($words, 24);
+
+    # pack triples as 1 byte, 2 bytes, 1 byte
+    my uint32 @in[4;3] = [1, 16, 0], [1, 741, 0], [1, 1030, 0], [1, 1446, 0];
+    my @W = packing-widths(@in, 3);    # [1, 2, 0];
+    $bytes = pack(@in, @W);
+```
+
+=head2 Subroutines
+=end pod
     use NativeCall;
     use PDF::Native :libpdf;
 
@@ -41,7 +62,8 @@ module PDF::Native::Buf {
         &pack($in, $out, $in-len);
         $out;
     }
-    multi sub unpack($nums!, PackingSize $n!)  {
+    #| unpack bytes to an array of words, each of a given size
+    multi sub unpack($nums!, PackingSize $n! --> Blob)  {
         my $type = container($n);
         my &packer = %(
             1 => &pdf_buf_unpack_1,
@@ -54,7 +76,8 @@ module PDF::Native::Buf {
             do-packing(8, $n, $nums, &packer);
     }
 
-    multi sub pack($nums!, PackingSize $n!)  {
+    #| upack bytes to an array words, each of a given size
+    multi sub pack($nums!, PackingSize $n! --> Blob)  {
         my $type = container($n);
         my &packer = %(
             1 => &pdf_buf_pack_1,
@@ -67,9 +90,9 @@ module PDF::Native::Buf {
         do-packing($n, 8, $nums, &packer);
     }
 
-    #| variable resampling, e.g. to decode/encode:
+    #| variable unpacking of records, e.g. to decode/encode:
     #|   obj 123 0 << /Type /XRef /W [1, 3, 1]
-    multi sub unpack( $in!, Array $W!)  {
+    multi sub unpack( $in!, Array $W! --> array)  {
         my size_t $in-len = +$in;
         my blob8 $in-buf = $in ~~ blob8 ?? $in !! blob8.new($in);
         my blob8 $W-buf .= new($W);
@@ -80,7 +103,8 @@ module PDF::Native::Buf {
         @shaped;
     }
 
-    multi sub pack( $in, Array $W!)  {
+    #| variable packing of records
+    multi sub pack( $in, Array $W! --> Blob)  {
         my $rows = $in.elems;
         my $cols-in = +$W;
         my $cols-out = $W.sum;

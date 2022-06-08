@@ -1,3 +1,7 @@
+DocProj=pdf-raku.github.io
+DocRepo=https://github.com/pdf-raku/$(DocProj)
+DocLinker=../$(DocProj)/etc/resolve-links.raku
+
 all : doc
 	cd src/pdf && %MAKE% all
 
@@ -23,8 +27,16 @@ realclean :
 	@rm -f Makefile;\
 	cd src/pdf && %MAKE% $@
 
+$(DocLinker) :
+	(cd .. && git clone $(DocRepo) $(DocProj))
 
-doc : docs/index.md
+docs/%.md : lib/%.rakumod
+	raku -I . --doc=Markdown $< \
+	|  TRAIL=$* raku -p -n $(DocLinker) \
+        > $@
+
+doc : $(DocLinker) docs/index.md docs/PDF/Native/Buf.md docs/PDF/Native/Filter/Predictors.md docs/PDF/Native/Reader.md docs/PDF/Native/Writer.md
 
 docs/index.md : README.md
 	cp $< $@
+
