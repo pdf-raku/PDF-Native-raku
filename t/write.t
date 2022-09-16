@@ -5,17 +5,17 @@ plan 32;
 use PDF::Native::Writer;
 
 given PDF::Native::Writer {
-     is .write-bool(0), "false";
-     is .write-bool(1), "true";
-     is .write-bool(0, Blob[uint8].allocate(4)), "fals";
+     is .write-bool(False), "false";
+     is .write-bool(True), "true";
+     is .write-bool(False, Blob[uint8].allocate(4)), "fals";
      is .write-real(pi), "3.14159";
      is .write-real(0.074877), "0.07488";
      is .write-real(42), "42";
      is .write-real(0), "0";
      is .write-real(-42), "-42";
      is .write-real(.42), "0.42";
-     is .write-real(42e5), "4200000";
-     is .write-int(42e5), "4200000";
+     is .write-real(42e5.Int), "4200000";
+     is .write-int(42e5.Int), "4200000";
      is .write-int(42), "42";
      is .write-int(-42), "-42";
      is .write-int(-0), "0";

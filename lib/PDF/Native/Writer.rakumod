@@ -75,12 +75,12 @@ given PDF::Native::Writer {
     }
 
     #| write 'true' or 'false'
-    method write-bool(Bool() $val, $buf = Blob[uint8].allocate(10) --> Str) {
+    method write-bool(Bool:D $val, $buf = Blob[uint8].allocate(10) --> Str) {
         self!decode: $buf, pdf_write_bool($val, $buf, $buf.bytes);
     }
 
     #| write simple integer, e.g. '42'
-    method write-int(Int() $val, $buf = Blob[uint8].allocate(8) --> Str) {
+    method write-int(Int:D $val, $buf = Blob[uint8].allocate(8) --> Str) {
         self!decode: $buf, pdf_write_int($val, $buf, $buf.bytes);
     }
 
@@ -90,8 +90,7 @@ given PDF::Native::Writer {
     }
 
     #| write string literal, e.g. '(Hello, World!)'
-    method write-literal(Str() $val, Blob $buf? is copy --> Str) {
-
+    method write-literal(Str:D $val, Blob $buf? is copy --> Str) {
         my Blob[uint8] $enc = $val.encode: "latin-1";
         my \bytes-in = $enc.bytes;
         $buf //= Blob[uint8].allocate(2 * bytes-in  +  3);
@@ -99,7 +98,7 @@ given PDF::Native::Writer {
     }
 
     #| write binary hex string, e.g. '<deadbeef>'
-    method write-hex-string(Str() $val, Blob $buf? is copy --> Str) {
+    method write-hex-string(Str:D $val, Blob $buf? is copy --> Str) {
         my Blob[uint8] $enc = $val.encode: "latin-1";
         my \bytes-in = $enc.bytes;
         $buf //= Blob[uint8].allocate(2 * bytes-in  +  3);
@@ -119,7 +118,7 @@ given PDF::Native::Writer {
     }
 
     #| write name, e.g. '/Raku'
-    method write-name(Str() $val, Blob $buf? is copy --> Str) {
+    method write-name(Str:D $val, Blob $buf? is copy --> Str) {
         my PDF_CODE_POINTS $in .= new: $val.ords;
         my \quads = $in.elems;
         $buf //= Blob[uint8].allocate(12 * quads  +  2);

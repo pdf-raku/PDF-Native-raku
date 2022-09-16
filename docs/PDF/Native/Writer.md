@@ -47,7 +47,7 @@ Methods
 
 ```raku
 method write-bool(
-    Bool(Any) $val,
+    Bool:D $val,
     $buf = Code.new
 ) returns Str
 ```
@@ -58,7 +58,7 @@ write 'true' or 'false'
 
 ```raku
 method write-int(
-    Int(Any) $val,
+    Int:D $val,
     $buf = Code.new
 ) returns Str
 ```
@@ -80,7 +80,7 @@ write number, e.g. '4.2'
 
 ```raku
 method write-literal(
-    Str(Any) $val,
+    Str:D $val,
     Blob $buf? is copy
 ) returns Str
 ```
@@ -91,7 +91,7 @@ write string literal, e.g. '(Hello, World!)'
 
 ```raku
 method write-hex-string(
-    Str(Any) $val,
+    Str:D $val,
     Blob $buf? is copy
 ) returns Str
 ```
@@ -113,7 +113,7 @@ write cross reference entries
 
 ```raku
 method write-name(
-    Str(Any) $val,
+    Str:D $val,
     Blob $buf? is copy
 ) returns Str
 ```

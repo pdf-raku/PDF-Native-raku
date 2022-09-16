@@ -1,7 +1,7 @@
 [[Raku PDF Project]](https://pdf-raku.github.io)
  / [[PDF-Native Module]](https://pdf-raku.github.io/PDF-Native-raku)
  / [PDF::Native](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native)
- :: [Filter](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Filter)
+ :: Filter
  :: [Predictors](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Filter/Predictors)
 
 class PDF::Native::Filter::Predictors

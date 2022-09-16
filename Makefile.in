@@ -2,7 +2,7 @@ DocProj=pdf-raku.github.io
 DocRepo=https://github.com/pdf-raku/$(DocProj)
 DocLinker=../$(DocProj)/etc/resolve-links.raku
 
-all : doc
+all :
 	cd src/pdf && %MAKE% all
 
 debug :
@@ -31,11 +31,15 @@ $(DocLinker) :
 	(cd .. && git clone $(DocRepo) $(DocProj))
 
 docs/%.md : lib/%.rakumod
+	@raku -I . -c $<
 	raku -I . --doc=Markdown $< \
 	|  TRAIL=$* raku -p -n $(DocLinker) \
         > $@
 
-doc : $(DocLinker) docs/index.md docs/PDF/Native/Buf.md docs/PDF/Native/Filter/Predictors.md docs/PDF/Native/Reader.md docs/PDF/Native/Writer.md
+Pod-To-Markdown-installed :
+	@raku -M Pod::To::Markdown -c
+
+doc : $(DocLinker) Pod-To-Markdown-installed docs/index.md docs/PDF/Native/Buf.md docs/PDF/Native/Filter/Predictors.md docs/PDF/Native/Reader.md docs/PDF/Native/Writer.md
 
 docs/index.md : README.md
 	cp $< $@
