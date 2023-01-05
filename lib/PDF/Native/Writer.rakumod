@@ -66,7 +66,7 @@ given PDF::Native::Writer {
         returns size_t
         is native(libpdf) {*};
 
-    sub pdf_write_name(PDF_CODE_POINTS $val, size_t $val-len, Blob[uint8] $buf, size_t $buf-len)
+    sub pdf_write_name(PDF_NAME $val, size_t $val-len, Blob[uint8] $buf, size_t $buf-len)
         returns size_t
         is native(libpdf) {*};
 
@@ -119,7 +119,7 @@ given PDF::Native::Writer {
 
     #| write name, e.g. '/Raku'
     method write-name(Str:D $val, Blob $buf? is copy --> Str) {
-        my PDF_CODE_POINTS $in .= new: $val.ords;
+        my PDF_NAME $in .= new: $val.ords;
         my \quads = $in.elems;
         $buf //= Blob[uint8].allocate(12 * quads  +  2);
         self!decode: $buf, pdf_write_name($in, quads, $buf, $buf.bytes);

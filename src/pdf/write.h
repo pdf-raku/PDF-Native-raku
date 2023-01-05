@@ -1,6 +1,8 @@
 #ifndef PDF_WRITE_H_
 #define PDF_WRITE_H_
 
+#include "pdf/types.h"
+
 /* write boolean: 0 -> "true", 1 -> "false" */
 DLLEXPORT size_t pdf_write_bool(PDF_BOOL, char *out, size_t out_len);
 
@@ -17,7 +19,7 @@ DLLEXPORT size_t pdf_write_literal(PDF_STRING, size_t in_len, char* out, size_t 
 DLLEXPORT size_t pdf_write_hex_string(PDF_STRING, size_t in_len, char* out, size_t out_len);
 
 /* write name: "Hi#there" -> "/Hi##there" */
-DLLEXPORT size_t pdf_write_name(PDF_CODE_POINTS, size_t in_len, char* out, size_t out_len);
+DLLEXPORT size_t pdf_write_name(PDF_NAME, size_t in_len, char* out, size_t out_len);
 
 /* write xref entries;
    typedef enum {free, inuse};

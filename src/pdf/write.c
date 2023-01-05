@@ -6,7 +6,6 @@
 #include <inttypes.h>
 #include <assert.h>
 #include "pdf.h"
-#include "pdf/types.h"
 #include "pdf/write.h"
 
 static void _concat(char** out_p, char* end_p, char* buf) {
@@ -170,10 +169,10 @@ static uint8_t utf8_encode(uint8_t *bp, uint32_t cp) {
     return 0;
 }
 
-DLLEXPORT size_t pdf_write_name(PDF_CODE_POINTS name, size_t in_len, char* out, size_t out_len) {
+DLLEXPORT size_t pdf_write_name(PDF_NAME name, size_t in_len, char* out, size_t out_len) {
 
-  PDF_CODE_POINTS in_p = name;
-  PDF_CODE_POINTS in_end = name + in_len;
+  PDF_NAME in_p = name;
+  PDF_NAME in_end = name + in_len;
   char* out_p = out;
   char* out_end = out + out_len;
 
