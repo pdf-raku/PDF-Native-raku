@@ -6,6 +6,7 @@
   "build-depends": [
   ],
   "depends": [
+    "PDF",
     "LibraryMake"
   ],
   "description": "Native drop-in routines for PDF",
