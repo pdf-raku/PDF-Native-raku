@@ -1,17 +1,25 @@
 unit class PDF::Native::COS::StructElem is repr('CStruct');
 
+use PDF::COS :LatinStr;
 use PDF::Native::COS;
 also is cos_indobj;
 
 use NativeCall;
 use PDF::Native :libpdf, :types;
 
-has Str   $.Type;
-has Str   $!S; method S { $!S }
-has cos_indref $.Pg;
+has Str        $.Type;
+has Str        $!S;       method S  { $!S }
+has Str        $!ID;      method ID { $!ID }
+has cos_indref $!Pg;      method Pg { $!Pg }
 
-submethod TWEAK(Str :$S) {
-    $!S := $_ with $S;
+submethod TWEAK(
+    LatinStr :$S,
+    LatinStr :$ID,
+    cos_indref :$Pg,
+) {
+    $!S  := $_ with $S;
+    $!ID := $_ with $ID; 
+    $!Pg := $_ with $Pg;
 }
 
 method Str {
