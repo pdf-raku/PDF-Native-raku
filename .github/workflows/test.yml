@@ -47,15 +47,15 @@ jobs:
       - uses: Raku/setup-raku@v1
         with:
           raku-version: ${{ matrix.raku-version }}
+      - name: Install Prerequisite Libraries (MacOS)
+        if: matrix.os == 'macOS-latest'
+        run: brew install openssl
       - name: Install Dependencies
         run: |
           zef install --/test LibraryMake
           zef install --/test App::Prove6
           zef install --deps-only .
           zef build .
-      - name: Install Prerequisite Libraries (MacOS)
-        if: matrix.os == 'macOS-latest'
-        run: brew install openssl
       - name: Run Tests
         run: |
           prove6 -I. t
