@@ -11,6 +11,8 @@ has Str        $.Type;
 has Str        $!S;       method S  { $!S }
 has Str        $!ID;      method ID { $!ID }
 has cos_indref $!Pg;      method Pg { $!Pg }
+has PDF::Native::COS::StructElem $!P;
+has CArray[PDF::Native::COS::StructElem] $!K;
 
 submethod TWEAK(
     LatinStr :$S,

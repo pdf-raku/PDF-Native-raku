@@ -1,7 +1,7 @@
 buf.o: buf.c ../pdf.h ../pdf/buf.h
 cos.o: cos.c cos.h ../pdf.h
 cos_struct_elem.o: cos_struct_elem.c ../pdf.h cos.h ../pdf/write.h \
- ../pdf/types.h
+ ../pdf/types.h ../pdf/cos_struct_elem.h
 filt_predict.o: filt_predict.c ../pdf.h ../pdf/filt_predict.h \
  ../pdf/filt_predict_tiff.h ../pdf/filt_predict_png.h
 filt_predict_png.o: filt_predict_png.c ../pdf.h ../pdf/filt_predict_png.h
