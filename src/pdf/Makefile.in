@@ -7,7 +7,7 @@ debug :
 	%MAKE% "DBG=-Wall -g"  all
 
 SRCS = buf.c cos.c cos_struct_elem.c filt_predict.c filt_predict_png.c filt_predict_tiff.c read.c write.c version.c
-OBJS = buf%O% cos%O% cos_struct_elem%O% filt_predict%O% filt_predict_png%O% filt_predict_tiff%O% read%O% write%O% version%O%
+OBJS = buf%O% cos%O% cos_struct_elem%O% cos_mcr%O% cos_objr%O% filt_predict%O% filt_predict_png%O% filt_predict_tiff%O% read%O% write%O% version%O%
 
 %DEST%/%LIB_NAME%: $(OBJS)
 	%LD% %LDSHARED% %LDFLAGS% %LDOUT%%DEST%/%LIB_NAME% $(OBJS) $(LD_COV_OPT)
@@ -20,6 +20,12 @@ cos%O% :
 
 cos_struct_elem%O% :
 	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ cos_struct_elem.c $(DBG)
+
+cos_mcr%O% :
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ cos_mcr.c $(DBG)
+
+cos_objr%O% :
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ cos_objr.c $(DBG)
 
 filt_predict%O% :
 	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ filt_predict.c $(DBG)
