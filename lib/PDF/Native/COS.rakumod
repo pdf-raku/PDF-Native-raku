@@ -9,7 +9,7 @@ our class cos_indobj is repr('CStruct') is export {
     has int16 $.gen-num;
 
     method Str {
-        my buf8 $buf .= allocate(32);
+        my buf8 $buf .= allocate(1024);
         my $n := self.write: $buf, $buf.bytes;
         $buf.subbuf(0, $n).decode: "latin-1";
     }
