@@ -1,6 +1,8 @@
 Revision history for PDF-Native
 
 {{$NEXT}}
+
+0.0.3  2023-10-22T08:47:19+13:00
     - Writer integers as 64bit / 18 digits (was 32 bit / 8 digits)
 
 0.0.2  2022-06-06T09:11:51+12:00
