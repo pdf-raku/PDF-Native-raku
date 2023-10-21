@@ -46,7 +46,7 @@ given PDF::Native::Writer {
         returns size_t
         is native(libpdf) {*};
 
-    sub pdf_write_int(PDF_INT $val, Blob[uint8] $buf, size_t $buf-len)
+    sub pdf_write_int(PDF_INT64 $val, Blob[uint8] $buf, size_t $buf-len)
         returns size_t
         is native(libpdf) {*};
 
@@ -80,7 +80,7 @@ given PDF::Native::Writer {
     }
 
     #| write simple integer, e.g. '42'
-    method write-int(Int:D $val, $buf = Blob[uint8].allocate(8) --> Str) {
+    method write-int(Int:D $val, $buf = Blob[uint8].allocate(18) --> Str) {
         self!decode: $buf, pdf_write_int($val, $buf, $buf.bytes);
     }
 

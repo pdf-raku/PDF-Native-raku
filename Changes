@@ -1,6 +1,7 @@
 Revision history for PDF-Native
 
 {{$NEXT}}
+    - Writer integers as 64bit / 18 digits (was 32 bit / 8 digits)
 
 0.0.2  2022-06-06T09:11:51+12:00
     - Fix writing of Name Objects.

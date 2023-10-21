@@ -5,7 +5,7 @@
 DLLEXPORT size_t pdf_write_bool(PDF_BOOL, char *out, size_t out_len);
 
 /* write integer: 42 -> "42" */
-DLLEXPORT size_t pdf_write_int(PDF_INT, char *out, size_t out_len);
+DLLEXPORT size_t pdf_write_int(PDF_INT64, char *out, size_t out_len);
 
 /* write real: pi -> "3.14159" */
 DLLEXPORT size_t pdf_write_real(PDF_REAL, char *out, size_t out_len);
