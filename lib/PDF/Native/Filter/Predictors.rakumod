@@ -50,7 +50,7 @@ These functions implements the predictor stage of TIFF N<L<TIFF Predictors|http:
         uint8 $colors,
         uint8 $bpc where BPC,
         uint16 $columns,
-        uint16 $rows,
+        size_t $rows,
     )  returns uint32 is native(libpdf) { * }
 
     sub pdf_filt_predict_encode(
@@ -59,7 +59,7 @@ These functions implements the predictor stage of TIFF N<L<TIFF Predictors|http:
         uint8 $colors,
         uint8 $bpc where BPC,
         uint16 $columns,
-        uint16 $rows,
+        size_t $rows,
     )  returns uint32 is native(libpdf) { * }
 
     # post prediction functions as described in the PDF 1.7 spec, table 3.8

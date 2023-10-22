@@ -8,12 +8,12 @@ static void tiff_decode_nibble (uint8_t* in,
                                 uint8_t* out,
                                 uint8_t colors,
                                 uint16_t columns,
-                                uint16_t rows,
+                                size_t rows,
                                 uint8_t bpc
                                 ) {
   int i;
   int j;
-  int r;
+  size_t r;
   uint8_t* in_p = in;
   uint8_t* out_p = out;
   uint8_t mask = (1 << bpc) - 1;
@@ -35,10 +35,10 @@ static void tiff_decode_8 (uint8_t* in,
                            uint8_t* out,
                            uint8_t colors,
                            uint16_t columns,
-                           uint16_t rows) {
+                           size_t rows) {
   int i;
   int j;
-  int r;
+  size_t r;
   uint8_t* in_p = in;
   uint8_t* out_p = out;
 
@@ -59,10 +59,10 @@ static void tiff_decode_16 (uint8_t* in,
 			    uint8_t* out,
 			    uint8_t colors,
 			    uint16_t columns,
-			    uint16_t rows) {
+			    size_t rows) {
   int i;
   int j;
-  int r;
+  size_t r;
   uint16_t* in_p  = (uint16_t*) in;
   uint16_t* out_p = (uint16_t*) out;
 
@@ -83,10 +83,10 @@ static void tiff_decode_32 (uint8_t* in,
 			    uint8_t* out,
 			    uint8_t colors,
 			    uint16_t columns,
-			    uint16_t rows) {
+			    size_t rows) {
   int i;
   int j;
-  int r;
+  size_t r;
   uint32_t* in_p  = (uint32_t *)in;
   uint32_t* out_p = (uint32_t *)out;
 
@@ -110,7 +110,7 @@ pdf_filt_predict_tiff_decode(uint8_t *in,
 			     uint8_t colors,
 			     uint8_t bpc,
 			     uint16_t columns,
-			     uint16_t rows
+			     size_t rows
 			     ) {
   switch (bpc) {
   case 1:
@@ -139,11 +139,11 @@ static void tiff_encode_nibble (uint8_t* in,
 				uint8_t* out,
 				uint8_t colors,
 				uint16_t columns,
-				uint16_t rows,
+				size_t rows,
 				uint8_t bpc) {
   int i;
   int j;
-  int r;
+  size_t r;
   uint8_t* in_p = in;
   uint8_t* out_p = out;
   uint8_t mask = (1 << bpc) - 1;
@@ -165,10 +165,10 @@ static void tiff_encode_8 (uint8_t* in,
 			   uint8_t* out,
 			   uint8_t colors,
 			   uint16_t columns,
-			   uint16_t rows) {
+			   size_t rows) {
   int i;
   int j;
-  int r;
+  size_t r;
   uint8_t* in_p = in;
   uint8_t* out_p = out;
 
@@ -189,10 +189,10 @@ static void tiff_encode_16 (uint8_t* in,
 			    uint8_t* out,
 			    uint8_t colors,
 			    uint16_t columns,
-			    uint16_t rows) {
+			    size_t rows) {
   int i;
   int j;
-  int r;
+  size_t r;
   uint16_t* in_p  = (uint16_t*) in;
   uint16_t* out_p = (uint16_t*) out;
 
@@ -213,10 +213,10 @@ static void tiff_encode_32 (uint8_t* in,
 			    uint8_t* out,
 			    uint8_t colors,
 			    uint16_t columns,
-			    uint16_t rows) {
+			    size_t rows) {
   int i;
   int j;
-  int r;
+  size_t r;
   uint32_t* in_p  = (uint32_t *)in;
   uint32_t* out_p = (uint32_t *)out;
 
@@ -240,7 +240,7 @@ pdf_filt_predict_tiff_encode(uint8_t *in,
 			     uint8_t colors,
 			     uint8_t bpc,
 			     uint16_t columns,
-			     uint16_t rows
+			     size_t rows
 			     ) {
   switch (bpc) {
   case 1:

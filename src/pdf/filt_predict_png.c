@@ -9,13 +9,13 @@ pdf_filt_predict_png_decode(uint8_t *buf,
                             uint8_t colors,
                             uint8_t bpc,
                             uint16_t columns,
-                            uint16_t rows
+                            size_t rows
                             ) {
   int row_size = (colors * bpc * columns + 7) / 8;
   int idx = 0;
   int n = 0;
-  int row;
-  
+  size_t row;
+
   for (row = 0; row < rows; row++) {
     /* PNG prediction can vary from row to row */
     uint8_t tag = buf[idx++];
@@ -83,13 +83,13 @@ DLLEXPORT void pdf_filt_predict_png_encode(uint8_t *buf,
                                            uint8_t colors,
                                            uint8_t bpc,
                                            uint16_t columns,
-                                           uint16_t rows,
+                                           size_t rows,
                                            uint8_t tag
                                            ) {
   int row_size = (colors * bpc * columns + 7) / 8;
   int idx = 0;
   int n = 0;
-  int row;
+  size_t row;
 
   if (tag == 15) {
     /* optimize - just use Paeth */

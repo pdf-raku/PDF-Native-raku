@@ -15,7 +15,7 @@ pdf_filt_predict_decode(
                         uint8_t colors,
                         uint8_t bpc,
                         uint16_t columns,
-                        uint16_t rows
+                        size_t rows
                    ) {
   switch (predictor) {
   case PDF_FILTER_TIFF_PREDICTOR:
@@ -51,7 +51,7 @@ pdf_filt_predict_encode(
                         uint8_t colors,
                         uint8_t bpc,
                         uint16_t columns,
-                        uint16_t rows
+                        size_t rows
                    ) {
   switch (predictor) {
   case PDF_FILTER_TIFF_PREDICTOR:

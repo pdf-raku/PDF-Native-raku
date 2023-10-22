@@ -1,6 +1,7 @@
 Revision history for PDF-Native
 
 {{$NEXT}}
+    - Also widen predictor rows parameter; from uint_16 to size_t.
 
 0.0.3  2023-10-22T08:47:19+13:00
     - Writer integers as 64bit / 18 digits (was 32 bit / 8 digits)
