@@ -1,6 +1,8 @@
 Revision history for PDF-Native
 
 {{$NEXT}}
+
+0.0.4  2023-10-23T09:25:09+13:00
     - Also widen predictor rows parameter; from uint_16 to size_t.
 
 0.0.3  2023-10-22T08:47:19+13:00
