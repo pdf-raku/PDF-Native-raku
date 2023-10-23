@@ -33,7 +33,7 @@ class Build {
     }
 }
 
-# Build.pm can also be run standalone
+# Build.pm6 can also be run standalone
 sub MAIN(Str $working-directory = '.', :$rebuild = !Rakudo::Internals.IS-WIN ) {
     Build.new.build($working-directory, :$rebuild);
 }

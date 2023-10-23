@@ -7,6 +7,4 @@
 #define DLLEXPORT extern
 #endif
 
-#define PDF_VERSION "0.0.4"
-
 #endif
