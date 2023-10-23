@@ -1,6 +1,7 @@
 DocProj=pdf-raku.github.io
 DocRepo=https://github.com/pdf-raku/$(DocProj)
 DocLinker=../$(DocProj)/etc/resolve-links.raku
+TEST_JOBS ?= 6
 
 all :
 	cd src/pdf && %MAKE% all
@@ -15,7 +16,10 @@ test-coverage :
 	cd src/pdf && %MAKE% coverage-reports
 
 test : all
-	@prove -e'perl6 -I .' -v t
+	@prove -e'perl6 -I .' -j $(TEST_JOBS) t
+
+loudtest : all
+	@prove -v -e'perl6 -I .' t
 
 memtest : all
 	@prove -e'perl6-valgrind-m -I .' -v t

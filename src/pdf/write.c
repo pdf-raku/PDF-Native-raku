@@ -25,7 +25,7 @@ DLLEXPORT size_t pdf_write_bool(PDF_BOOL val, char *out, size_t out_len) {
 
 DLLEXPORT size_t pdf_write_int(PDF_INT64 val, char *out, size_t out_len) {
   char buf[32];
-  snprintf(buf, sizeof(buf), "%ld", val);
+  snprintf(buf, sizeof(buf), "%" PRId64, val);
   strncpy(out, buf, out_len);
   return strnlen(out, out_len);
 }
