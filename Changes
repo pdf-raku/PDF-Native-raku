@@ -1,7 +1,6 @@
 Revision history for PDF-Native
 
 {{$NEXT}}
-    - And widen index passed to xref_stream packing and unpacking from 32 to 64 bits
 
 0.0.4  2023-10-23T09:25:09+13:00
     - Also widen predictor rows parameter; from uint_16 to size_t.

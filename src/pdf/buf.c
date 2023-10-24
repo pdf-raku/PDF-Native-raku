@@ -193,15 +193,15 @@ DLLEXPORT void pdf_buf_unpack_W_64(uint8_t *in, uint64_t *out, size_t in_len, ui
 // the stream-data having been partially unpacked by merging
 // /W via pdf_buf_unpack_W_64() above
 
-DLLEXPORT size_t pdf_buf_unpack_xref_stream(uint64_t *in, uint64_t *out, size_t in_rows, uint64_t *index, size_t index_len) {
+DLLEXPORT size_t pdf_buf_unpack_xref_stream(uint64_t *in, uint64_t *out, size_t in_rows, int *index, size_t index_len) {
     size_t i;
     size_t n = 0;
 
     if (index_len % 2) return 0;
 
     for (i = 0; i < index_len;) {
-        uint64_t obj_num = index[i++];
-        uint64_t num_entries = index[i++];
+        uint32_t obj_num = index[i++];
+        uint32_t num_entries = index[i++];
         size_t j;
 
         if (n + num_entries > in_rows) return in_rows+1;
@@ -218,9 +218,9 @@ DLLEXPORT size_t pdf_buf_unpack_xref_stream(uint64_t *in, uint64_t *out, size_t 
     return n;
 }
 
-DLLEXPORT uint64_t pdf_buf_pack_xref_stream(uint64_t *in, uint64_t *out, size_t rows, uint64_t *index, size_t *index_len) {
-    uint64_t size = rows ? in[0] + 1 : 0;
-    uint64_t *pindex = index-1;
+DLLEXPORT uint32_t pdf_buf_pack_xref_stream(uint64_t *in, uint64_t *out, size_t rows, uint32_t *index, size_t *index_len) {
+    uint32_t size = rows ? in[0] + 1 : 0;
+    uint32_t *pindex = index-1;
 
     while (rows > 0) {
         uint32_t obj_num = *(in++);

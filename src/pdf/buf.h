@@ -20,7 +20,7 @@ DLLEXPORT void pdf_buf_pack_compute_W_64(uint64_t *in, size_t in_len, uint8_t *w
 DLLEXPORT void pdf_buf_pack_W_64(uint64_t *in, uint8_t *out, size_t in_len, uint8_t *w, size_t w_len);
 DLLEXPORT void pdf_buf_unpack_W_64(uint8_t *in, uint64_t *out, size_t in_len, uint8_t *w, size_t w_len);
 
-DLLEXPORT uint64_t pdf_buf_pack_xref_stream(uint64_t *in, uint64_t *out, size_t in_rows, uint64_t *index, size_t *index_len);
-DLLEXPORT size_t pdf_buf_unpack_xref_stream(uint64_t *in, uint64_t *out, size_t in_rows, uint64_t *index, size_t index_len);
+DLLEXPORT uint32_t pdf_buf_pack_xref_stream(uint64_t *in, uint64_t *out, size_t in_rows, uint32_t *index, size_t *index_len);
+DLLEXPORT size_t pdf_buf_unpack_xref_stream(uint64_t *in, uint64_t *out, size_t in_rows, int *index, size_t index_len);
 
 #endif

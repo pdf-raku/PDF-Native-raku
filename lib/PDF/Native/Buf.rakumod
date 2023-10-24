@@ -46,8 +46,8 @@ Also handles variable byte packing and unpacking. As seen in the `/W` parameter 
     sub pdf_buf_pack_compute_W_64(Blob, size_t, Blob, size_t) is native(libpdf) { * }
     sub pdf_buf_pack_W_64(Blob, Blob, size_t, Blob, size_t) is native(libpdf) { * }
 
-    sub pdf_buf_unpack_xref_stream(Blob, Blob, size_t, Blob, size_t --> uint64) is native(libpdf) { * }
-    sub pdf_buf_pack_xref_stream(Blob, Blob, size_t, Blob, size_t is rw --> uint64) is native(libpdf) { * }
+    sub pdf_buf_unpack_xref_stream(Blob, Blob, size_t, Blob, size_t --> size_t) is native(libpdf) { * }
+    sub pdf_buf_pack_xref_stream(Blob, Blob, size_t, Blob, size_t is rw --> uint32) is native(libpdf) { * }
 
     my subset PackingSize where 1|2|4|8|16|24|32;
     sub container(PackingSize $bits) {
@@ -130,7 +130,7 @@ Also handles variable byte packing and unpacking. As seen in the `/W` parameter 
 
     our sub unpack-xref-stream($in, $index) is export(:pack-xref-stream) {
         my blob64 $in-buf = $in ~~ blob64 ?? $in !! blob64.new: $in;
-        my blob64 $index-buf = $index ~~ blob64 ?? $index !! blob64.new($index);
+        my blob32 $index-buf = $index ~~ blob32 ?? $index !! blob32.new($index);
         warn "input XRef input size not a multiple of 3"
             unless $in-buf.elems %% 3;
         my $rows = $in-buf.elems div 3;
@@ -150,7 +150,7 @@ Also handles variable byte packing and unpacking. As seen in the `/W` parameter 
             unless $in-buf.elems %% 4;
         my $rows = $in-buf.elems div 4;
         my buf64 $out-buf := buf64.allocate(3 * $rows);
-        my buf64 $index-buf := buf64.allocate(2 * $rows);
+        my buf32 $index-buf := buf32.allocate(2 * $rows);
         my size_t $index-len;
         my $size = pdf_buf_pack_xref_stream($in-buf, $out-buf, $rows, $index-buf, $index-len);
         @out Z= $out-buf;
