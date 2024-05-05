@@ -16,10 +16,10 @@ related to reading and writing larger PDF files.
 
 So far, just a subset of potential areas are covered:
 
-=item the PDF::IO::Filter::Predictor `decode` and `encode` functions.
-=item the widely used PDF::IO::Util `pack` and `unpack` functions.
-=item reading of cross reference tables and PDF 1.5+ cross reference streams.
-=item writing of strings, numerics, cross-reference tables and streams.
+- the PDF::IO::Filter::Predictor `decode` and `encode` functions.
+- the widely used PDF::IO::Util `pack` and `unpack` functions.
+- reading of cross reference tables and PDF 1.5+ cross reference streams.
+- writing of strings, numerics, cross-reference tables and streams.
 
 ## Classes in this Distribution
 
