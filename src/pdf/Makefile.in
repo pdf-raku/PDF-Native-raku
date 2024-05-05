@@ -6,7 +6,7 @@ all: %DEST%/%LIB_NAME%
 debug :
 	%MAKE% "DBG=-Wall -g"  all
 
-SRCS = buf.c filt_predict.c filt_predict_png.c filt_predict_tiff.c read.c write.c
+SRCS = buf.c filt_predict.c filt_predict_png.c filt_predict_tiff.c read.c write.c version.c
 OBJS = buf%O% filt_predict%O% filt_predict_png%O% filt_predict_tiff%O% read%O% write%O% version%O%
 
 %DEST%/%LIB_NAME%: $(OBJS)

@@ -1,6 +1,7 @@
 Revision history for PDF-Native
 
 {{$NEXT}}
+    - Fix printing of wide integers in pdf_write_int()
 
 0.0.4  2023-10-23T09:25:09+13:00
     - Also widen predictor rows parameter; from uint_16 to size_t.
