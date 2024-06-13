@@ -18,18 +18,18 @@ pdf_filt_predict_decode(
                         size_t rows
                    ) {
   switch (predictor) {
-  case PDF_TYPE_FILTER_TIFF_PREDICTOR:
+  case PDF_FILTER_TIFF_PREDICTOR:
     pdf_filt_predict_tiff_decode(in, out, colors, bpc, columns, rows);
     break;
-  case PDF_TYPE_FILTER_PNG_NONE_ALL_ROWS:
-  case PDF_TYPE_FILTER_PNG_SUB_ALL_ROWS:
-  case PDF_TYPE_FILTER_PNG_UP_ALL_ROWS:
-  case PDF_TYPE_FILTER_PNG_AVERAGE_ALL_ROWS:
-  case PDF_TYPE_FILTER_PNG_PAETH_ALL_ROWS:
-  case PDF_TYPE_FILTER_PNG_OPTIMUM:
+  case PDF_FILTER_PNG_NONE_ALL_ROWS:
+  case PDF_FILTER_PNG_SUB_ALL_ROWS:
+  case PDF_FILTER_PNG_UP_ALL_ROWS:
+  case PDF_FILTER_PNG_AVERAGE_ALL_ROWS:
+  case PDF_FILTER_PNG_PAETH_ALL_ROWS:
+  case PDF_FILTER_PNG_OPTIMUM:
     pdf_filt_predict_png_decode(in, out, colors, bpc, columns, rows);
     break;
-  case PDF_TYPE_FILTER_NO_PREDICTION: {
+  case PDF_FILTER_NO_PREDICTION: {
     int w = bpc / 8;
     if (w < 1) {
       w = 1;
@@ -54,18 +54,18 @@ pdf_filt_predict_encode(
                         size_t rows
                    ) {
   switch (predictor) {
-  case PDF_TYPE_FILTER_TIFF_PREDICTOR:
+  case PDF_FILTER_TIFF_PREDICTOR:
     pdf_filt_predict_tiff_encode(in, out, colors, bpc, columns, rows);
     break;
-  case PDF_TYPE_FILTER_PNG_NONE_ALL_ROWS:
-  case PDF_TYPE_FILTER_PNG_SUB_ALL_ROWS:
-  case PDF_TYPE_FILTER_PNG_UP_ALL_ROWS:
-  case PDF_TYPE_FILTER_PNG_AVERAGE_ALL_ROWS:
-  case PDF_TYPE_FILTER_PNG_PAETH_ALL_ROWS:
-  case PDF_TYPE_FILTER_PNG_OPTIMUM:
+  case PDF_FILTER_PNG_NONE_ALL_ROWS:
+  case PDF_FILTER_PNG_SUB_ALL_ROWS:
+  case PDF_FILTER_PNG_UP_ALL_ROWS:
+  case PDF_FILTER_PNG_AVERAGE_ALL_ROWS:
+  case PDF_FILTER_PNG_PAETH_ALL_ROWS:
+  case PDF_FILTER_PNG_OPTIMUM:
     pdf_filt_predict_png_encode(in, out, colors, bpc, columns, rows, predictor);
     break;
-  case PDF_TYPE_FILTER_NO_PREDICTION: {
+  case PDF_FILTER_NO_PREDICTION: {
     int w = bpc / 8;
     if (w < 1) {
       w = 1;
