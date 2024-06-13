@@ -1,5 +1,5 @@
-#ifndef PDF_TYPE_BUF_H_
-#define PDF_TYPE_BUF_H_
+#ifndef PDF_BUF_H_
+#define PDF_BUF_H_
 
 // unpack bytes to n-bit unsigned integers
 DLLEXPORT void pdf_buf_unpack_1(uint8_t *in, uint8_t *out, size_t in_len);

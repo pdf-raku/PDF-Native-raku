@@ -1,5 +1,5 @@
-#ifndef PDF_TYPE_TYPES_H_
-#define PDF_TYPE_TYPES_H_
+#ifndef PDF_TYPES_H_
+#define PDF_TYPES_H_
 
 typedef double    PDF_TYPE_REAL;
 typedef int32_t   PDF_TYPE_INT;

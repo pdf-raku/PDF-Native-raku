@@ -1,5 +1,5 @@
-#ifndef PDF_TYPE_FILT_PREDICT_H_
-#define PDF_TYPE_FILT_PREDICT_H_
+#ifndef PDF_FILT_PREDICT_H_
+#define PDF_FILT_PREDICT_H_
 
 typedef enum
 {

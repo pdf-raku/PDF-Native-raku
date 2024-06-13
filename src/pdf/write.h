@@ -1,5 +1,5 @@
-#ifndef PDF_TYPE_WRITE_H_
-#define PDF_TYPE_WRITE_H_
+#ifndef PDF_WRITE_H_
+#define PDF_WRITE_H_
 
 /* write boolean: 0 -> "true", 1 -> "false" */
 DLLEXPORT size_t pdf_write_bool(PDF_TYPE_BOOL, char *out, size_t out_len);

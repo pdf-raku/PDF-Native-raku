@@ -1,5 +1,5 @@
-#ifndef PDF_TYPE_READ_H_
-#define PDF_TYPE_READ_H_
+#ifndef PDF_READ_H_
+#define PDF_READ_H_
 
 DLLEXPORT size_t pdf_read_xref_entry_count(PDF_TYPE_STRING buf, size_t buf_len);
 
