@@ -1,5 +1,5 @@
-#ifndef PDF_FILT_PREDICT_TIFF_H_
-#define PDF_FILT_PREDICT_TIFF_H_
+#ifndef PDF_TYPE_FILT_PREDICT_TIFF_H_
+#define PDF_TYPE_FILT_PREDICT_TIFF_H_
 
 // Decode TIFF predictors
 DLLEXPORT void

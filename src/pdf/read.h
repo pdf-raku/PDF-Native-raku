@@ -1,7 +1,7 @@
-#ifndef PDF_READ_H_
-#define PDF_READ_H_
+#ifndef PDF_TYPE_READ_H_
+#define PDF_TYPE_READ_H_
 
-DLLEXPORT size_t pdf_read_xref_entry_count(PDF_STRING buf, size_t buf_len);
+DLLEXPORT size_t pdf_read_xref_entry_count(PDF_TYPE_STRING buf, size_t buf_len);
 
 /* read xref entries;
    typedef enum {free, inuse};
@@ -16,8 +16,8 @@ DLLEXPORT size_t pdf_read_xref_entry_count(PDF_STRING buf, size_t buf_len);
       60,   0      inuse,
       100,  2      inuse }
 */
-DLLEXPORT size_t pdf_read_xref_seg(PDF_XREF xref, PDF_UINT length, PDF_STRING buf, size_t buf_len, size_t obj_first_num);
+DLLEXPORT size_t pdf_read_xref_seg(PDF_TYPE_XREF xref, PDF_TYPE_UINT length, PDF_TYPE_STRING buf, size_t buf_len, size_t obj_first_num);
 
-DLLEXPORT size_t pdf_read_xref(PDF_XREF xref, PDF_STRING buf, size_t buf_len);
+DLLEXPORT size_t pdf_read_xref(PDF_TYPE_XREF xref, PDF_TYPE_STRING buf, size_t buf_len);
 
 #endif

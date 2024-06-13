@@ -12,9 +12,9 @@ static uint8_t eoln_char(uint8_t c) {
   return (c == 10 || c == 13);
 }
 
-static uint8_t _line_length(PDF_STRING buf_start, PDF_STRING buf_end) {
+static uint8_t _line_length(PDF_TYPE_STRING buf_start, PDF_TYPE_STRING buf_end) {
 
-  PDF_STRING buf_p = buf_start;
+  PDF_TYPE_STRING buf_p = buf_start;
   int eoln = 0;
 
   while (buf_p <= buf_end) {
@@ -34,7 +34,7 @@ static uint8_t _line_length(PDF_STRING buf_start, PDF_STRING buf_end) {
   return buf_p - buf_start + eoln;
 }
 
-static uint8_t scan_num(PDF_STRING buf_p, uint8_t n, uint64_t *num) {
+static uint8_t scan_num(PDF_TYPE_STRING buf_p, uint8_t n, uint64_t *num) {
     uint8_t ok = 1;
     uint8_t j = 0;
     *num = 0;
@@ -53,7 +53,7 @@ static uint8_t scan_num(PDF_STRING buf_p, uint8_t n, uint64_t *num) {
     return ok;
 }
 
-static size_t skip_xref(PDF_STRING buf_p, PDF_STRING buf_end) {
+static size_t skip_xref(PDF_TYPE_STRING buf_p, PDF_TYPE_STRING buf_end) {
   size_t bytes = 0;
   if ((buf_end - buf_p > 5)
       && strncmp(buf_p, "xref", 4)==0) {
@@ -66,10 +66,10 @@ static size_t skip_xref(PDF_STRING buf_p, PDF_STRING buf_end) {
 /*
  * prescan index segments to find the number of entrys
  */
-DLLEXPORT size_t pdf_read_xref_entry_count(PDF_STRING buf, size_t buf_len) {
+DLLEXPORT size_t pdf_read_xref_entry_count(PDF_TYPE_STRING buf, size_t buf_len) {
   size_t entries = 0;
-  PDF_STRING buf_p = buf;
-  PDF_STRING buf_end = buf + buf_len;
+  PDF_TYPE_STRING buf_p = buf;
+  PDF_TYPE_STRING buf_end = buf + buf_len;
   uint64_t obj_first_num;
   uint64_t obj_count;
   uint8_t line_len;
@@ -85,10 +85,10 @@ DLLEXPORT size_t pdf_read_xref_entry_count(PDF_STRING buf, size_t buf_len) {
   return entries;
 }
 
-DLLEXPORT size_t pdf_read_xref_seg(PDF_XREF xref, PDF_UINT length, PDF_STRING buf, size_t buf_len, size_t obj_first_num) {
-  PDF_STRING buf_p = buf;
-  PDF_STRING buf_end = buf + buf_len;
-  PDF_UINT i;
+DLLEXPORT size_t pdf_read_xref_seg(PDF_TYPE_XREF xref, PDF_TYPE_UINT length, PDF_TYPE_STRING buf, size_t buf_len, size_t obj_first_num) {
+  PDF_TYPE_STRING buf_p = buf;
+  PDF_TYPE_STRING buf_end = buf + buf_len;
+  PDF_TYPE_UINT i;
 
   for (i = 0; i < length && (buf_end - buf_p >= 20); i++) {
     uint64_t offset;
@@ -115,10 +115,10 @@ DLLEXPORT size_t pdf_read_xref_seg(PDF_XREF xref, PDF_UINT length, PDF_STRING bu
   return (size_t) (buf_p - buf);
 }
 
-DLLEXPORT size_t pdf_read_xref(PDF_XREF xref, PDF_STRING buf, size_t buf_len) {
+DLLEXPORT size_t pdf_read_xref(PDF_TYPE_XREF xref, PDF_TYPE_STRING buf, size_t buf_len) {
   size_t entries = 0;
-  PDF_STRING buf_p = buf;
-  PDF_STRING buf_end = buf + buf_len;
+  PDF_TYPE_STRING buf_p = buf;
+  PDF_TYPE_STRING buf_end = buf + buf_len;
   uint64_t obj_first_num;
   uint64_t obj_count;
   uint8_t line_len;

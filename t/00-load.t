@@ -2,7 +2,8 @@ use v6;
 use Test;
 plan 2;
 
-use PDF::Native :libpdf;
+use PDF::Native;
+use PDF::Native::Defs :libpdf;
 
 ok libpdf.IO.s, libpdf.IO.path ~ ' library has been built';
 unless libpdf.IO.s {

@@ -15,6 +15,7 @@
   "provides": {
     "PDF::Native": "lib/PDF/Native.rakumod",
     "PDF::Native::Buf": "lib/PDF/Native/Buf.rakumod",
+    "PDF::Native::Defs": "lib/PDF/Native/Defs.rakumod",
     "PDF::Native::Filter::Predictors": "lib/PDF/Native/Filter/Predictors.rakumod",
     "PDF::Native::Reader": "lib/PDF/Native/Reader.rakumod",
     "PDF::Native::Writer": "lib/PDF/Native/Writer.rakumod"
@@ -23,7 +24,7 @@
     "libraries/pdf"
   ],
   "source-url": "git://github.com/pdf-raku/PDF-Native-raku.git",
-  "tags": [
+  "tags": [ "pdf"
   ],
   "test-depends": [
   ],

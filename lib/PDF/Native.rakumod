@@ -1,26 +1,18 @@
 use v6;
 
 #| native implementations of PDF functions.
-class PDF::Native:ver<0.0.5> {
-    use LibraryMake;
-    use NativeCall;
-    # Find our compiled library.
-    constant libpdf is export(:libpdf) = %?RESOURCES<libraries/pdf>;
+unit class PDF::Native:ver<0.0.5>;
 
-    sub pdf_version
-        returns Str
-        is native(libpdf) {*};
+use LibraryMake;
+use NativeCall;
+use PDF::Native::Defs :libpdf;
+# Find our compiled library.
 
-    constant PDF_BOOL   is export(:types) = int32;
-    constant PDF_INT    is export(:types) = int32;
-    constant PDF_INT64  is export(:types) = int64;
-    constant PDF_UINT   is export(:types) = uint32;
-    constant PDF_REAL   is export(:types) = num64;
-    constant PDF_STRING is export(:types) = str;
-    constant PDF_CODE_POINTS is export(:types) = Blob[uint32];
-    constant PDF_XREF   is export(:types) = Blob[uint64];
+sub pdf_version
+    returns Str
+    is native(libpdf) {*};
 
-    method lib-version {
-        return Version.new: pdf_version();
-    }
+method lib-version {
+    return Version.new: pdf_version();
 }
+

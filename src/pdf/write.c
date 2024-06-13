@@ -18,19 +18,19 @@ static void _concat(char** out_p, char* end_p, char* buf) {
   *out_p += len;
 }
 
-DLLEXPORT size_t pdf_write_bool(PDF_BOOL val, char *out, size_t out_len) {
+DLLEXPORT size_t pdf_write_bool(PDF_TYPE_BOOL val, char *out, size_t out_len) {
   strncpy(out, val ? "true" : "false", out_len);
   return strnlen(out, out_len);
 }
 
-DLLEXPORT size_t pdf_write_int(PDF_INT64 val, char *out, size_t out_len) {
+DLLEXPORT size_t pdf_write_int(PDF_TYPE_INT64 val, char *out, size_t out_len) {
   char buf[32];
   snprintf(buf, sizeof(buf), "%" PRId64, val);
   strncpy(out, buf, out_len);
   return strnlen(out, out_len);
 }
 
-DLLEXPORT size_t pdf_write_real(PDF_REAL val, char *out, size_t out_len) {
+DLLEXPORT size_t pdf_write_real(PDF_TYPE_REAL val, char *out, size_t out_len) {
   char   buf[32];
   char   *t;
   char   *dp;
@@ -57,10 +57,10 @@ DLLEXPORT size_t pdf_write_real(PDF_REAL val, char *out, size_t out_len) {
   return len;
 }
 
-DLLEXPORT size_t pdf_write_literal(PDF_STRING val, size_t in_len, char* out, size_t out_len) {
+DLLEXPORT size_t pdf_write_literal(PDF_TYPE_STRING val, size_t in_len, char* out, size_t out_len) {
 
-  PDF_STRING in_p = val;
-  PDF_STRING in_end = val + in_len;
+  PDF_TYPE_STRING in_p = val;
+  PDF_TYPE_STRING in_end = val + in_len;
   char* out_p = out;
   char* out_end = out + out_len - 1;
 
@@ -103,10 +103,10 @@ static uint8_t hex_char(uint8_t c) {
           );
 }
 
-DLLEXPORT size_t pdf_write_hex_string(PDF_STRING val, size_t in_len, char* out, size_t out_len) {
+DLLEXPORT size_t pdf_write_hex_string(PDF_TYPE_STRING val, size_t in_len, char* out, size_t out_len) {
 
-  PDF_STRING in_p = val;
-  PDF_STRING in_end = val + in_len;
+  PDF_TYPE_STRING in_p = val;
+  PDF_TYPE_STRING in_end = val + in_len;
   char* out_p = out;
   char* out_end = out + out_len - 1;
 
@@ -122,11 +122,11 @@ DLLEXPORT size_t pdf_write_hex_string(PDF_STRING val, size_t in_len, char* out, 
   return (size_t) (out_p - out);
 }
 
-DLLEXPORT size_t pdf_write_xref_seg(PDF_XREF xref, PDF_UINT length, PDF_STRING buf, size_t buf_len) {
-  PDF_STRING buf_p = buf;
-  PDF_STRING buf_end = buf + buf_len;
+DLLEXPORT size_t pdf_write_xref_seg(PDF_TYPE_XREF xref, PDF_TYPE_UINT length, PDF_TYPE_STRING buf, size_t buf_len) {
+  PDF_TYPE_STRING buf_p = buf;
+  PDF_TYPE_STRING buf_end = buf + buf_len;
   char entry[24];
-  PDF_UINT i;
+  PDF_TYPE_UINT i;
 
   for (i = 0; i < length && buf_p < buf_end; i++) {
       uint64_t offset  = *(xref++);
@@ -170,10 +170,10 @@ static uint8_t utf8_encode(uint8_t *bp, uint32_t cp) {
     return 0;
 }
 
-DLLEXPORT size_t pdf_write_name(PDF_CODE_POINTS name, size_t in_len, char* out, size_t out_len) {
+DLLEXPORT size_t pdf_write_name(PDF_TYPE_CODE_POINTS name, size_t in_len, char* out, size_t out_len) {
 
-  PDF_CODE_POINTS in_p = name;
-  PDF_CODE_POINTS in_end = name + in_len;
+  PDF_TYPE_CODE_POINTS in_p = name;
+  PDF_TYPE_CODE_POINTS in_end = name + in_len;
   char* out_p = out;
   char* out_end = out + out_len;
 
