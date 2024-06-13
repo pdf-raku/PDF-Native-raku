@@ -5,14 +5,15 @@ use NativeCall;
 
 enum PDF_NODE_TYPE «
     PDF_NODE_ANY
-    PDF_NODE_REFERENCE
     PDF_NODE_ARRAY
-    PDF_NODE_DICT
     PDF_NODE_BOOL
-    PDF_NODE_REAL
-    PDF_NODE_LITERAL
+    PDF_NODE_DICT
     PDF_NODE_HEX_STRING
+    PDF_NODE_LITERAL
+    PDF_NODE_NAME
     PDF_NODE_NULL
+    PDF_NODE_REAL
+    PDF_NODE_REFERENCE
 »;
 
 our @ClassMap;
@@ -76,14 +77,20 @@ class PdfNodeReal is repr('CStruct') is PdfNode is export {
     has PDF_TYPE_REAL $.value;
 }
 
-class PdfNodeLiteral is repr('CStruct') is PdfNode is export {
-    also does domNode[$?CLASS, PDF_NODE_LITERAL];
+class _PdfNodeStringy is repr('CStruct') is PdfNode {
     has Str $.value;
 }
 
-class PdfNodeHexString is repr('CStruct') is PdfNode is export {
+class PdfNodeLiteral is repr('CStruct') is _PdfNodeStringy is export {
+    also does domNode[$?CLASS, PDF_NODE_LITERAL];
+}
+
+class PdfNodeHexString is repr('CStruct') is _PdfNodeStringy is export {
     also does domNode[$?CLASS, PDF_NODE_HEX_STRING];
-    has Str $.value;
+}
+
+class PdfNodeName is repr('CStruct') is _PdfNodeStringy is export {
+    also does domNode[$?CLASS, PDF_NODE_NAME];
 }
 
 class PdfNodeNull is repr('CStruct') is PdfNode is export {
