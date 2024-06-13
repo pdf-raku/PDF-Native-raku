@@ -15,6 +15,7 @@
   "provides": {
     "PDF::Native": "lib/PDF/Native.rakumod",
     "PDF::Native::Buf": "lib/PDF/Native/Buf.rakumod",
+    "PDF::Native::DOM": "lib/PDF/Native/DOM.rakumod",
     "PDF::Native::Defs": "lib/PDF/Native/Defs.rakumod",
     "PDF::Native::Filter::Predictors": "lib/PDF/Native/Filter/Predictors.rakumod",
     "PDF::Native::Reader": "lib/PDF/Native/Reader.rakumod",
