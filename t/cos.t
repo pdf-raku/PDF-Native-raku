@@ -1,4 +1,4 @@
-use PDF::Native::DOM;
+use PDF::Native::COS;
 use Test;
 
 pass;
