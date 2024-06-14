@@ -3,13 +3,14 @@ unit class PDF::Native::COS;
 use PDF::Native::Defs :types, :libpdf;
 use NativeCall;
 
-enum COS_NODE_TYPE «
+enum COS_NODE_TYPE is export «
     COS_NODE_ANY
     COS_NODE_ARRAY
     COS_NODE_BOOL
     COS_NODE_DICT
     COS_NODE_HEX
     COS_NODE_IND_OBJ
+    COS_NODE_INT
     COS_NODE_LITERAL
     COS_NODE_NAME
     COS_NODE_NULL
@@ -40,6 +41,9 @@ class CosNode is repr('CStruct') is export {
         my $class := @ClassMap[$type];
         nativecast($class, $p);
     }
+
+    #| Only needed on tree/fragment root nodes.
+    method fragment-done() is native(libpdf) is symbol('cos_fragment_done') {*}
 }
 
 #| Indirect object or object reference
@@ -50,7 +54,6 @@ class CosRef is repr('CStruct') is CosNode is export {
 
     method !cos_ref_new(uint64, uint32 --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_ref_write(Blob, int32 --> int32) is native(libpdf) {*}
-    method !cos_ref_done() is native(libpdf) {*}
 
     method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0) {
         self!cos_ref_new($obj-num, $gen-num);
@@ -60,7 +63,6 @@ class CosRef is repr('CStruct') is CosNode is export {
         my $n = self!cos_ref_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
-    method DESTROY { self!cos_ref_done(); }
 }
 
 class CosIndObj is repr('CStruct') is CosNode is export {
@@ -69,6 +71,10 @@ class CosIndObj is repr('CStruct') is CosNode is export {
     has uint32 $.gen-num;
     has CosNode $.value;
     method value { $!value.cast }
+    #| Indirect objects are always root nodes
+    submethod DESTROY {
+        self.root-done;
+    }
 }
 
 class CosArray is repr('CStruct') is CosNode is export {
