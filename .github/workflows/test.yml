@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-libraries:
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - uses: ilammy/msvc-dev-cmd@v1
       - uses: actions/checkout@v2
