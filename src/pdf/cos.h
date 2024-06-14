@@ -10,12 +10,12 @@ typedef enum COS_NODE_TYPE {
     COS_NODE_ARRAY,
     COS_NODE_BOOL,
     COS_NODE_DICT,
-    COS_NODE_HEX_STRING,
+    COS_NODE_HEX,
     COS_NODE_LITERAL,
     COS_NODE_NAME,
     COS_NODE_NULL,
     COS_NODE_REAL,
-    COS_NODE_REFERENCE
+    COS_NODE_REF
 } COS_NODE_TYPE;
 
 typedef struct {
@@ -70,5 +70,9 @@ typedef struct {
 typedef struct {
     uint8_t         type;
 } CosNull;
+
+DLLEXPORT CosRef* cos_ref_new(CosRef*, uint64_t, uint32_t);
+DLLEXPORT int cos_ref_write(CosRef*, char*, int);
+DLLEXPORT void cos_ref_done(CosRef*);
 
 #endif

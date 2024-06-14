@@ -1,6 +1,6 @@
 unit class PDF::Native::COS;
 
-use PDF::Native::Defs :types;
+use PDF::Native::Defs :types, :libpdf;
 use NativeCall;
 
 enum COS_NODE_TYPE «
@@ -8,17 +8,18 @@ enum COS_NODE_TYPE «
     COS_NODE_ARRAY
     COS_NODE_BOOL
     COS_NODE_DICT
-    COS_NODE_HEX_STRING
+    COS_NODE_HEX
+    COS_NODE_IND_OBJ
     COS_NODE_LITERAL
     COS_NODE_NAME
     COS_NODE_NULL
     COS_NODE_REAL
-    COS_NODE_REFERENCE
+    COS_NODE_REF
 »;
 
 our @ClassMap;
 
-role domNode[$class, UInt:D $type] is export {
+role cosNode[$class, UInt:D $type] is export {
     @ClassMap[$type] = $class;
     method delegate {
         fail "expected node of type $type, got {self.type}"
@@ -43,14 +44,35 @@ class CosNode is repr('CStruct') is export {
 
 #| Indirect object or object reference
 class CosRef is repr('CStruct') is CosNode is export {
-    also does domNode[$?CLASS, COS_NODE_REFERENCE];
+    also does cosNode[$?CLASS, COS_NODE_REF];
+    has uint64 $.obj-num;
+    has uint32 $.gen-num;
+
+    method !cos_ref_new(uint64, uint32 --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_ref_write(Blob, int32 --> int32) is native(libpdf) {*}
+    method !cos_ref_done() is native(libpdf) {*}
+
+    method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0) {
+        self!cos_ref_new($obj-num, $gen-num);
+    }
+    method Str {
+        my Buf[uint8] $buf .= allocate(20);
+        my $n = self!cos_ref_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
+    method DESTROY { self!cos_ref_done(); }
+}
+
+class CosIndObj is repr('CStruct') is CosNode is export {
+    also does cosNode[$?CLASS, COS_NODE_IND_OBJ];
     has uint64 $.obj-num;
     has uint32 $.gen-num;
     has CosNode $.value;
+    method value { $!value.cast }
 }
 
 class CosArray is repr('CStruct') is CosNode is export {
-    also does domNode[$?CLASS, COS_NODE_ARRAY];
+    also does cosNode[$?CLASS, COS_NODE_ARRAY];
     # naive implementation for now
     has size_t $.len;
     has CArray[CosNode] $.value;
@@ -58,7 +80,7 @@ class CosArray is repr('CStruct') is CosNode is export {
 
 class CosDict is repr('CStruct') is CosNode is export {
     # naive implementation for now
-    also does domNode[$?CLASS, COS_NODE_DICT];
+    also does cosNode[$?CLASS, COS_NODE_DICT];
     has size_t $.len;
     has CArray[Str] $.keys;
     has CArray[CosNode] $.values;
@@ -68,12 +90,12 @@ class CosDict is repr('CStruct') is CosNode is export {
 }
 
 class CosBool is repr('CStruct') is CosNode is export {
-    also does domNode[$?CLASS, COS_NODE_BOOL];
+    also does cosNode[$?CLASS, COS_NODE_BOOL];
     has PDF_TYPE_BOOL $.value;
 }
 
 class CosReal is repr('CStruct') is CosNode is export {
-    also does domNode[$?CLASS, COS_NODE_REAL];
+    also does cosNode[$?CLASS, COS_NODE_REAL];
     has PDF_TYPE_REAL $.value;
 }
 
@@ -82,19 +104,19 @@ class _CosStringy is repr('CStruct') is CosNode {
 }
 
 class CosLiteral is repr('CStruct') is _CosStringy is export {
-    also does domNode[$?CLASS, COS_NODE_LITERAL];
+    also does cosNode[$?CLASS, COS_NODE_LITERAL];
 }
 
 class CosHexString is repr('CStruct') is _CosStringy is export {
-    also does domNode[$?CLASS, COS_NODE_HEX_STRING];
+    also does cosNode[$?CLASS, COS_NODE_HEX];
 }
 
 class CosName is repr('CStruct') is _CosStringy is export {
-    also does domNode[$?CLASS, COS_NODE_NAME];
+    also does cosNode[$?CLASS, COS_NODE_NAME];
 }
 
 class CosNull is repr('CStruct') is CosNode is export {
-    also does domNode[$?CLASS, COS_NODE_NULL];
+    also does cosNode[$?CLASS, COS_NODE_NULL];
     method value { Any }
 }
 
