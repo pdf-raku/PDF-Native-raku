@@ -53,7 +53,7 @@ class CosRef is repr('CStruct') is CosNode is export {
     has uint32 $.gen-num;
 
     method !cos_ref_new(uint64, uint32 --> ::?CLASS:D) is native(libpdf) {*}
-    method !cos_ref_write(Blob, int32 --> int32) is native(libpdf) {*}
+    method !cos_ref_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
     method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0) {
         self!cos_ref_new($obj-num, $gen-num);
@@ -70,10 +70,22 @@ class CosIndObj is repr('CStruct') is CosNode is export {
     has uint64 $.obj-num;
     has uint32 $.gen-num;
     has CosNode $.value;
-    method value { $!value.cast }
-    #| Indirect objects are always root nodes
+    method value { $!value.delegate }
+    #| Indirect objects the top of the tree and always fragments
+
+    method !cos_ind_obj_new(uint64, uint32, CosNode --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_ind_obj_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0, CosNode:D :$value!) {
+        self!cos_ind_obj_new($obj-num, $gen-num, $value);
+    }
+    method Str {
+        my Buf[uint8] $buf .= allocate(200);
+        my $n = self!cos_ind_obj_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
     submethod DESTROY {
-        self.root-done;
+        self.fragment-done;
     }
 }
 
@@ -98,6 +110,23 @@ class CosDict is repr('CStruct') is CosNode is export {
 class CosBool is repr('CStruct') is CosNode is export {
     also does cosNode[$?CLASS, COS_NODE_BOOL];
     has PDF_TYPE_BOOL $.value;
+}
+
+class CosInt is repr('CStruct') is CosNode is export {
+    also does cosNode[$?CLASS, COS_NODE_INT];
+    has PDF_TYPE_INT $.value;
+
+    method !cos_int_new(PDF_TYPE_INT --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_int_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(UInt:D :$value!) {
+        self!cos_int_new($value);
+    }
+    method Str {
+        my Buf[uint8] $buf .= allocate(20);
+        my $n = self!cos_int_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
 }
 
 class CosReal is repr('CStruct') is CosNode is export {

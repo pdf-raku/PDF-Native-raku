@@ -1,5 +1,6 @@
 #include "pdf.h"
 #include "pdf/cos.h"
+#include "pdf/write.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +33,12 @@ static int _node_write(CosNode* self, char* out, int out_len) {
     int n = 0;
     if (self) {
         switch (self->type) {
+        case COS_NODE_IND_OBJ:
+            n = cos_ind_obj_write((CosIndObj*)self, out, out_len);
+            break;
+        case COS_NODE_INT:
+            n = cos_int_write((CosInt*)self, out, out_len);
+            break;
         case COS_NODE_REF:
             n = cos_ref_write((CosRef*)self, out, out_len);
             break;
@@ -50,9 +57,9 @@ DLLEXPORT CosRef* cos_ref_new(CosRef* self, uint64_t obj_num, uint32_t gen_num) 
     return self;
 }
 
-DLLEXPORT int cos_ref_write(CosRef* self, char* out, int out_len) {
+DLLEXPORT size_t cos_ref_write(CosRef* self, char* out, size_t out_len) {
     if (self && out && out_len && self->obj_num > 0) {
-        int n = snprintf(out, out_len, "%ld %d R", self->obj_num, self->gen_num);
+        size_t n = snprintf(out, out_len, "%ld %d R", self->obj_num, self->gen_num);
         return n >= out_len ? out_len - 1 : n;
     }
     else {
@@ -70,16 +77,28 @@ DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj* self, uint64_t obj_num, uint32_t
     return self;
 }
 
-DLLEXPORT int cos_ind_obj_write(CosIndObj* self, char* out, int out_len) {
-    int n = cos_ref_write((CosRef*)self, out, out_len);
-    strncat(out+n,"\n", out_len-n);
-    n += _node_write(self->value, out+n+1, out_len-n-1);
+DLLEXPORT size_t cos_ind_obj_write(CosIndObj* self, char* out, size_t out_len) {
+    size_t n = (size_t) snprintf(out, out_len, "%ld %d obj\n", self->obj_num, self->gen_num);
+    n += _node_write(self->value, out+n, out_len-n);
+    if (n < out_len) {
+        strncat(out+n, "\nendobj\n", out_len-n);
+        n += 8;
+        if (n > out_len) n = out_len;
+    }
     return n;
 }
 
-DLLEXPORT void cos_ind_obj_done(CosIndObj* self) {
-    _node_done(self->value);
-    free((void*)self);
+DLLEXPORT CosInt* cos_int_new(CosInt* self, PDF_TYPE_INT value) {
+    self = (CosInt*) malloc(sizeof(CosInt));
+    self->type = COS_NODE_INT;
+    self->value = value;
+    return self;
 }
+
+DLLEXPORT size_t cos_int_write(CosInt* self, char* out, size_t out_len) {
+    return  pdf_write_int(self->value, out, out_len);
+}
+
+
 
 

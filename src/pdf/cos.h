@@ -65,27 +65,27 @@ typedef struct {
     PDF_TYPE_REAL   value;
 } CosReal;
 
-typedef struct {
-    uint8_t         type;
-    PDF_TYPE_STRING value;
-} CosLiteral;
-
-typedef struct {
+typedef struct CosStringyNode {
     uint8_t         type;
     PDF_TYPE_STRING value;
 } CosHexString;
 
-typedef struct {
-    uint8_t         type;
-    PDF_TYPE_STRING value;
-} CosName;
+typedef struct CosStringyNode CosName;
+typedef struct CosStringyNode CosLiteral;
 
 typedef struct {
     uint8_t         type;
 } CosNull;
 
 DLLEXPORT void cos_fragment_done(CosNode*);
+
 DLLEXPORT CosRef* cos_ref_new(CosRef*, uint64_t, uint32_t);
-DLLEXPORT int cos_ref_write(CosRef*, char*, int);
+DLLEXPORT size_t cos_ref_write(CosRef*, char*, size_t);
+
+DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj*, uint64_t, uint32_t, CosNode*);
+DLLEXPORT size_t cos_ind_obj_write(CosIndObj*, char*, size_t);
+
+DLLEXPORT CosInt* cos_int_new(CosInt*, PDF_TYPE_INT);
+DLLEXPORT size_t cos_int_write(CosInt*, char*, size_t);
 
 #endif
