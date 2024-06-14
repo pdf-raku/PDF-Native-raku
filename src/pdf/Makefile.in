@@ -6,14 +6,17 @@ all: %DEST%/%LIB_NAME%
 debug :
 	%MAKE% "DBG=-Wall -g"  all
 
-SRCS = buf.c filt_predict.c filt_predict_png.c filt_predict_tiff.c read.c write.c version.c
-OBJS = buf%O% filt_predict%O% filt_predict_png%O% filt_predict_tiff%O% read%O% write%O% version%O%
+SRCS = buf.c filt_predict.c filt_predict_png.c filt_predict_tiff.c read.c write.c version.c cos.c
+OBJS = buf%O% filt_predict%O% filt_predict_png%O% filt_predict_tiff%O% read%O% write%O% version%O% cos%O%
 
 %DEST%/%LIB_NAME%: $(OBJS)
 	%LD% %LDSHARED% %LDFLAGS% %LDOUT%%DEST%/%LIB_NAME% $(OBJS) $(LD_COV_OPT)
 
 buf%O% :
 	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ buf.c $(DBG)
+
+cos%O% :
+	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ cos.c $(DBG)
 
 filt_predict%O% :
 	%CC% -I .. -c %CCSHARED% %CCFLAGS% $(CC_COV_OPT) %CCOUT%$@ filt_predict.c $(DBG)

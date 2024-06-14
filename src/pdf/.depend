@@ -7,3 +7,4 @@ filt_predict_tiff.o: filt_predict_tiff.c ../pdf.h \
 read.o: read.c ../pdf.h ../pdf/types.h ../pdf/read.h
 write.o: write.c ../pdf.h ../pdf/types.h ../pdf/write.h
 version.o: version.c ../pdf.h ../pdf/version.h
+cos.o: cos.c ../pdf.h ../pdf/cos.h ../pdf/types.h

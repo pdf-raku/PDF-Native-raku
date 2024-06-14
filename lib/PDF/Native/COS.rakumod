@@ -42,21 +42,21 @@ class CosNode is repr('CStruct') is export {
 }
 
 #| Indirect object or object reference
-class CosNodeRef is repr('CStruct') is CosNode is export {
+class CosRef is repr('CStruct') is CosNode is export {
     also does domNode[$?CLASS, COS_NODE_REFERENCE];
     has uint64 $.obj-num;
     has uint32 $.gen-num;
     has CosNode $.value;
 }
 
-class CosNodeArray is repr('CStruct') is CosNode is export {
+class CosArray is repr('CStruct') is CosNode is export {
     also does domNode[$?CLASS, COS_NODE_ARRAY];
     # naive implementation for now
     has size_t $.len;
     has CArray[CosNode] $.value;
 }
 
-class CosNodeDict is repr('CStruct') is CosNode is export {
+class CosDict is repr('CStruct') is CosNode is export {
     # naive implementation for now
     also does domNode[$?CLASS, COS_NODE_DICT];
     has size_t $.len;
@@ -67,33 +67,33 @@ class CosNodeDict is repr('CStruct') is CosNode is export {
     }
 }
 
-class CosNodeBool is repr('CStruct') is CosNode is export {
+class CosBool is repr('CStruct') is CosNode is export {
     also does domNode[$?CLASS, COS_NODE_BOOL];
     has PDF_TYPE_BOOL $.value;
 }
 
-class CosNodeReal is repr('CStruct') is CosNode is export {
+class CosReal is repr('CStruct') is CosNode is export {
     also does domNode[$?CLASS, COS_NODE_REAL];
     has PDF_TYPE_REAL $.value;
 }
 
-class _CosNodeStringy is repr('CStruct') is CosNode {
+class _CosStringy is repr('CStruct') is CosNode {
     has Str $.value;
 }
 
-class CosNodeLiteral is repr('CStruct') is _CosNodeStringy is export {
+class CosLiteral is repr('CStruct') is _CosStringy is export {
     also does domNode[$?CLASS, COS_NODE_LITERAL];
 }
 
-class CosNodeHexString is repr('CStruct') is _CosNodeStringy is export {
+class CosHexString is repr('CStruct') is _CosStringy is export {
     also does domNode[$?CLASS, COS_NODE_HEX_STRING];
 }
 
-class CosNodeName is repr('CStruct') is _CosNodeStringy is export {
+class CosName is repr('CStruct') is _CosStringy is export {
     also does domNode[$?CLASS, COS_NODE_NAME];
 }
 
-class CosNodeNull is repr('CStruct') is CosNode is export {
+class CosNull is repr('CStruct') is CosNode is export {
     also does domNode[$?CLASS, COS_NODE_NULL];
     method value { Any }
 }
