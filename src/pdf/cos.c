@@ -15,6 +15,14 @@ DLLEXPORT void cos_node_done(CosNode* self) {
         case COS_NODE_REF:
             /* leaf node */
             break;
+        case COS_NODE_ARRAY:
+            size_t i;
+            CosArray* a = (CosArray*)self;
+            for (i=0; i < a->elems; i++) {
+                cos_node_done(a->values[i]);
+            }
+            free(a->values);
+            break;
         case COS_NODE_IND_OBJ:
             cos_node_done(((CosIndObj*)self)->value);
             break;
@@ -38,9 +46,41 @@ static int _node_write(CosNode* self, char* out, int out_len) {
         case COS_NODE_REF:
             n = cos_ref_write((CosRef*)self, out, out_len);
             break;
+        case COS_NODE_ARRAY:
+            n = cos_array_write((CosArray*)self, out, out_len);
+            break;
         default:
             fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
         }
+    }
+    return n;
+}
+
+DLLEXPORT CosArray* cos_array_new(CosArray* self, CosNode** values, size_t elems) {
+    size_t i;
+    self = (CosArray*) malloc(sizeof(CosArray));
+    self->type = COS_NODE_ARRAY;
+    self->ref_count = 1;
+    self->elems = elems;
+    self->values = (CosNode**) malloc(sizeof(CosNode*) * elems);
+    for (i=0; i < elems; i++) {
+        self->values[i] = values[i];
+        values[i]->ref_count++;
+    }
+    return self;
+}
+
+DLLEXPORT size_t cos_array_write(CosArray* self, char* out, size_t out_len) {
+    size_t n = 0;
+    size_t i;
+    if (out && out_len) {
+        strncat(out, "[ ", out_len);
+        n += 2;
+        for (i=0; i < self->elems; i++) {
+            n += _node_write(self->values[i], out+n, out_len - n);
+            if (n < out_len) out[n++] = ' ';
+        }
+        if (n < out_len) out[n++] = ']';
     }
     return n;
 }
@@ -55,14 +95,16 @@ DLLEXPORT CosRef* cos_ref_new(CosRef* self, uint64_t obj_num, uint32_t gen_num) 
 }
 
 DLLEXPORT size_t cos_ref_write(CosRef* self, char* out, size_t out_len) {
-    if (self && out && out_len && self->obj_num > 0) {
-        size_t n = snprintf(out, out_len, "%ld %d R", self->obj_num, self->gen_num);
-        return n >= out_len ? out_len - 1 : n;
+    size_t n = 0;
+    if (out && out_len) {
+        if (self && self->obj_num > 0) {
+            n = snprintf(out, out_len, "%ld %d R", self->obj_num, self->gen_num);
+        }
+        else {
+            *out = 0;
+        }
     }
-    else {
-        if (out && out_len) *out = 0;
-        return 0;
-    }
+    return n;
 }
 
 DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj* self, uint64_t obj_num, uint32_t gen_num, CosNode* value) {

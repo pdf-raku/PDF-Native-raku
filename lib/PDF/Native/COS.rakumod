@@ -49,11 +49,11 @@ class CosNode is repr('CStruct') is export {
     method !cos_node_done() is native(libpdf) {*}
 
     submethod DESTROY {
-        lock.protect: self!cos_node_done();
+        lock.protect: { self!cos_node_done(); }
     }
 }
 
-#| Indirect object or object reference
+#| Indirect object reference
 class CosRef is repr('CStruct') is CosNode is export {
     also does cosNode[$?CLASS, COS_NODE_REF];
     has uint64 $.obj-num;
@@ -96,18 +96,32 @@ class CosIndObj is repr('CStruct') is CosNode is export {
 class CosArray is repr('CStruct') is CosNode is export {
     also does cosNode[$?CLASS, COS_NODE_ARRAY];
     # naive implementation for now
-    has size_t $.len;
-    has CArray[CosNode] $.value;
+    has size_t $.elems;
+    has CArray[CosNode] $!values;
+    method !cos_array_new(CArray[CosNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_array_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(CArray[CosNode] :$values!, UInt:D :$elems = $values.elems) {
+        self!cos_array_new($values, $elems);
+    }
+    method AT-POS(UInt:D() $idx) {
+        $idx < $!elems
+            ?? $!values[$idx].delegate
+            !! $?CLASS;
+    }
+    method Str {
+        my Buf[uint8] $buf .= allocate(200);
+        my $n = self!cos_array_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
 }
 
-class CosDict is repr('CStruct') is CosNode is export {
+class CosDict is repr('CStruct') is CosArray is export {
     # naive implementation for now
     also does cosNode[$?CLASS, COS_NODE_DICT];
-    has size_t $.len;
     has CArray[Str] $.keys;
-    has CArray[CosNode] $.values;
     method value {
-        (^$!len).map: { $!keys[$_] => $!values[$_] }
+        (^$.elems).map: { $!keys[$_] => $.values[$_].delegate }
     }
 }
 
