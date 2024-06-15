@@ -20,18 +20,21 @@ typedef enum COS_NODE_TYPE {
     COS_NODE_REF
 } COS_NODE_TYPE;
 
-typedef struct {
+typedef struct CosBlankNode {
     uint8_t type;
+    uint8_t ref;
 } CosNode;
 
 typedef struct {
     uint8_t         type;
+    uint8_t         ref;
     uint64_t        obj_num;
     uint32_t        gen_num;
 } CosRef;
 
 typedef struct {
     uint8_t         type;
+    uint8_t         ref;
     uint64_t        obj_num;
     uint32_t        gen_num;
     CosNode*        value;
@@ -39,12 +42,14 @@ typedef struct {
 
 typedef struct {
     uint8_t         type;
+    uint8_t         ref;
     size_t          len;
     CosNode*        value;
 } CosArray;
 
 typedef struct {
     uint8_t         type;
+    uint8_t         ref;
     size_t          len;
     char*           key;
     CosNode*        value;
@@ -52,32 +57,33 @@ typedef struct {
 
 typedef struct {
     uint8_t         type;
+    uint8_t         ref;
     PDF_TYPE_BOOL   value;
 } CosBool;
 
 typedef struct {
     uint8_t         type;
+    uint8_t         ref;
     PDF_TYPE_INT    value;
 } CosInt;
 
 typedef struct {
     uint8_t         type;
+    uint8_t         ref;
     PDF_TYPE_REAL   value;
 } CosReal;
 
 typedef struct CosStringyNode {
     uint8_t         type;
+    uint8_t         ref;
     PDF_TYPE_STRING value;
 } CosHexString;
 
 typedef struct CosStringyNode CosName;
 typedef struct CosStringyNode CosLiteral;
+typedef struct CosBlankNode CosNull;
 
-typedef struct {
-    uint8_t         type;
-} CosNull;
-
-DLLEXPORT void cos_fragment_done(CosNode*);
+DLLEXPORT void cos_node_done(CosNode*);
 
 DLLEXPORT CosRef* cos_ref_new(CosRef*, uint64_t, uint32_t);
 DLLEXPORT size_t cos_ref_write(CosRef*, char*, size_t);

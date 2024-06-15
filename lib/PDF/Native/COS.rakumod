@@ -20,6 +20,8 @@ enum COS_NODE_TYPE is export «
 
 our @ClassMap;
 
+constant lock = Lock.new;
+
 role cosNode[$class, UInt:D $type] is export {
     @ClassMap[$type] = $class;
     method delegate {
@@ -31,6 +33,7 @@ role cosNode[$class, UInt:D $type] is export {
 
 class CosNode is repr('CStruct') is export {
     has uint8 $.type;
+    has uint8 $.ref;
 
     method delegate {
         my $class := @ClassMap[$!type];
@@ -43,7 +46,11 @@ class CosNode is repr('CStruct') is export {
     }
 
     #| Only needed on tree/fragment root nodes.
-    method fragment-done() is native(libpdf) is symbol('cos_fragment_done') {*}
+    method !cos_node_done() is native(libpdf) {*}
+
+    submethod DESTROY {
+        lock.protect: self!cos_node_done();
+    }
 }
 
 #| Indirect object or object reference
@@ -83,9 +90,6 @@ class CosIndObj is repr('CStruct') is CosNode is export {
         my Buf[uint8] $buf .= allocate(200);
         my $n = self!cos_ind_obj_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
-    }
-    submethod DESTROY {
-        self.fragment-done;
     }
 }
 

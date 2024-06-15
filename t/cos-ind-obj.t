@@ -1,10 +1,12 @@
 use PDF::Native::COS;
 use Test;
 
-plan 6;
+plan 8;
 
 my CosInt $value .= new: :value(69);
+is $value.ref, 1;
 my CosIndObj $ind-obj .= new: :obj-num(42), :gen-num(3), :$value;
+is $value.ref, 2;
 
 is $ind-obj.type, +COS_NODE_IND_OBJ;
 is $ind-obj.obj-num, 42;

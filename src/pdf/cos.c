@@ -5,28 +5,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void _node_done(CosNode* self) {
-    if (self) {
+DLLEXPORT void cos_node_done(CosNode* self) {
+    if (self && --(self->ref) <= 0) {
         switch (self->type) {
         case COS_NODE_BOOL:
         case COS_NODE_INT:
         case COS_NODE_NULL:
         case COS_NODE_REAL:
         case COS_NODE_REF:
-            /* content does need freeing */
+            /* leaf node */
             break;
         case COS_NODE_IND_OBJ:
-            _node_done(((CosIndObj*)self)->value);
+            cos_node_done(((CosIndObj*)self)->value);
             break;
         default:
             fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
         }
         free((void*)self);
     }
-}
-
-DLLEXPORT void cos_fragment_done(CosNode* self) {
-    _node_done(self);
 }
 
 static int _node_write(CosNode* self, char* out, int out_len) {
@@ -52,6 +48,7 @@ static int _node_write(CosNode* self, char* out, int out_len) {
 DLLEXPORT CosRef* cos_ref_new(CosRef* self, uint64_t obj_num, uint32_t gen_num) {
     self = (CosRef*) malloc(sizeof(CosRef));
     self->type = COS_NODE_REF;
+    self->ref = 1;
     self->obj_num = obj_num;
     self->gen_num = gen_num;
     return self;
@@ -71,9 +68,11 @@ DLLEXPORT size_t cos_ref_write(CosRef* self, char* out, size_t out_len) {
 DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj* self, uint64_t obj_num, uint32_t gen_num, CosNode* value) {
     self = (CosIndObj*) malloc(sizeof(CosIndObj));
     self->type = COS_NODE_IND_OBJ;
+    self->ref = 1;
     self->obj_num = obj_num;
     self->gen_num = gen_num;
     self->value = value;
+    value->ref++;
     return self;
 }
 
@@ -91,6 +90,7 @@ DLLEXPORT size_t cos_ind_obj_write(CosIndObj* self, char* out, size_t out_len) {
 DLLEXPORT CosInt* cos_int_new(CosInt* self, PDF_TYPE_INT value) {
     self = (CosInt*) malloc(sizeof(CosInt));
     self->type = COS_NODE_INT;
+    self->ref = 1;
     self->value = value;
     return self;
 }
