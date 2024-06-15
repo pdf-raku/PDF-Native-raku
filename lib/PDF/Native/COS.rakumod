@@ -93,11 +93,11 @@ class CosIndObj is repr('CStruct') is CosNode is export {
     }
 }
 
-class CosArray is repr('CStruct') is CosNode is export {
+class CosArray is CosNode is repr('CStruct') is export {
     also does cosNode[$?CLASS, COS_NODE_ARRAY];
     # naive implementation for now
     has size_t $.elems;
-    has CArray[CosNode] $!values;
+    has CArray[CosNode] $.values;
     method !cos_array_new(CArray[CosNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_array_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
@@ -107,7 +107,7 @@ class CosArray is repr('CStruct') is CosNode is export {
     method AT-POS(UInt:D() $idx) {
         $idx < $!elems
             ?? $!values[$idx].delegate
-            !! $?CLASS;
+            !! CosNode;
     }
     method Str {
         my Buf[uint8] $buf .= allocate(200);
@@ -117,12 +117,37 @@ class CosArray is repr('CStruct') is CosNode is export {
 }
 
 class CosDict is repr('CStruct') is CosArray is export {
-    # naive implementation for now
     also does cosNode[$?CLASS, COS_NODE_DICT];
-    has CArray[Str] $.keys;
-    method value {
-        (^$.elems).map: { $!keys[$_] => $.values[$_].delegate }
+    has CArray[CArray[uint32]] $.keys;
+    has CArray[uint8]   $.key-lens;
+    method !cos_dict_new(CArray, CArray[CosNode], CArray[uint8], size_t --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_dict_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(
+        CArray :$keys!,
+        CArray[CosNode] :$values!,
+        CArray[uint8] :$key-lens = CArray[uint8].new($keys.map(*.elems)),
+        UInt:D :$elems = $values.elems,
+) {
+        self!cos_dict_new($keys, $values, $key-lens, $elems);
     }
+
+    method AT-KEY(Str:D() $key) {
+        # todo: implement in C. higher order key search
+        for (^$.elems) {
+            my $len := $!key-lens[$_];
+            my $k = $!keys[$_][^$len].map(*.chr).join;
+            return $.values[$_].delegate
+                if $key eq $k;
+        }
+        CosNode;
+     }
+    method Str {
+        my Buf[uint8] $buf .= allocate(200);
+        my $n = self!cos_dict_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
+   
 }
 
 class CosBool is repr('CStruct') is CosNode is export {

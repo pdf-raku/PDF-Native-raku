@@ -48,11 +48,12 @@ typedef struct {
 } CosArray;
 
 typedef struct {
-    uint8_t         type;
-    uint8_t         ref_count;
-    size_t          elems;
-    char*           keys;
-    CosNode*        values;
+    uint8_t               type;
+    uint8_t               ref_count;
+    size_t                elems;
+    CosNode**             values;
+    PDF_TYPE_CODE_POINTS* keys;
+    uint8_t*              key_lens;
 } CosDict;
 
 typedef struct {
@@ -96,5 +97,8 @@ DLLEXPORT size_t cos_int_write(CosInt*, char*, size_t);
 
 DLLEXPORT CosArray* cos_array_new(CosArray*, CosNode**, size_t);
 DLLEXPORT size_t cos_array_write(CosArray*, char*, size_t);
+
+DLLEXPORT CosDict* cos_dict_new(CosDict*, PDF_TYPE_CODE_POINTS*, CosNode**, uint8_t*, size_t);
+DLLEXPORT size_t cos_dict_write(CosDict*, char*, size_t);
 
 #endif

@@ -16,12 +16,27 @@ DLLEXPORT void cos_node_done(CosNode* self) {
             /* leaf node */
             break;
         case COS_NODE_ARRAY:
-            size_t i;
-            CosArray* a = (CosArray*)self;
-            for (i=0; i < a->elems; i++) {
-                cos_node_done(a->values[i]);
+            {
+                size_t i;
+                CosArray* a = (CosArray*)self;
+                for (i=0; i < a->elems; i++) {
+                    cos_node_done(a->values[i]);
+                }
+                free(a->values);
             }
-            free(a->values);
+            break;
+        case COS_NODE_DICT:
+             {
+                size_t i;
+                CosDict* a = (CosDict*)self;
+                for (i=0; i < a->elems; i++) {
+                    free(a->keys[i]);
+                    cos_node_done(a->values[i]);
+                }
+                free(a->keys);
+                free(a->key_lens);
+                free(a->values);
+            }
             break;
         case COS_NODE_IND_OBJ:
             cos_node_done(((CosIndObj*)self)->value);
@@ -48,6 +63,9 @@ static int _node_write(CosNode* self, char* out, int out_len) {
             break;
         case COS_NODE_ARRAY:
             n = cos_array_write((CosArray*)self, out, out_len);
+            break;
+        case COS_NODE_DICT:
+            n = cos_dict_write((CosDict*)self, out, out_len);
             break;
         default:
             fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
@@ -81,6 +99,43 @@ DLLEXPORT size_t cos_array_write(CosArray* self, char* out, size_t out_len) {
             if (n < out_len) out[n++] = ' ';
         }
         if (n < out_len) out[n++] = ']';
+    }
+    return n;
+}
+
+DLLEXPORT CosDict* cos_dict_new(CosDict* self, PDF_TYPE_CODE_POINTS* keys, CosNode** values, uint8_t* key_lens, size_t elems) {
+    size_t i;
+    self = (CosDict*) malloc(sizeof(CosDict));
+    self->type = COS_NODE_DICT;
+    self->ref_count = 1;
+    self->elems = elems;
+    self->keys = (PDF_TYPE_CODE_POINTS*) malloc(sizeof(PDF_TYPE_CODE_POINTS) * elems);
+    self->key_lens = (uint8_t*) malloc(elems);
+    self->values = (CosNode**) malloc(sizeof(CosNode*) * elems);
+    for (i=0; i < elems; i++) {
+        self->keys[i] = malloc(key_lens[i] * sizeof(PDF_TYPE_CODE_POINTS));
+        memcpy(self->keys[i], keys[i], key_lens[i] * sizeof(int32_t));
+        self->key_lens[i] = key_lens[i];
+        self->values[i] = values[i];
+        values[i]->ref_count++;
+    }
+    return self;
+}
+
+DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len) {
+    size_t n = 0;
+    size_t i;
+    if (out && out_len) {
+        strncat(out, "<< ", out_len);
+        n += 3;
+        for (i=0; i < self->elems; i++) {
+            n += pdf_write_name(self->keys[i], self->key_lens[i], out+n, out_len-n);
+            if (n < out_len) out[n++] = ' ';
+            n += _node_write(self->values[i], out+n, out_len - n);
+            if (n < out_len) out[n++] = ' ';
+        }
+        if (n < out_len) out[n++] = '>';
+        if (n < out_len) out[n++] = '>';
     }
     return n;
 }
