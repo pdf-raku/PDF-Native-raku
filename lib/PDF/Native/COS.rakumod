@@ -33,7 +33,7 @@ role cosNode[$class, UInt:D $type] is export {
 
 class CosNode is repr('CStruct') is export {
     has uint8 $.type;
-    has uint8 $.ref;
+    has uint8 $.ref-count;
 
     method delegate {
         my $class := @ClassMap[$!type];

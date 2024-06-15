@@ -22,19 +22,19 @@ typedef enum COS_NODE_TYPE {
 
 typedef struct CosBlankNode {
     uint8_t type;
-    uint8_t ref;
+    uint8_t ref_count;
 } CosNode;
 
 typedef struct {
     uint8_t         type;
-    uint8_t         ref;
+    uint8_t         ref_count;
     uint64_t        obj_num;
     uint32_t        gen_num;
 } CosRef;
 
 typedef struct {
     uint8_t         type;
-    uint8_t         ref;
+    uint8_t         ref_count;
     uint64_t        obj_num;
     uint32_t        gen_num;
     CosNode*        value;
@@ -42,14 +42,14 @@ typedef struct {
 
 typedef struct {
     uint8_t         type;
-    uint8_t         ref;
+    uint8_t         ref_count;
     size_t          len;
     CosNode*        value;
 } CosArray;
 
 typedef struct {
     uint8_t         type;
-    uint8_t         ref;
+    uint8_t         ref_count;
     size_t          len;
     char*           key;
     CosNode*        value;
@@ -57,25 +57,25 @@ typedef struct {
 
 typedef struct {
     uint8_t         type;
-    uint8_t         ref;
+    uint8_t         ref_count;
     PDF_TYPE_BOOL   value;
 } CosBool;
 
 typedef struct {
     uint8_t         type;
-    uint8_t         ref;
+    uint8_t         ref_count;
     PDF_TYPE_INT    value;
 } CosInt;
 
 typedef struct {
     uint8_t         type;
-    uint8_t         ref;
+    uint8_t         ref_count;
     PDF_TYPE_REAL   value;
 } CosReal;
 
 typedef struct CosStringyNode {
     uint8_t         type;
-    uint8_t         ref;
+    uint8_t         ref_count;
     PDF_TYPE_STRING value;
 } CosHexString;
 
