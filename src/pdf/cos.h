@@ -26,57 +26,57 @@ typedef struct CosBlankNode {
 } CosNode;
 
 typedef struct {
-    uint16_t         type;
-    uint16_t         ref_count;
+    uint16_t        type;
+    uint16_t        ref_count;
     uint64_t        obj_num;
     uint32_t        gen_num;
 } CosRef;
 
 typedef struct {
-    uint16_t         type;
-    uint16_t         ref_count;
+    uint16_t        type;
+    uint16_t        ref_count;
     uint64_t        obj_num;
     uint32_t        gen_num;
     CosNode*        value;
 } CosIndObj;
 
 typedef struct {
-    uint16_t         type;
-    uint16_t         ref_count;
+    uint16_t        type;
+    uint16_t        ref_count;
     size_t          elems;
     CosNode**       values;
 } CosArray;
 
 typedef struct {
-    uint16_t               type;
-    uint16_t               ref_count;
+    uint16_t              type;
+    uint16_t              ref_count;
     size_t                elems;
     CosNode**             values;
     PDF_TYPE_CODE_POINTS* keys;
-    uint16_t*              key_lens;
+    uint16_t*             key_lens;
 } CosDict;
 
 typedef struct {
-    uint16_t         type;
-    uint16_t         ref_count;
+    uint16_t        type;
+    uint16_t        ref_count;
     PDF_TYPE_BOOL   value;
 } CosBool;
 
 typedef struct {
-    uint16_t         type;
-    uint16_t         ref_count;
+    uint16_t        type;
+    uint16_t        ref_count;
     PDF_TYPE_INT    value;
 } CosInt;
 
 typedef struct {
-    uint16_t         type;
-    uint16_t         ref_count;
+    uint16_t        type;
+    uint16_t        ref_count;
     PDF_TYPE_REAL   value;
 } CosReal;
 
 typedef struct CosStringyNode {
-    uint16_t         type;
-    uint16_t         ref_count;
+    uint16_t        type;
+    uint16_t        ref_count;
     PDF_TYPE_STRING value;
 } CosHexString;
 

@@ -96,12 +96,19 @@ DLLEXPORT CosArray* cos_array_new(CosArray* self, CosNode** values, size_t elems
     return self;
 }
 
+static int _bufcat(char* out, int out_len, char *in) {
+    int n;
+    for (n=0; in[n] && out_len > 0; n++) {
+        out[n] = in[n];
+    }
+    return n;
+}
+
 DLLEXPORT size_t cos_array_write(CosArray* self, char* out, size_t out_len) {
     size_t n = 0;
     size_t i;
     if (out && out_len) {
-        strncat(out, "[ ", out_len);
-        n += 2;
+        n += _bufcat(out, out_len, "[ ");
         for (i=0; i < self->elems; i++) {
             n += _node_write(self->values[i], out+n, out_len - n);
             if (n < out_len) out[n++] = ' ';
@@ -122,7 +129,7 @@ DLLEXPORT CosDict* cos_dict_new(CosDict* self, PDF_TYPE_CODE_POINTS* keys, CosNo
     self->values = (CosNode**) malloc(sizeof(CosNode*) * elems);
     for (i=0; i < elems; i++) {
         self->keys[i] = malloc(key_lens[i] * sizeof(PDF_TYPE_CODE_POINTS));
-        memcpy(self->keys[i], keys[i], key_lens[i] * sizeof(int32_t));
+        memcpy(self->keys[i], keys[i], key_lens[i] * sizeof(PDF_TYPE_CODE_POINT));
         self->key_lens[i] = key_lens[i];
         self->values[i] = values[i];
         values[i]->ref_count++;
@@ -157,16 +164,14 @@ DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len) {
     size_t n = 0;
     size_t i;
     if (out && out_len) {
-        strncat(out, "<< ", out_len);
-        n += 3;
+        n += _bufcat(out, out_len, "<< ");
         for (i=0; i < self->elems; i++) {
             n += pdf_write_name(self->keys[i], self->key_lens[i], out+n, out_len-n);
             if (n < out_len) out[n++] = ' ';
             n += _node_write(self->values[i], out+n, out_len - n);
             if (n < out_len) out[n++] = ' ';
         }
-        if (n < out_len) out[n++] = '>';
-        if (n < out_len) out[n++] = '>';
+        n += _bufcat(out+n, out_len-n, ">>");
     }
     return n;
 }
@@ -207,11 +212,7 @@ DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj* self, uint64_t obj_num, uint32_t
 DLLEXPORT size_t cos_ind_obj_write(CosIndObj* self, char* out, size_t out_len) {
     size_t n = (size_t) snprintf(out, out_len, "%ld %d obj\n", self->obj_num, self->gen_num);
     n += _node_write(self->value, out+n, out_len-n);
-    if (n < out_len) {
-        strncat(out+n, "\nendobj\n", out_len-n);
-        n += 8;
-        if (n > out_len) n = out_len;
-    }
+    n += _bufcat(out+n, out_len-n, "\nendobj\n");
     return n;
 }
 
