@@ -125,10 +125,10 @@ DLLEXPORT CosDict* cos_dict_new(CosDict* self, PDF_TYPE_CODE_POINTS* keys, CosNo
     self->ref_count = 1;
     self->elems = elems;
     self->keys = (PDF_TYPE_CODE_POINTS*) malloc(sizeof(PDF_TYPE_CODE_POINTS) * elems);
-    self->key_lens = (uint16_t*) malloc(elems);
+    self->key_lens = (uint16_t*) malloc(elems * sizeof(uint16_t));
     self->values = (CosNode**) malloc(sizeof(CosNode*) * elems);
     for (i=0; i < elems; i++) {
-        self->keys[i] = malloc(key_lens[i] * sizeof(PDF_TYPE_CODE_POINTS));
+        self->keys[i] = malloc(key_lens[i] * sizeof(PDF_TYPE_CODE_POINT));
         memcpy(self->keys[i], keys[i], key_lens[i] * sizeof(PDF_TYPE_CODE_POINT));
         self->key_lens[i] = key_lens[i];
         self->values[i] = values[i];
@@ -187,13 +187,8 @@ DLLEXPORT CosRef* cos_ref_new(CosRef* self, uint64_t obj_num, uint32_t gen_num) 
 
 DLLEXPORT size_t cos_ref_write(CosRef* self, char* out, size_t out_len) {
     size_t n = 0;
-    if (out && out_len) {
-        if (self && self->obj_num > 0) {
-            n = snprintf(out, out_len, "%ld %d R", self->obj_num, self->gen_num);
-        }
-        else {
-            *out = 0;
-        }
+    if (out && out_len && self->obj_num > 0) {
+        n = snprintf(out, out_len, "%ld %d R", self->obj_num, self->gen_num);
     }
     return n;
 }
