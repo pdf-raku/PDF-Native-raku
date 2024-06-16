@@ -99,6 +99,7 @@ DLLEXPORT CosArray* cos_array_new(CosArray*, CosNode**, size_t);
 DLLEXPORT size_t cos_array_write(CosArray*, char*, size_t);
 
 DLLEXPORT CosDict* cos_dict_new(CosDict*, PDF_TYPE_CODE_POINTS*, CosNode**, uint8_t*, size_t);
+DLLEXPORT CosNode* cos_dict_lookup(CosDict*, PDF_TYPE_CODE_POINTS, uint8_t);
 DLLEXPORT size_t cos_dict_write(CosDict*, char*, size_t);
 
 #endif

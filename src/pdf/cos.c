@@ -122,6 +122,29 @@ DLLEXPORT CosDict* cos_dict_new(CosDict* self, PDF_TYPE_CODE_POINTS* keys, CosNo
     return self;
 }
 
+static int _cmp_code_points(PDF_TYPE_CODE_POINTS v1, PDF_TYPE_CODE_POINTS v2, uint8_t key_len) {
+    uint8_t i;
+    for (i = 0; i < key_len; i++) {
+        if (v1[i] != v2[i]) {
+            return v1[i] > v2[i] ? 1 : -1;
+        }
+    }
+    return 0;
+}
+
+DLLEXPORT CosNode* cos_dict_lookup(CosDict* self, PDF_TYPE_CODE_POINTS key, uint8_t key_len) {
+    size_t i;
+
+    for (i = 0; i < self->elems; i++) {
+        if (self->key_lens[i] == key_len) {
+            if (_cmp_code_points(key, self->keys[i], key_len) == 0) {
+                return self->values[i];
+            }
+        }
+    }
+    return NULL;
+}
+
 DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len) {
     size_t n = 0;
     size_t i;

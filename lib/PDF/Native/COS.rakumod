@@ -122,6 +122,7 @@ class CosDict is repr('CStruct') is CosArray is export {
     has CArray[uint8]   $.key-lens;
     method !cos_dict_new(CArray, CArray[CosNode], CArray[uint8], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_dict_write(Blob, size_t --> size_t) is native(libpdf) {*}
+    method !cos_dict_lookup(PDF_TYPE_CODE_POINTS, uint8 --> CosNode) is native(libpdf) {*}
 
     method new(
         CArray :$keys!,
@@ -133,15 +134,11 @@ class CosDict is repr('CStruct') is CosArray is export {
     }
 
     method AT-KEY(Str:D() $key) {
-        # todo: implement in C. higher order key search
-        for (^$.elems) {
-            my $len := $!key-lens[$_];
-            my $k = $!keys[$_][^$len].map(*.chr).join;
-            return $.values[$_].delegate
-                if $key eq $k;
-        }
-        CosNode;
-     }
+        my PDF_TYPE_CODE_POINTS $cps .= new: $key.ords;
+        my CosNode $value = self!cos_dict_lookup($cps, $cps.elems);
+        $value.defined ?? $value.delegate !! $value;
+    }
+
     method Str {
         my Buf[uint8] $buf .= allocate(200);
         my $n = self!cos_dict_write($buf, $buf.bytes);

@@ -3,7 +3,7 @@ use PDF::Native::Defs :types;
 use NativeCall;
 use Test;
 
-plan 11;
+plan 13;
 
 my CosInt $value1 .= new: :value(69);
 my CosRef $value2 .= new: :obj-num(123);
@@ -24,6 +24,8 @@ isa-ok $dict[0], CosInt;
 isa-ok $dict[1], CosRef;
 is $dict[0].value, 69;
 is $dict<foo>.value, 69;
+is $dict<bar>.obj-num, 123;
+is-deeply $dict<baz>, CosNode;
 is-deeply $dict.Str, '<< /foo 69 /bar 123 0 R >>';
 
 done-testing;
