@@ -24,33 +24,47 @@ constant lock = Lock.new;
 
 role cosNode[$class, UInt:D $type] is export {
     @ClassMap[$type] = $class;
+
+    #| Only needed on tree/fragment root nodes.
+
+    submethod DESTROY {
+        self.done();
+    }
+
     method delegate {
         fail "expected node of type $type, got {self.type}"
             unless self.type == $type;
+        
         self
     }
 }
 
 class CosNode is repr('CStruct') is export {
-    has uint8 $.type;
-    has uint8 $.ref-count;
+    has uint16 $.type;
+    has uint16 $.ref-count;
+
+    method !cos_node_reference() is native(libpdf) {*}
+    method !cos_node_done() is native(libpdf) {*}
+
+    method reference {
+        self!cos_node_reference();
+        self;
+    }
+
+    method done {
+        self!cos_node_done();
+    }
 
     method delegate {
         my $class := @ClassMap[$!type];
-        nativecast($class, self);
+        nativecast($class, self).reference;
     }
     method cast(Pointer:D $p) {
         my $type := nativecast(CosNode, $p).type;
         my $class := @ClassMap[$type];
-        nativecast($class, $p);
+        nativecast($class, $p).reference;
     }
 
-    #| Only needed on tree/fragment root nodes.
-    method !cos_node_done() is native(libpdf) {*}
-
-    submethod DESTROY {
-        lock.protect: { self!cos_node_done(); }
-    }
 }
 
 #| Indirect object reference
@@ -119,15 +133,15 @@ class CosArray is CosNode is repr('CStruct') is export {
 class CosDict is repr('CStruct') is CosArray is export {
     also does cosNode[$?CLASS, COS_NODE_DICT];
     has CArray[CArray[uint32]] $.keys;
-    has CArray[uint8]   $.key-lens;
-    method !cos_dict_new(CArray, CArray[CosNode], CArray[uint8], size_t --> ::?CLASS:D) is native(libpdf) {*}
+    has CArray[uint16]   $.key-lens;
+    method !cos_dict_new(CArray, CArray[CosNode], CArray[uint16], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_dict_write(Blob, size_t --> size_t) is native(libpdf) {*}
-    method !cos_dict_lookup(PDF_TYPE_CODE_POINTS, uint8 --> CosNode) is native(libpdf) {*}
+    method !cos_dict_lookup(PDF_TYPE_CODE_POINTS, uint16 --> CosNode) is native(libpdf) {*}
 
     method new(
         CArray :$keys!,
         CArray[CosNode] :$values!,
-        CArray[uint8] :$key-lens = CArray[uint8].new($keys.map(*.elems)),
+        CArray[uint16] :$key-lens = CArray[uint16].new($keys.map(*.elems)),
         UInt:D :$elems = $values.elems,
 ) {
         self!cos_dict_new($keys, $values, $key-lens, $elems);

@@ -5,8 +5,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+DLLEXPORT void cos_node_reference(CosNode* self) {
+    self->ref_count++;
+}
+
 DLLEXPORT void cos_node_done(CosNode* self) {
-    if (self && --(self->ref_count) <= 0) {
+    if (!self || self->ref_count == 0) {
+        fprintf(stderr, __FILE__ ":%d double done on %p\n", __LINE__, (void*) self);
+        return;
+    }
+    if (--(self->ref_count) <= 0) {
         switch (self->type) {
         case COS_NODE_BOOL:
         case COS_NODE_INT:
@@ -103,14 +111,14 @@ DLLEXPORT size_t cos_array_write(CosArray* self, char* out, size_t out_len) {
     return n;
 }
 
-DLLEXPORT CosDict* cos_dict_new(CosDict* self, PDF_TYPE_CODE_POINTS* keys, CosNode** values, uint8_t* key_lens, size_t elems) {
+DLLEXPORT CosDict* cos_dict_new(CosDict* self, PDF_TYPE_CODE_POINTS* keys, CosNode** values, uint16_t* key_lens, size_t elems) {
     size_t i;
     self = (CosDict*) malloc(sizeof(CosDict));
     self->type = COS_NODE_DICT;
     self->ref_count = 1;
     self->elems = elems;
     self->keys = (PDF_TYPE_CODE_POINTS*) malloc(sizeof(PDF_TYPE_CODE_POINTS) * elems);
-    self->key_lens = (uint8_t*) malloc(elems);
+    self->key_lens = (uint16_t*) malloc(elems);
     self->values = (CosNode**) malloc(sizeof(CosNode*) * elems);
     for (i=0; i < elems; i++) {
         self->keys[i] = malloc(key_lens[i] * sizeof(PDF_TYPE_CODE_POINTS));
@@ -122,8 +130,8 @@ DLLEXPORT CosDict* cos_dict_new(CosDict* self, PDF_TYPE_CODE_POINTS* keys, CosNo
     return self;
 }
 
-static int _cmp_code_points(PDF_TYPE_CODE_POINTS v1, PDF_TYPE_CODE_POINTS v2, uint8_t key_len) {
-    uint8_t i;
+static int _cmp_code_points(PDF_TYPE_CODE_POINTS v1, PDF_TYPE_CODE_POINTS v2, uint16_t key_len) {
+    uint16_t i;
     for (i = 0; i < key_len; i++) {
         if (v1[i] != v2[i]) {
             return v1[i] > v2[i] ? 1 : -1;
@@ -132,7 +140,7 @@ static int _cmp_code_points(PDF_TYPE_CODE_POINTS v1, PDF_TYPE_CODE_POINTS v2, ui
     return 0;
 }
 
-DLLEXPORT CosNode* cos_dict_lookup(CosDict* self, PDF_TYPE_CODE_POINTS key, uint8_t key_len) {
+DLLEXPORT CosNode* cos_dict_lookup(CosDict* self, PDF_TYPE_CODE_POINTS key, uint16_t key_len) {
     size_t i;
 
     for (i = 0; i < self->elems; i++) {

@@ -12,7 +12,7 @@ my PDF_TYPE_CODE_POINTS $key1 .= new: "foo".ords;
 my PDF_TYPE_CODE_POINTS $key2 .= new: "bar".ords;
 my CArray[Pointer] $keys .= new: nativecast(Pointer, $key1), nativecast(Pointer, $key2);
 my CArray[CosNode] $values .= new: $value1, $value2;
-my CArray[uint8] $key-lens .= new: 3,3;
+my CArray[uint16] $key-lens .= new: 3,3;
 is $values[0].ref-count, 1;
 my CosDict $dict .= new: :$keys, :$key-lens, :$values;
 is $dict.elems, 2;
