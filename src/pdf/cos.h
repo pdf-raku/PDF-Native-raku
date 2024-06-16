@@ -23,7 +23,7 @@ typedef enum COS_NODE_TYPE {
 typedef struct CosBlankNode {
     uint16_t type;
     uint16_t ref_count;
-} CosNode;
+} CosNode, CosNull;
 
 typedef struct {
     uint16_t        type;
@@ -74,15 +74,18 @@ typedef struct {
     PDF_TYPE_REAL   value;
 } CosReal;
 
+typedef struct {
+    uint16_t             type;
+    uint16_t             ref_count;
+    PDF_TYPE_CODE_POINTS value;
+    uint16_t             value_len;
+} CosNameString;
+
 typedef struct CosStringyNode {
     uint16_t        type;
     uint16_t        ref_count;
     PDF_TYPE_STRING value;
-} CosHexString;
-
-typedef struct CosStringyNode CosName;
-typedef struct CosStringyNode CosLiteral;
-typedef struct CosBlankNode CosNull;
+} CosHexString, CosLiteral;
 
 DLLEXPORT void cos_node_reference(CosNode*);
 DLLEXPORT void cos_node_done(CosNode*);

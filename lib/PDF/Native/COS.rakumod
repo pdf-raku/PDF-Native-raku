@@ -200,8 +200,10 @@ class CosHexString is repr('CStruct') is _CosStringy is export {
     also does cosNode[$?CLASS, COS_NODE_HEX];
 }
 
-class CosName is repr('CStruct') is _CosStringy is export {
+class CosName is repr('CStruct') is CosNode is export {
     also does cosNode[$?CLASS, COS_NODE_NAME];
+    has CArray[CArray[uint32]] $.value; # code-points
+    has uint16 $.value-len;
 }
 
 class CosNull is repr('CStruct') is CosNode is export {
