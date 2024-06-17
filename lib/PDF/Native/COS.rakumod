@@ -189,15 +189,39 @@ class CosReal is repr('CStruct') is CosNode is export {
 }
 
 class _CosStringy is repr('CStruct') is CosNode {
-    has Str $.value;
+    has CArray[uint8] $.value;
+    has size_t $.value-len;
+    method value { (^$!value-len).map({$!value[$_].chr}).join }
 }
 
 class CosLiteral is repr('CStruct') is _CosStringy is export {
     also does cosNode[$?CLASS, COS_NODE_LITERAL];
+    method !cos_literal_new(blob8, size_t --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_literal_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(blob8:D :$value!, UInt:D :$value-len = $value.elems) {
+        self!cos_literal_new($value, $value-len);
+    }
+    method Str {
+        my Buf[uint8] $buf .= allocate(20);
+        my $n = self!cos_literal_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
 }
 
 class CosHexString is repr('CStruct') is _CosStringy is export {
     also does cosNode[$?CLASS, COS_NODE_HEX];
+    method !cos_hex_string_new(blob8, size_t --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_hex_string_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(blob8:D :$value!, UInt:D :$value-len = $value.elems) {
+        self!cos_hex_string_new($value, $value-len);
+    }
+    method Str {
+        my Buf[uint8] $buf .= allocate(20);
+        my $n = self!cos_hex_string_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
 }
 
 class CosName is repr('CStruct') is CosNode is export {

@@ -85,6 +85,7 @@ typedef struct CosStringyNode {
     uint16_t        type;
     uint16_t        ref_count;
     PDF_TYPE_STRING value;
+    size_t          value_len;
 } CosHexString, CosLiteral;
 
 DLLEXPORT void cos_node_reference(CosNode*);
@@ -108,5 +109,11 @@ DLLEXPORT size_t cos_dict_write(CosDict*, char*, size_t);
 
 DLLEXPORT CosName* cos_name_new(CosName*, PDF_TYPE_CODE_POINTS, uint16_t);
 DLLEXPORT size_t cos_name_write(CosName*, char*, size_t);
+
+DLLEXPORT CosLiteral* cos_literal_new(CosLiteral*, PDF_TYPE_STRING, size_t);
+DLLEXPORT size_t cos_literal_write(CosLiteral*, char*, size_t);
+
+DLLEXPORT CosHexString* cos_hex_string_new(CosHexString*, PDF_TYPE_STRING, size_t);
+DLLEXPORT size_t cos_hex_string_write(CosHexString*, char*, size_t);
 
 #endif

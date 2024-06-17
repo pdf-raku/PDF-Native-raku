@@ -26,6 +26,10 @@ DLLEXPORT void cos_node_done(CosNode* self) {
         case COS_NODE_NAME:
             free(((CosName*)self)->value);
             break;
+        case COS_NODE_LITERAL:
+        case COS_NODE_HEX:
+            free(((struct CosStringyNode*)self)->value);
+            break;
         case COS_NODE_ARRAY:
             {
                 size_t i;
@@ -80,6 +84,12 @@ static int _node_write(CosNode* self, char* out, int out_len) {
             break;
         case COS_NODE_NAME:
             n = cos_name_write((CosName*)self, out, out_len);
+            break;
+        case COS_NODE_LITERAL:
+            n = cos_literal_write((CosLiteral*)self, out, out_len);
+            break;
+        case COS_NODE_HEX:
+            n = cos_hex_string_write((CosHexString*)self, out, out_len);
             break;
         default:
             fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
@@ -243,4 +253,30 @@ DLLEXPORT size_t cos_name_write(CosName* self, char* out, size_t out_len) {
     return  pdf_write_name(self->value, self->value_len, out, out_len);
 }
 
+DLLEXPORT CosLiteral* cos_literal_new(CosLiteral* self, PDF_TYPE_STRING value, size_t value_len) {
+    self = (CosLiteral*) malloc(sizeof(CosLiteral));
+    self->type = COS_NODE_LITERAL;
+    self->ref_count = 1;
+    self->value = malloc(sizeof(*value) * value_len);
+    memcpy(self->value, value, sizeof(*value) * value_len);
+    self->value_len = value_len;
+    return self;
+ }
 
+DLLEXPORT size_t cos_literal_write(CosLiteral* self, char* out, size_t out_len) {
+    return  pdf_write_literal(self->value, self->value_len, out, out_len);
+}
+
+DLLEXPORT CosHexString* cos_hex_string_new(CosHexString* self, PDF_TYPE_STRING value, size_t value_len) {
+    self = (CosHexString*) malloc(sizeof(CosHexString));
+    self->type = COS_NODE_HEX;
+    self->ref_count = 1;
+    self->value = malloc(sizeof(*value) * value_len);
+    memcpy(self->value, value, sizeof(*value) * value_len);
+    self->value_len = value_len;
+    return self;
+ }
+
+DLLEXPORT size_t cos_hex_string_write(CosHexString* self, char* out, size_t out_len) {
+    return  pdf_write_hex_string(self->value, self->value_len, out, out_len);
+}
