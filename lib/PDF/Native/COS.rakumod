@@ -164,6 +164,18 @@ class CosDict is repr('CStruct') is CosArray is export {
 class CosBool is repr('CStruct') is CosNode is export {
     also does cosNode[$?CLASS, COS_NODE_BOOL];
     has PDF_TYPE_BOOL $.value;
+
+    method !cos_bool_new(PDF_TYPE_BOOL --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_bool_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(Bool:D :$value!) {
+        self!cos_bool_new($value);
+    }
+    method Str {
+        my Buf[uint8] $buf .= allocate(20);
+        my $n = self!cos_bool_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
 }
 
 class CosInt is repr('CStruct') is CosNode is export {
@@ -186,6 +198,17 @@ class CosInt is repr('CStruct') is CosNode is export {
 class CosReal is repr('CStruct') is CosNode is export {
     also does cosNode[$?CLASS, COS_NODE_REAL];
     has PDF_TYPE_REAL $.value;
+    method !cos_real_new(PDF_TYPE_REAL --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_real_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(Num:D :$value!) {
+        self!cos_real_new($value);
+    }
+    method Str {
+        my Buf[uint8] $buf .= allocate(20);
+        my $n = self!cos_real_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
 }
 
 class _CosStringy is repr('CStruct') is CosNode {
@@ -244,5 +267,17 @@ class CosName is repr('CStruct') is CosNode is export {
 class CosNull is repr('CStruct') is CosNode is export {
     also does cosNode[$?CLASS, COS_NODE_NULL];
     method value { Any }
+
+    method !cos_null_new(--> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_null_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new {
+        self!cos_null_new();
+    }
+    method Str {
+        my Buf[uint8] $buf .= allocate(10);
+        my $n = self!cos_null_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
 }
 

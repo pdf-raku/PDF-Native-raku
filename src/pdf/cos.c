@@ -73,6 +73,15 @@ static int _node_write(CosNode* self, char* out, int out_len) {
         case COS_NODE_INT:
             n = cos_int_write((CosInt*)self, out, out_len);
             break;
+        case COS_NODE_BOOL:
+            n = cos_bool_write((CosBool*)self, out, out_len);
+            break;
+        case COS_NODE_NULL:
+            n = cos_null_write((CosNull*)self, out, out_len);
+            break;
+        case COS_NODE_REAL:
+            n = cos_real_write((CosReal*)self, out, out_len);
+            break;
         case COS_NODE_REF:
             n = cos_ref_write((CosRef*)self, out, out_len);
             break;
@@ -239,6 +248,31 @@ DLLEXPORT size_t cos_int_write(CosInt* self, char* out, size_t out_len) {
     return  pdf_write_int(self->value, out, out_len);
 }
 
+DLLEXPORT CosBool* cos_bool_new(CosBool* self, PDF_TYPE_BOOL value) {
+    self = (CosBool*) malloc(sizeof(CosBool));
+    self->type = COS_NODE_BOOL;
+    self->ref_count = 1;
+    self->value = value;
+    return self;
+}
+
+DLLEXPORT size_t cos_bool_write(CosBool* self, char* out, size_t out_len) {
+    return  pdf_write_bool(self->value, out, out_len);
+}
+
+DLLEXPORT CosReal* cos_real_new(CosReal* self, PDF_TYPE_REAL value) {
+    self = (CosReal*) malloc(sizeof(CosReal));
+    self->type = COS_NODE_REAL;
+    self->ref_count = 1;
+    self->value = value;
+    return self;
+}
+
+DLLEXPORT size_t cos_real_write(CosReal* self, char* out, size_t out_len) {
+    return  pdf_write_real(self->value, out, out_len);
+}
+
+
 DLLEXPORT CosName* cos_name_new(CosName* self, PDF_TYPE_CODE_POINTS value, uint16_t value_len) {
     self = (CosName*) malloc(sizeof(CosName));
     self->type = COS_NODE_NAME;
@@ -280,3 +314,16 @@ DLLEXPORT CosHexString* cos_hex_string_new(CosHexString* self, PDF_TYPE_STRING v
 DLLEXPORT size_t cos_hex_string_write(CosHexString* self, char* out, size_t out_len) {
     return  pdf_write_hex_string(self->value, self->value_len, out, out_len);
 }
+
+DLLEXPORT CosNull* cos_null_new(CosNull* self) {
+    self = (CosNull*) malloc(sizeof(CosNull));
+    self->type = COS_NODE_NULL;
+    self->ref_count = 1;
+    return self;
+}
+
+DLLEXPORT size_t cos_null_write(CosNull* self, char* out, size_t out_len) {
+    strncpy(out, "null", out_len);
+    return strnlen(out, out_len);
+}
+

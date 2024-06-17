@@ -100,6 +100,12 @@ DLLEXPORT size_t cos_ind_obj_write(CosIndObj*, char*, size_t);
 DLLEXPORT CosInt* cos_int_new(CosInt*, PDF_TYPE_INT);
 DLLEXPORT size_t cos_int_write(CosInt*, char*, size_t);
 
+DLLEXPORT CosBool* cos_bool_new(CosBool* self, PDF_TYPE_BOOL value);
+DLLEXPORT size_t cos_bool_write(CosBool* self, char* out, size_t out_len);
+
+DLLEXPORT CosReal* cos_real_new(CosReal* self, PDF_TYPE_REAL value);
+DLLEXPORT size_t cos_real_write(CosReal* self, char* out, size_t out_len);
+
 DLLEXPORT CosArray* cos_array_new(CosArray*, CosNode**, size_t);
 DLLEXPORT size_t cos_array_write(CosArray*, char*, size_t);
 
@@ -115,5 +121,8 @@ DLLEXPORT size_t cos_literal_write(CosLiteral*, char*, size_t);
 
 DLLEXPORT CosHexString* cos_hex_string_new(CosHexString*, PDF_TYPE_STRING, size_t);
 DLLEXPORT size_t cos_hex_string_write(CosHexString*, char*, size_t);
+
+DLLEXPORT CosNull* cos_null_new(CosNull*);
+DLLEXPORT size_t cos_null_write(CosNull* self, char*, size_t);
 
 #endif
