@@ -23,6 +23,9 @@ DLLEXPORT void cos_node_done(CosNode* self) {
         case COS_NODE_REF:
             /* leaf node */
             break;
+        case COS_NODE_NAME:
+            free(((CosName*)self)->value);
+            break;
         case COS_NODE_ARRAY:
             {
                 size_t i;
@@ -74,6 +77,9 @@ static int _node_write(CosNode* self, char* out, int out_len) {
             break;
         case COS_NODE_DICT:
             n = cos_dict_write((CosDict*)self, out, out_len);
+            break;
+        case COS_NODE_NAME:
+            n = cos_name_write((CosName*)self, out, out_len);
             break;
         default:
             fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
@@ -223,6 +229,18 @@ DLLEXPORT size_t cos_int_write(CosInt* self, char* out, size_t out_len) {
     return  pdf_write_int(self->value, out, out_len);
 }
 
+DLLEXPORT CosName* cos_name_new(CosName* self, PDF_TYPE_CODE_POINTS value, uint16_t value_len) {
+    self = (CosName*) malloc(sizeof(CosName));
+    self->type = COS_NODE_NAME;
+    self->ref_count = 1;
+    self->value = (PDF_TYPE_CODE_POINTS) malloc(sizeof(PDF_TYPE_CODE_POINT) * value_len);
+    memcpy(self->value, value, sizeof(PDF_TYPE_CODE_POINT) * value_len);
+    self->value_len = value_len;
+    return self;
+ }
 
+DLLEXPORT size_t cos_name_write(CosName* self, char* out, size_t out_len) {
+    return  pdf_write_name(self->value, self->value_len, out, out_len);
+}
 
 

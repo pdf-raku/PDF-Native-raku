@@ -202,8 +202,19 @@ class CosHexString is repr('CStruct') is _CosStringy is export {
 
 class CosName is repr('CStruct') is CosNode is export {
     also does cosNode[$?CLASS, COS_NODE_NAME];
-    has CArray[CArray[uint32]] $.value; # code-points
+    has CArray[uint32] $.value; # code-points
     has uint16 $.value-len;
+    method !cos_name_new(CArray[uint32], uint16 --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_name_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(CArray[uint32] :$value!, UInt:D :$value-len = $value.elems) {
+        self!cos_name_new($value, $value-len);
+    }
+    method Str {
+        my Buf[uint8] $buf .= allocate(20);
+        my $n = self!cos_name_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
 }
 
 class CosNull is repr('CStruct') is CosNode is export {
