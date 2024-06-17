@@ -1,6 +1,6 @@
 use v6;
 use Test;
-plan 32;
+plan 35;
 
 use PDF::Native::Writer;
 
@@ -24,10 +24,13 @@ given PDF::Native::Writer {
      is .write-literal(""), '()';
      is .write-literal("\\ % # / ( ) < > [ ] \{ \}"), '(\\\\ % # / \( \) < > [ ] { })';
      is .write-literal("\x0E\x0\xA0"),"(\o016\o0\o240)";
-     is .write-literal("a(", Blob[uint8].allocate(4)), "(a)";
-     is .write-literal("a(", Blob[uint8].allocate(5)), "(a\\()";
+     is .write-literal("a(b", Blob[uint8].allocate(4)), "(a)";
+     is .write-literal("a(b", Blob[uint8].allocate(5)), "(a\\()";
+     is .write-literal("a(b", Blob[uint8].allocate(6)), "(a\\(b)";
      is .write-hex-string("snoopy"),'<736e6f6f7079>';
+     is .write-hex-string("snoopy", Blob[uint8].allocate(4)),'<73>';
      is .write-hex-string("snoopy", Blob[uint8].allocate(5)),'<73>';
+     is .write-hex-string("snoopy", Blob[uint8].allocate(6)),'<736e>';
 
      enum <free inuse>;
 
