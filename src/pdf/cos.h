@@ -10,10 +10,10 @@ typedef enum COS_NODE_TYPE {
     COS_NODE_ARRAY,
     COS_NODE_BOOL,
     COS_NODE_DICT,
-    COS_NODE_HEX,
+    COS_NODE_HEX, /* 4 */
     COS_NODE_IND_OBJ,
     COS_NODE_INT,
-    COS_NODE_LITERAL,
+    COS_NODE_LITERAL, /* 7 */
     COS_NODE_NAME,
     COS_NODE_NULL,
     COS_NODE_REAL,
@@ -40,7 +40,7 @@ typedef struct {
     CosNode*        value;
 } CosIndObj;
 
-typedef struct {
+typedef struct CosArrayishNode {
     uint16_t        type;
     uint16_t        ref_count;
     size_t          elems;

@@ -82,7 +82,7 @@ class CosRef is repr('CStruct') is CosNode is export {
     method Str {
         my Buf[uint8] $buf .= allocate(20);
         my $n = self!cos_ref_write($buf, $buf.bytes);
-        $buf.subbuf(0,$n).decode;
+        $buf.subbuf(0,$n).decode: "latin-1";
     }
 }
 
@@ -96,14 +96,17 @@ class CosIndObj is repr('CStruct') is CosNode is export {
 
     method !cos_ind_obj_new(uint64, uint32, CosNode --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_ind_obj_write(Blob, size_t --> size_t) is native(libpdf) {*}
-
+    method !cos_ind_obj_crypt_rc4(Blob, size_t) is native(libpdf) {*}
+    method crypt-rc4(Blob() $key, UInt:D $key-len = $key.bytes) {
+        self!cos_ind_obj_crypt_rc4($key, $key-len);
+    }
     method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0, CosNode:D :$value!) {
         self!cos_ind_obj_new($obj-num, $gen-num, $value);
     }
     method Str {
         my Buf[uint8] $buf .= allocate(200);
         my $n = self!cos_ind_obj_write($buf, $buf.bytes);
-        $buf.subbuf(0,$n).decode;
+        $buf.subbuf(0,$n).decode: "latin-1";
     }
 }
 
@@ -126,7 +129,7 @@ class CosArray is CosNode is repr('CStruct') is export {
     method Str {
         my Buf[uint8] $buf .= allocate(200);
         my $n = self!cos_array_write($buf, $buf.bytes);
-        $buf.subbuf(0,$n).decode;
+        $buf.subbuf(0,$n).decode: "latin-1";
     }
 }
 
@@ -156,7 +159,7 @@ class CosDict is repr('CStruct') is CosArray is export {
     method Str {
         my Buf[uint8] $buf .= allocate(200);
         my $n = self!cos_dict_write($buf, $buf.bytes);
-        $buf.subbuf(0,$n).decode;
+        $buf.subbuf(0,$n).decode: "latin-1";
     }
    
 }
@@ -228,7 +231,7 @@ class CosLiteral is repr('CStruct') is _CosStringy is export {
     method Str {
         my Buf[uint8] $buf .= allocate(20);
         my $n = self!cos_literal_write($buf, $buf.bytes);
-        $buf.subbuf(0,$n).decode;
+        $buf.subbuf(0,$n).decode: "latin-1";
     }
 }
 
@@ -243,7 +246,7 @@ class CosHexString is repr('CStruct') is _CosStringy is export {
     method Str {
         my Buf[uint8] $buf .= allocate(20);
         my $n = self!cos_hex_string_write($buf, $buf.bytes);
-        $buf.subbuf(0,$n).decode;
+        $buf.subbuf(0,$n).decode: "latin-1";
     }
 }
 

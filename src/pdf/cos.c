@@ -5,13 +5,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/rc4.h>
+
 DLLEXPORT void cos_node_reference(CosNode* self) {
     self->ref_count++;
 }
 
 DLLEXPORT void cos_node_done(CosNode* self) {
     if (!self || self->ref_count == 0) {
-        fprintf(stderr, __FILE__ ":%d double done on %p\n", __LINE__, (void*) self);
         return;
     }
     if (--(self->ref_count) <= 0) {
@@ -227,6 +228,56 @@ DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj* self, uint64_t obj_num, uint32_t
     self->value = value;
     value->ref_count++;
     return self;
+}
+
+typedef struct {
+    uint64_t obj_num;
+    uint32_t gen_num;
+
+    unsigned char *key;
+    int key_len;
+
+    unsigned char *buf;
+    size_t   buf_len;
+} CosRC4Ctxt;
+
+static void _rc4_crypt_node(CosNode* self, CosRC4Ctxt* rc4_ctxt) {
+    
+    switch (self->type) {
+        case COS_NODE_LITERAL:
+        case COS_NODE_HEX:
+            {
+                size_t i;
+                struct CosStringyNode* s = (struct CosStringyNode*) self;
+                /* stub (RC4 to be applied here) */
+                for (i = 0; i < s->value_len; i++) {
+                    s->value[i] = 256 - s->value[i];
+                }
+            }
+            break;
+        case COS_NODE_ARRAY:
+        case COS_NODE_DICT:
+            {
+                size_t i;
+                struct CosArrayishNode* a = (struct CosArrayishNode*)self;
+                for (i=0; i < a->elems; i++) {
+                    _rc4_crypt_node(a->values[i], rc4_ctxt);
+                }
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+DLLEXPORT void cos_ind_obj_crypt_rc4(CosIndObj* self, unsigned char* key, int key_len) {
+    CosRC4Ctxt rc4_ctxt = {
+        self->obj_num, self->gen_num,
+        key, key_len,
+        malloc(512), 512
+    };
+    _rc4_crypt_node(self->value, &rc4_ctxt);
+    free(rc4_ctxt.buf);
 }
 
 DLLEXPORT size_t cos_ind_obj_write(CosIndObj* self, char* out, size_t out_len) {
