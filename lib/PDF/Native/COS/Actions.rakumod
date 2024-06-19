@@ -5,8 +5,13 @@ also is PDF::Grammar::COS::Actions;
 
 use PDF::Native::COS;
 
+method int($/) {
+    my $value =  $/.Int;
+    make CosInt.new :$value;
+}
+
 method number($/) {
-    my $value = $<numeric>.ast.value;
-    make ($value.isa(Int) ?? CosInt !! CosReal).new: :$value;
+    my $value = $<numeric>.ast;
+    make ($value.isa(CosNode) ?? $value !! CosReal.new: :$value);
 }
 
