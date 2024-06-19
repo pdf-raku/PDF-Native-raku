@@ -16,6 +16,7 @@
     "PDF::Native": "lib/PDF/Native.rakumod",
     "PDF::Native::Buf": "lib/PDF/Native/Buf.rakumod",
     "PDF::Native::COS": "lib/PDF/Native/COS.rakumod",
+      "PDF::Native::COS::Actions": "lib/PDF/Native/COS/Actions.rakumod",
     "PDF::Native::Defs": "lib/PDF/Native/Defs.rakumod",
     "PDF::Native::Filter::Predictors": "lib/PDF/Native/Filter/Predictors.rakumod",
     "PDF::Native::Reader": "lib/PDF/Native/Reader.rakumod",

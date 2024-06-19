@@ -219,7 +219,7 @@ class CosReal is repr('CStruct') is CosNode is export {
     method !cos_real_new(PDF_TYPE_REAL --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_real_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
-    method new(Num:D :$value!) {
+    method new(Num:D() :$value!) {
         self!cos_real_new($value);
     }
     method Str {
