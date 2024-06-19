@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/rc4.h>
-
 DLLEXPORT void cos_node_reference(CosNode* self) {
     self->ref_count++;
 }
@@ -231,28 +229,26 @@ DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj* self, uint64_t obj_num, uint32_t
 }
 
 typedef struct {
-    uint64_t obj_num;
-    uint32_t gen_num;
-
     unsigned char *key;
     int key_len;
 
+    uint64_t obj_num;
+    uint32_t gen_num;
+
     unsigned char *buf;
     size_t   buf_len;
-} CosRC4Ctxt;
+} CosCryptNodeCtx;
 
-static void _rc4_crypt_node(CosNode* self, CosRC4Ctxt* rc4_ctxt) {
+typedef void (*CosCryptFunc) (CosCryptNodeCtx*, PDF_TYPE_STRING, size_t);
+
+static void _crypt_node(CosNode* self, CosCryptNodeCtx* crypt_ctx, CosCryptFunc crypt_cb) {
     
     switch (self->type) {
         case COS_NODE_LITERAL:
         case COS_NODE_HEX:
             {
-                size_t i;
                 struct CosStringyNode* s = (struct CosStringyNode*) self;
-                /* stub (RC4 to be applied here) */
-                for (i = 0; i < s->value_len; i++) {
-                    s->value[i] = 256 - s->value[i];
-                }
+                crypt_cb(crypt_ctx, s->value, s->value_len);
             }
             break;
         case COS_NODE_ARRAY:
@@ -261,7 +257,7 @@ static void _rc4_crypt_node(CosNode* self, CosRC4Ctxt* rc4_ctxt) {
                 size_t i;
                 struct CosArrayishNode* a = (struct CosArrayishNode*)self;
                 for (i=0; i < a->elems; i++) {
-                    _rc4_crypt_node(a->values[i], rc4_ctxt);
+                    _crypt_node(a->values[i], crypt_ctx, crypt_cb);
                 }
             }
             break;
@@ -270,14 +266,14 @@ static void _rc4_crypt_node(CosNode* self, CosRC4Ctxt* rc4_ctxt) {
     }
 }
 
-DLLEXPORT void cos_ind_obj_crypt_rc4(CosIndObj* self, unsigned char* key, int key_len) {
-    CosRC4Ctxt rc4_ctxt = {
-        self->obj_num, self->gen_num,
+DLLEXPORT void cos_ind_obj_crypt(CosIndObj* self, unsigned char* key, int key_len, CosCryptFunc crypt_cb) {
+    CosCryptNodeCtx crypt_ctx = {
         key, key_len,
+        self->obj_num, self->gen_num,
         malloc(512), 512
     };
-    _rc4_crypt_node(self->value, &rc4_ctxt);
-    free(rc4_ctxt.buf);
+    _crypt_node(self->value, &crypt_ctx, crypt_cb);
+    free(crypt_ctx.buf);
 }
 
 DLLEXPORT size_t cos_ind_obj_write(CosIndObj* self, char* out, size_t out_len) {

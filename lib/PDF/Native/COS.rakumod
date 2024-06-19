@@ -22,7 +22,7 @@ our @ClassMap;
 
 constant lock = Lock.new;
 
-role cosNode[$class, UInt:D $type] is export {
+role CosType[$class, UInt:D $type] is export {
     @ClassMap[$type] = $class;
 
     #| Only needed on tree/fragment root nodes.
@@ -69,7 +69,7 @@ class CosNode is repr('CStruct') is export {
 
 #| Indirect object reference
 class CosRef is repr('CStruct') is CosNode is export {
-    also does cosNode[$?CLASS, COS_NODE_REF];
+    also does CosType[$?CLASS, COS_NODE_REF];
     has uint64 $.obj-num;
     has uint32 $.gen-num;
 
@@ -86,8 +86,23 @@ class CosRef is repr('CStruct') is CosNode is export {
     }
 }
 
+class CosCryptCtx is repr('CStruct') is export {
+
+    # encryption key
+    has CArray[uint8] $.key;
+    has int32 $.key-len;
+
+    # parent indirect object
+    has uint64 $.obj-num;
+    has uint32 $.gen-num;
+
+    # scratch buffer
+    has CArray[uint8] $.buf;
+    has size_t $buf-len;
+}
+
 class CosIndObj is repr('CStruct') is CosNode is export {
-    also does cosNode[$?CLASS, COS_NODE_IND_OBJ];
+    also does CosType[$?CLASS, COS_NODE_IND_OBJ];
     has uint64 $.obj-num;
     has uint32 $.gen-num;
     has CosNode $.value;
@@ -96,9 +111,9 @@ class CosIndObj is repr('CStruct') is CosNode is export {
 
     method !cos_ind_obj_new(uint64, uint32, CosNode --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_ind_obj_write(Blob, size_t --> size_t) is native(libpdf) {*}
-    method !cos_ind_obj_crypt_rc4(Blob, size_t) is native(libpdf) {*}
-    method crypt-rc4(Blob() $key, UInt:D $key-len = $key.bytes) {
-        self!cos_ind_obj_crypt_rc4($key, $key-len);
+    method !cos_ind_obj_crypt(Blob, size_t, &crypt-cb (CosCryptCtx, CArray[uint8], size_t)) is native(libpdf) {*}
+    method crypt(Blob() $key, &crypt-func) {
+        self!cos_ind_obj_crypt($key, $key.bytes, &crypt-func);
     }
     method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0, CosNode:D :$value!) {
         self!cos_ind_obj_new($obj-num, $gen-num, $value);
@@ -111,7 +126,7 @@ class CosIndObj is repr('CStruct') is CosNode is export {
 }
 
 class CosArray is CosNode is repr('CStruct') is export {
-    also does cosNode[$?CLASS, COS_NODE_ARRAY];
+    also does CosType[$?CLASS, COS_NODE_ARRAY];
     # naive implementation for now
     has size_t $.elems;
     has CArray[CosNode] $.values;
@@ -134,7 +149,7 @@ class CosArray is CosNode is repr('CStruct') is export {
 }
 
 class CosDict is repr('CStruct') is CosArray is export {
-    also does cosNode[$?CLASS, COS_NODE_DICT];
+    also does CosType[$?CLASS, COS_NODE_DICT];
     has CArray[CArray[uint32]] $.keys;
     has CArray[uint16]   $.key-lens;
     method !cos_dict_new(CArray, CArray[CosNode], CArray[uint16], size_t --> ::?CLASS:D) is native(libpdf) {*}
@@ -165,7 +180,7 @@ class CosDict is repr('CStruct') is CosArray is export {
 }
 
 class CosBool is repr('CStruct') is CosNode is export {
-    also does cosNode[$?CLASS, COS_NODE_BOOL];
+    also does CosType[$?CLASS, COS_NODE_BOOL];
     has PDF_TYPE_BOOL $.value;
 
     method !cos_bool_new(PDF_TYPE_BOOL --> ::?CLASS:D) is native(libpdf) {*}
@@ -182,7 +197,7 @@ class CosBool is repr('CStruct') is CosNode is export {
 }
 
 class CosInt is repr('CStruct') is CosNode is export {
-    also does cosNode[$?CLASS, COS_NODE_INT];
+    also does CosType[$?CLASS, COS_NODE_INT];
     has PDF_TYPE_INT $.value;
 
     method !cos_int_new(PDF_TYPE_INT --> ::?CLASS:D) is native(libpdf) {*}
@@ -199,7 +214,7 @@ class CosInt is repr('CStruct') is CosNode is export {
 }
 
 class CosReal is repr('CStruct') is CosNode is export {
-    also does cosNode[$?CLASS, COS_NODE_REAL];
+    also does CosType[$?CLASS, COS_NODE_REAL];
     has PDF_TYPE_REAL $.value;
     method !cos_real_new(PDF_TYPE_REAL --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_real_write(Blob, size_t --> size_t) is native(libpdf) {*}
@@ -221,7 +236,7 @@ class _CosStringy is repr('CStruct') is CosNode {
 }
 
 class CosLiteral is repr('CStruct') is _CosStringy is export {
-    also does cosNode[$?CLASS, COS_NODE_LITERAL];
+    also does CosType[$?CLASS, COS_NODE_LITERAL];
     method !cos_literal_new(blob8, size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_literal_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
@@ -236,7 +251,7 @@ class CosLiteral is repr('CStruct') is _CosStringy is export {
 }
 
 class CosHexString is repr('CStruct') is _CosStringy is export {
-    also does cosNode[$?CLASS, COS_NODE_HEX];
+    also does CosType[$?CLASS, COS_NODE_HEX];
     method !cos_hex_string_new(blob8, size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_hex_string_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
@@ -251,7 +266,7 @@ class CosHexString is repr('CStruct') is _CosStringy is export {
 }
 
 class CosName is repr('CStruct') is CosNode is export {
-    also does cosNode[$?CLASS, COS_NODE_NAME];
+    also does CosType[$?CLASS, COS_NODE_NAME];
     has CArray[uint32] $.value; # code-points
     has uint16 $.value-len;
     method !cos_name_new(CArray[uint32], uint16 --> ::?CLASS:D) is native(libpdf) {*}
@@ -268,7 +283,7 @@ class CosName is repr('CStruct') is CosNode is export {
 }
 
 class CosNull is repr('CStruct') is CosNode is export {
-    also does cosNode[$?CLASS, COS_NODE_NULL];
+    also does CosType[$?CLASS, COS_NODE_NULL];
     method value { Any }
 
     method !cos_null_new(--> ::?CLASS:D) is native(libpdf) {*}

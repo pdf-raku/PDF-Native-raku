@@ -2,7 +2,7 @@ use PDF::Native::COS;
 use NativeCall;
 use Test;
 
-plan 5;
+plan 11;
 
 my CosInt  $value1 .= new: :value(69);
 my CosRef  $value2 .= new: :obj-num(123);
@@ -23,10 +23,17 @@ is-deeply $ind-obj.Str.lines, (
 
 my Buf[uint8] $key .= new(193,67,83,175,223);
 
-$ind-obj.crypt-rc4($key);
-isnt $value7.Str, '(xyz)';
+sub crypt-func(CosCryptCtx $ctx, CArray[uint8] $buf, size_t $buf-len ) {
+    is $ctx.obj-num, 42;
+    is $ctx.gen-num, 3;
+    is-deeply $ctx.key[^$ctx.key-len], $key.list;
+    $buf[$_] = 256 - $buf[$_] for ^$buf-len;
+}
 
-$ind-obj.crypt-rc4($key);
+$ind-obj.crypt($key, &crypt-func);
+is-deeply $value7.Str, "(\x[88]\x[87]\x[86])";
+
+$ind-obj.crypt($key, &crypt-func);
 is $value7.Str, '(xyz)';
 
 is-deeply $ind-obj.Str.lines, (
