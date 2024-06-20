@@ -244,7 +244,7 @@ class CosLiteral is repr('CStruct') is _CosStringy is export {
         self!cos_literal_new($value, $value-len);
     }
     method Str {
-        my Buf[uint8] $buf .= allocate(20);
+        my Buf[uint8] $buf .= allocate(50);
         my $n = self!cos_literal_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -259,7 +259,7 @@ class CosHexString is repr('CStruct') is _CosStringy is export {
         self!cos_hex_string_new($value, $value-len);
     }
     method Str {
-        my Buf[uint8] $buf .= allocate(20);
+        my Buf[uint8] $buf .= allocate(50);
         my $n = self!cos_hex_string_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
