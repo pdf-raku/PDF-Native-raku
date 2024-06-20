@@ -1,4 +1,4 @@
-unit class PDF::Native::COS;
+unit module PDF::Native::Cos;
 
 use PDF::Native::Defs :types, :libpdf;
 use NativeCall;
@@ -16,6 +16,7 @@ enum COS_NODE_TYPE is export «
     COS_NODE_NULL
     COS_NODE_REAL
     COS_NODE_REF
+    COS_NODE_STREAM
 »;
 
 our @ClassMap;
@@ -193,6 +194,26 @@ class CosDict is repr('CStruct') is CosArray is export {
         $buf.subbuf(0,$n).decode: "latin-1";
     }
    
+}
+
+class CosStream is repr('CStruct') is CosNode is export {
+    also does CosType[$?CLASS, COS_NODE_STREAM];
+    has CosDict          $.dict;
+    has CArray[uint8]    $.stream;
+    has size_t           $.stream-len;
+
+    method !cos_stream_new(CosDict:D, Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_stream_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(CosDict:D :$dict!, Blob:D :$value!, UInt:D :$value-len = $value.bytes) {
+        self!cos_stream_new($dict, $value, $value-len);
+    }
+
+    method Str {
+        my Buf[uint8] $buf .= allocate(500);
+        my $n = self!cos_stream_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode: "latin-1";
+    }
 }
 
 class CosBool is repr('CStruct') is CosNode is export {

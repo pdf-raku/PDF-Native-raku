@@ -1,11 +1,11 @@
 use PDF::Grammar::COS;
-use PDF::Native::COS;
-use PDF::Native::COS::Actions;
+use PDF::Native::Cos;
+use PDF::Native::Cos::Actions;
 use Test;
 
-plan 13;
+plan 15;
 
-my PDF::Native::COS::Actions:D $actions .= new: :lite;
+my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
 given PDF::Grammar::COS.parse('123', :rule<object>, :$actions) {
       my CosInt:D $node = .ast;
@@ -60,8 +60,8 @@ given PDF::Grammar::COS.parse('12 3 R', :rule<object>, :$actions) {
 }
 
 given PDF::Grammar::COS.parse('[1(2) /3  ]', :rule<object>, :$actions) {
-      my CosArray:D $node = .ast;
-      is $node.Str, '[ 1 (2) /3 ]', 'parse array';
+    my CosArray:D $node = .ast;
+    is $node.Str, '[ 1 (2) /3 ]', 'parse array';
 }
 
 given PDF::Grammar::COS.parse('<</a 42/BB(Hi)>>', :rule<object>, :$actions) {
@@ -69,3 +69,24 @@ given PDF::Grammar::COS.parse('<</a 42/BB(Hi)>>', :rule<object>, :$actions) {
       is $node.Str, '<< /a 42 /BB (Hi) >>', 'parse dict';
 }
 
+my $stream = q:to<--END-->;
+    << /Length 45 >>
+    stream
+    BT
+    /F1 24 Tf
+    100 250 Td (Hello, world!) Tj
+    ET
+    endstream
+    --END--
+
+given PDF::Grammar::COS.parse( $stream, :rule<object>, :$actions) {
+    my CosStream:D $node = .ast;
+    is $node.Str, $stream.chomp, 'parse stream';
+}
+
+my $ind-obj = "123 4 obj\n{$stream}endobj";
+
+with PDF::Grammar::COS.parse( $ind-obj, :rule<ind-obj>, :$actions) {
+    my CosIndObj:D $node = .ast;
+    is $node.Str, $ind-obj, 'parse indirect object';
+}

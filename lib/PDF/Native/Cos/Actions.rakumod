@@ -1,10 +1,10 @@
 #| Native Cos object construction actions for PDF::Grammar::COS
-unit class PDF::Native::COS::Actions;
+unit class PDF::Native::Cos::Actions;
 
 use PDF::Grammar::COS::Actions;
 also is PDF::Grammar::COS::Actions;
 
-use PDF::Native::COS;
+use PDF::Native::Cos;
 use NativeCall;
 
 method int($/) {
@@ -12,8 +12,7 @@ method int($/) {
 }
 
 method number($/) {
-    my $value = $<numeric>.ast;
-    make $value;
+    make $<numeric>.ast;
 }
 
 method string($/) {
@@ -46,10 +45,27 @@ method ind-ref($/) {
     make CosRef.new: :$obj-num, :$gen-num;
 }
 
+method ind-obj($/) {
+    my $obj-num = $<obj-num>.ast;
+    my $gen-num = $<gen-num>.ast;
+    my $value = $<object>.ast;
+    make CosIndObj.new: :$obj-num, :$gen-num, :$value;
+}
+
 method object:sym<true>($/)   { make CosBool.new :value }
 method object:sym<false>($/)  { make CosBool.new :!value }
 method object:sym<null>($/)   { make CosNull.new }
 method object:sym<number>($/) {
     my $value = $<number>.ast;
     make ($value.isa(Int) ?? CosInt !! CosReal).new: :$value;
+}
+method object:sym<dict>($/) {
+    my CosDict:D $dict = $<dict>.ast;
+    make do with $<stream> {
+    	my Blob:D $value = .ast.encode: "latin-1";
+        CosStream.new: :$dict, :$value;
+    }
+    else {
+        $dict;
+    }
 }

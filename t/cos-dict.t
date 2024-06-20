@@ -1,4 +1,4 @@
-use PDF::Native::COS;
+use PDF::Native::Cos;
 use PDF::Native::Defs :types;
 use NativeCall;
 use Test;

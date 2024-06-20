@@ -17,7 +17,8 @@ typedef enum COS_NODE_TYPE {
     COS_NODE_NAME,
     COS_NODE_NULL,
     COS_NODE_REAL,
-    COS_NODE_REF
+    COS_NODE_REF,
+    COS_NODE_STREAM
 } COS_NODE_TYPE;
 
 typedef struct CosBlankNode {
@@ -87,6 +88,14 @@ typedef struct CosStringyNode {
     size_t          value_len;
 } CosHexString, CosLiteral;
 
+typedef struct {
+    uint16_t        type;
+    uint16_t        ref_count;
+    CosDict*        dict;
+    unsigned char*  value;
+    size_t          value_len;
+} CosStream;
+
 DLLEXPORT void cos_node_reference(CosNode*);
 DLLEXPORT void cos_node_done(CosNode*);
 
@@ -123,5 +132,11 @@ DLLEXPORT size_t cos_hex_string_write(CosHexString*, char*, size_t);
 
 DLLEXPORT CosNull* cos_null_new(CosNull*);
 DLLEXPORT size_t cos_null_write(CosNull* self, char*, size_t);
+
+DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj*, uint64_t, uint32_t, CosNode*);
+
+DLLEXPORT CosStream* cos_stream_new(CosStream*, CosDict*, unsigned char*, size_t);
+
+DLLEXPORT size_t cos_stream_write(CosStream*, char*, size_t);
 
 #endif
