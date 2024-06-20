@@ -50,10 +50,16 @@ typedef struct CosArrayishNode {
 typedef struct {
     uint16_t        type;
     uint16_t        ref_count;
+    PDF_TYPE_CODE_POINTS value;
+    uint16_t        value_len;
+} CosName;
+
+typedef struct {
+    uint16_t        type;
+    uint16_t        ref_count;
     size_t          elems;
     CosNode**       values;
-    PDF_TYPE_CODE_POINTS* keys;
-    uint16_t*       key_lens;
+    CosName**       keys;
 } CosDict;
 
 typedef struct {
@@ -73,13 +79,6 @@ typedef struct {
     uint16_t        ref_count;
     PDF_TYPE_REAL   value;
 } CosReal;
-
-typedef struct {
-    uint16_t        type;
-    uint16_t        ref_count;
-    PDF_TYPE_CODE_POINTS value;
-    uint16_t        value_len;
-} CosName;
 
 typedef struct CosStringyNode {
     uint16_t        type;
@@ -109,7 +108,7 @@ DLLEXPORT size_t cos_real_write(CosReal* self, char* out, size_t out_len);
 DLLEXPORT CosArray* cos_array_new(CosArray*, CosNode**, size_t);
 DLLEXPORT size_t cos_array_write(CosArray*, char*, size_t);
 
-DLLEXPORT CosDict* cos_dict_new(CosDict*, PDF_TYPE_CODE_POINTS*, CosNode**, uint16_t*, size_t);
+DLLEXPORT CosDict* cos_dict_new(CosDict*, CosName**, CosNode**, size_t);
 DLLEXPORT CosNode* cos_dict_lookup(CosDict*, PDF_TYPE_CODE_POINTS, uint16_t);
 DLLEXPORT size_t cos_dict_write(CosDict*, char*, size_t);
 

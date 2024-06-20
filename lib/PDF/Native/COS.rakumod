@@ -148,21 +148,37 @@ class CosArray is CosNode is repr('CStruct') is export {
     }
 }
 
+class CosName is repr('CStruct') is CosNode is export {
+    also does CosType[$?CLASS, COS_NODE_NAME];
+    has CArray[uint32] $.value; # code-points
+    has uint16 $.value-len;
+    method !cos_name_new(CArray[CosName], uint16 --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_name_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(CArray[uint32] :$value!, UInt:D :$value-len = $value.elems) {
+        self!cos_name_new($value, $value-len);
+    }
+    method Str {
+        my Buf[uint8] $buf .= allocate(20);
+        my $n = self!cos_name_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
+}
+
 class CosDict is repr('CStruct') is CosArray is export {
     also does CosType[$?CLASS, COS_NODE_DICT];
     has CArray[CArray[uint32]] $.keys;
     has CArray[uint16]   $.key-lens;
-    method !cos_dict_new(CArray, CArray[CosNode], CArray[uint16], size_t --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_dict_new(CArray[CosName], CArray[CosNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_dict_write(Blob, size_t --> size_t) is native(libpdf) {*}
     method !cos_dict_lookup(PDF_TYPE_CODE_POINTS, uint16 --> CosNode) is native(libpdf) {*}
 
     method new(
-        CArray :$keys!,
+        CArray[CosName] :$keys!,
         CArray[CosNode] :$values!,
-        CArray[uint16] :$key-lens = CArray[uint16].new($keys.map(*.elems)),
         UInt:D :$elems = $values.elems,
-) {
-        self!cos_dict_new($keys, $values, $key-lens, $elems);
+    ) {
+        self!cos_dict_new($keys, $values, $elems);
     }
 
     method AT-KEY(Str:D() $key) {
@@ -262,23 +278,6 @@ class CosHexString is repr('CStruct') is _CosStringy is export {
         my Buf[uint8] $buf .= allocate(50);
         my $n = self!cos_hex_string_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
-    }
-}
-
-class CosName is repr('CStruct') is CosNode is export {
-    also does CosType[$?CLASS, COS_NODE_NAME];
-    has CArray[uint32] $.value; # code-points
-    has uint16 $.value-len;
-    method !cos_name_new(CArray[uint32], uint16 --> ::?CLASS:D) is native(libpdf) {*}
-    method !cos_name_write(Blob, size_t --> size_t) is native(libpdf) {*}
-
-    method new(CArray[uint32] :$value!, UInt:D :$value-len = $value.elems) {
-        self!cos_name_new($value, $value-len);
-    }
-    method Str {
-        my Buf[uint8] $buf .= allocate(20);
-        my $n = self!cos_name_write($buf, $buf.bytes);
-        $buf.subbuf(0,$n).decode;
     }
 }
 

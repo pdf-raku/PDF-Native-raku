@@ -44,11 +44,10 @@ DLLEXPORT void cos_node_done(CosNode* self) {
                 size_t i;
                 CosDict* a = (CosDict*)self;
                 for (i=0; i < a->elems; i++) {
-                    free(a->keys[i]);
+                    cos_node_done((CosNode*)a->keys[i]);
                     cos_node_done(a->values[i]);
                 }
                 free(a->keys);
-                free(a->key_lens);
                 free(a->values);
             }
             break;
@@ -142,19 +141,18 @@ DLLEXPORT size_t cos_array_write(CosArray* self, char* out, size_t out_len) {
     return n;
 }
 
-DLLEXPORT CosDict* cos_dict_new(CosDict* self, PDF_TYPE_CODE_POINTS* keys, CosNode** values, uint16_t* key_lens, size_t elems) {
+DLLEXPORT CosDict* cos_dict_new(CosDict* self, CosName** keys, CosNode** values, size_t elems) {
     size_t i;
     self = (CosDict*) malloc(sizeof(CosDict));
     self->type = COS_NODE_DICT;
     self->ref_count = 1;
     self->elems = elems;
-    self->keys = (PDF_TYPE_CODE_POINTS*) malloc(sizeof(PDF_TYPE_CODE_POINTS) * elems);
-    self->key_lens = (uint16_t*) malloc(elems * sizeof(uint16_t));
+    self->keys   = (CosName**) malloc(sizeof(CosName*) * elems);
     self->values = (CosNode**) malloc(sizeof(CosNode*) * elems);
     for (i=0; i < elems; i++) {
-        self->keys[i] = malloc(key_lens[i] * sizeof(PDF_TYPE_CODE_POINT));
-        memcpy(self->keys[i], keys[i], key_lens[i] * sizeof(PDF_TYPE_CODE_POINT));
-        self->key_lens[i] = key_lens[i];
+        self->keys[i] = keys[i];
+        keys[i]->ref_count++;
+
         self->values[i] = values[i];
         values[i]->ref_count++;
     }
@@ -175,8 +173,8 @@ DLLEXPORT CosNode* cos_dict_lookup(CosDict* self, PDF_TYPE_CODE_POINTS key, uint
     size_t i;
 
     for (i = 0; i < self->elems; i++) {
-        if (self->key_lens[i] == key_len) {
-            if (_cmp_code_points(key, self->keys[i], key_len) == 0) {
+        if (self->keys[i]->value_len == key_len) {
+            if (_cmp_code_points(key, self->keys[i]->value, self->keys[i]->value_len) == 0) {
                 return self->values[i];
             }
         }
@@ -190,7 +188,7 @@ DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len) {
     if (out && out_len) {
         n += _bufcat(out, out_len, "<< ");
         for (i=0; i < self->elems; i++) {
-            n += pdf_write_name(self->keys[i], self->key_lens[i], out+n, out_len-n);
+            n += _node_write((CosNode*)self->keys[i], out+n, out_len - n);
             if (n < out_len) out[n++] = ' ';
             n += _node_write(self->values[i], out+n, out_len - n);
             if (n < out_len) out[n++] = ' ';
