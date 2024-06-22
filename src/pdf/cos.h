@@ -19,22 +19,32 @@ typedef enum COS_NODE_TYPE {
     COS_NODE_REAL,
     COS_NODE_REF,
     COS_NODE_STREAM
-} COS_NODE_TYPE;
+} CosNodeType;
+
+typedef enum {
+    COS_CMP_EQUAL,
+    COS_CMP_SLIGHTLY_DIFFERENT,
+    COS_CMP_DIFFERENT,
+    COS_CMP_DIFFERENT_TYPE
+} CosCmpResult;
 
 typedef struct CosBlankNode {
-    uint16_t        type;
+    uint8_t         type;
+    uint8_t         check;
     uint16_t        ref_count;
 } CosNode, CosNull;
 
 typedef struct {
-    uint16_t        type;
+    uint8_t         type;
+    uint8_t         check;
     uint16_t        ref_count;
     uint64_t        obj_num;
     uint32_t        gen_num;
 } CosRef;
 
 typedef struct {
-    uint16_t        type;
+    uint8_t         type;
+    uint8_t         check;
     uint16_t        ref_count;
     uint64_t        obj_num;
     uint32_t        gen_num;
@@ -42,21 +52,24 @@ typedef struct {
 } CosIndObj;
 
 typedef struct CosArrayishNode {
-    uint16_t        type;
+    uint8_t         type;
+    uint8_t         check;
     uint16_t        ref_count;
     size_t          elems;
     CosNode**       values;
 } CosArray;
 
 typedef struct {
-    uint16_t        type;
+    uint8_t         type;
+    uint8_t         check;
     uint16_t        ref_count;
     PDF_TYPE_CODE_POINTS value;
     uint16_t        value_len;
 } CosName;
 
 typedef struct {
-    uint16_t        type;
+    uint8_t         type;
+    uint8_t         check;
     uint16_t        ref_count;
     size_t          elems;
     CosNode**       values;
@@ -64,32 +77,37 @@ typedef struct {
 } CosDict;
 
 typedef struct {
-    uint16_t        type;
+    uint8_t         type;
+    uint8_t         check;
     uint16_t        ref_count;
     PDF_TYPE_BOOL   value;
 } CosBool;
 
 typedef struct {
-    uint16_t        type;
+    uint8_t         type;
+    uint8_t         check;
     uint16_t        ref_count;
     PDF_TYPE_INT    value;
 } CosInt;
 
 typedef struct {
-    uint16_t        type;
+    uint8_t         type;
+    uint8_t         check;
     uint16_t        ref_count;
     PDF_TYPE_REAL   value;
 } CosReal;
 
 typedef struct CosStringyNode {
-    uint16_t        type;
+    uint8_t         type;
+    uint8_t         check;
     uint16_t        ref_count;
     PDF_TYPE_STRING value;
     size_t          value_len;
 } CosHexString, CosLiteral;
 
 typedef struct {
-    uint16_t        type;
+    uint8_t         type;
+    uint8_t         check;
     uint16_t        ref_count;
     CosDict*        dict;
     unsigned char*  value;
@@ -98,6 +116,8 @@ typedef struct {
 
 DLLEXPORT void cos_node_reference(CosNode*);
 DLLEXPORT void cos_node_done(CosNode*);
+
+DLLEXPORT int cos_node_cmp(CosNode*, CosNode*);
 
 DLLEXPORT CosRef* cos_ref_new(CosRef*, uint64_t, uint32_t);
 DLLEXPORT size_t cos_ref_write(CosRef*, char*, size_t);

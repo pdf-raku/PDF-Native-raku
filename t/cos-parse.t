@@ -65,7 +65,7 @@ given PDF::Grammar::COS.parse('[1(2) /3  ]', :rule<object>, :$actions) {
 }
 
 given PDF::Grammar::COS.parse('<</a 42/BB(Hi)>>', :rule<object>, :$actions) {
-      my CosArray:D $node = .ast;
+      my CosDict:D $node = .ast;
       is $node.Str, '<< /a 42 /BB (Hi) >>', 'parse dict';
 }
 
@@ -88,5 +88,6 @@ my $ind-obj = "123 4 obj\n{$stream}endobj";
 
 with PDF::Grammar::COS.parse( $ind-obj, :rule<ind-obj>, :$actions) {
     my CosIndObj:D $node = .ast;
+    note $/.from.raku;
     is $node.Str, $ind-obj, 'parse indirect object';
 }

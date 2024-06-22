@@ -19,6 +19,13 @@ enum COS_NODE_TYPE is export «
     COS_NODE_STREAM
 »;
 
+enum COS_CMP is export «
+   COS_CMP_EQUAL
+   COS_CMP_SLIGHTLY_DIFFERENT
+   COS_CMP_DIFFERENT
+   COS_CMP_DIFFERENT_TYPE
+»;
+
 our @ClassMap;
 
 constant lock = Lock.new;
@@ -36,16 +43,18 @@ role CosType[$class, UInt:D $type] is export {
         fail "expected node of type $type, got {self.type}"
             unless self.type == $type;
         
-        self
+        self;
     }
 }
 
 class CosNode is repr('CStruct') is export {
-    has uint16 $.type;
+    has uint8 $.type;
+    has uint8 $!private;
     has uint16 $.ref-count;
 
     method !cos_node_reference() is native(libpdf) {*}
     method !cos_node_done() is native(libpdf) {*}
+    method !cos_node_cmp(CosNode --> int32) is native(libpdf) {*}
 
     method reference {
         self!cos_node_reference();
@@ -53,6 +62,8 @@ class CosNode is repr('CStruct') is export {
     }
 
     method done {
+        die "dodgey dereference of node of type: " ~ self.WHAT.raku
+            unless 0 < self.ref-count < 20000;
         self!cos_node_done();
     }
 
@@ -66,6 +77,10 @@ class CosNode is repr('CStruct') is export {
         nativecast($class, $p).reference;
     }
 
+    method cmp(CosNode $obj) {
+        self!cos_node_cmp($obj);
+    }
+    method new(|) { fail }
 }
 
 #| Indirect object reference
@@ -128,19 +143,18 @@ class CosIndObj is repr('CStruct') is CosNode is export {
 
 class CosArray is CosNode is repr('CStruct') is export {
     also does CosType[$?CLASS, COS_NODE_ARRAY];
-    # naive implementation for now
     has size_t $.elems;
     has CArray[CosNode] $.values;
+    method AT-POS(UInt:D() $idx) {
+        $idx < $!elems
+            ?? $!values[$idx].delegate
+            !! CosNode;
+    }
     method !cos_array_new(CArray[CosNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_array_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
     method new(CArray[CosNode] :$values!, UInt:D :$elems = $values.elems) {
         self!cos_array_new($values, $elems);
-    }
-    method AT-POS(UInt:D() $idx) {
-        $idx < $!elems
-            ?? $!values[$idx].delegate
-            !! CosNode;
     }
     method Str {
         my Buf[uint8] $buf .= allocate(200);
@@ -166,16 +180,17 @@ class CosName is repr('CStruct') is CosNode is export {
     }
 }
 
-class CosDict is repr('CStruct') is CosArray is export {
+class CosDict is CosNode is repr('CStruct') is export {
     also does CosType[$?CLASS, COS_NODE_DICT];
-    has CArray[CArray[uint32]] $.keys;
-    has CArray[uint16]   $.key-lens;
+    has size_t $.elems;
+    has CArray[CosNode] $.values;
+    has CArray[CosName] $!keys;
     method !cos_dict_new(CArray[CosName], CArray[CosNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_dict_write(Blob, size_t --> size_t) is native(libpdf) {*}
     method !cos_dict_lookup(PDF_TYPE_CODE_POINTS, uint16 --> CosNode) is native(libpdf) {*}
 
     method new(
-        CArray[CosName] :$keys!,
+        CArray[CosName] :$keys,
         CArray[CosNode] :$values!,
         UInt:D :$elems = $values.elems,
     ) {
@@ -186,6 +201,11 @@ class CosDict is repr('CStruct') is CosArray is export {
         my PDF_TYPE_CODE_POINTS $cps .= new: $key.ords;
         my CosNode $value = self!cos_dict_lookup($cps, $cps.elems);
         $value.defined ?? $value.delegate !! $value;
+    }
+    method AT-POS(UInt:D() $idx) {
+        $idx < $!elems
+            ?? $!values[$idx].delegate
+            !! CosNode;
     }
 
     method Str {
@@ -240,7 +260,7 @@ class CosInt is repr('CStruct') is CosNode is export {
     method !cos_int_new(PDF_TYPE_INT --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_int_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
-    method new(UInt:D :$value!) {
+    method new(Int:D :$value!) {
         self!cos_int_new($value);
     }
     method Str {
