@@ -110,7 +110,7 @@ typedef struct {
     uint8_t         check;
     uint16_t        ref_count;
     CosDict*        dict;
-    unsigned char*  value;
+    char*           value;
     size_t          value_len;
 } CosStream;
 
@@ -124,6 +124,32 @@ DLLEXPORT size_t cos_ref_write(CosRef*, char*, size_t);
 
 DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj*, uint64_t, uint32_t, CosNode*);
 DLLEXPORT size_t cos_ind_obj_write(CosIndObj*, char*, size_t);
+
+typedef enum {
+    COS_CRYPT_ALL,
+    COS_CRYPT_STRINGS,
+    COS_CRYPT_STREAMS
+} CosCryptMode;
+
+typedef struct _CosCryptNodeCtx CosCryptNodeCtx;
+
+typedef void (*CosCryptFunc) (CosCryptNodeCtx*, PDF_TYPE_STRING, size_t);
+
+struct  _CosCryptNodeCtx {
+    unsigned char *key;
+    int key_len;
+
+    uint64_t obj_num;
+    uint32_t gen_num;
+
+    CosCryptMode mode;
+    CosCryptFunc crypt_cb;
+
+    unsigned char *buf;
+    size_t   buf_len;
+};
+
+DLLEXPORT void cos_ind_obj_crypt(CosIndObj* self, unsigned char* key, int key_len, CosCryptFunc crypt_cb, CosCryptMode mode);
 
 DLLEXPORT CosInt* cos_int_new(CosInt*, PDF_TYPE_INT);
 DLLEXPORT size_t cos_int_write(CosInt*, char*, size_t);

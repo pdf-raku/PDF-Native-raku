@@ -85,14 +85,6 @@ static int _cmp_code_points(PDF_TYPE_CODE_POINTS v1, PDF_TYPE_CODE_POINTS v2, ui
     return COS_CMP_EQUAL;
 }
 
-static int _cmp_bytes(unsigned char* v1, unsigned char* v2, uint16_t key_len) {
-    uint16_t i;
-    for (i = 0; i < key_len; i++) {
-        if (v1[i] != v2[i]) return COS_CMP_DIFFERENT;
-    }
-    return COS_CMP_EQUAL;
-}
-
 static int _cmp_chars(char* v1, char* v2, uint16_t key_len) {
     uint16_t i;
     for (i = 0; i < key_len; i++) {
@@ -249,7 +241,7 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                     CosStream* a = (void*)self;
                     CosStream* b = (void*)obj;
                     int rv = COS_CMP_EQUAL;
-                    if (a->value_len != b->value_len || _cmp_bytes(a->value, b->value, a->value_len)) {
+                    if (a->value_len != b->value_len || _cmp_chars(a->value, b->value, a->value_len)) {
                         rv = COS_CMP_DIFFERENT;
                     }
                     else {
@@ -434,35 +426,32 @@ DLLEXPORT size_t cos_ind_obj_write(CosIndObj* self, char* out, size_t out_len) {
     return n;
 }
 
-typedef struct {
-    unsigned char *key;
-    int key_len;
-
-    uint64_t obj_num;
-    uint32_t gen_num;
-
-    unsigned char *buf;
-    size_t   buf_len;
-} CosCryptNodeCtx;
-
-typedef void (*CosCryptFunc) (CosCryptNodeCtx*, PDF_TYPE_STRING, size_t);
-
-static void _crypt_node(CosNode* self, CosCryptNodeCtx* crypt_ctx, CosCryptFunc crypt_cb) {
+static void _crypt_node(CosNode* self, CosCryptNodeCtx* crypt_ctx) {
     switch (self->type) {
         case COS_NODE_LITERAL:
         case COS_NODE_HEX:
-            {
-                struct CosStringyNode* s = (struct CosStringyNode*) self;
-                crypt_cb(crypt_ctx, s->value, s->value_len);
+            if (crypt_ctx->mode != COS_CRYPT_STREAMS) {
+                struct CosStringyNode* s = (void*) self;
+                (crypt_ctx->crypt_cb)(crypt_ctx, s->value, s->value_len);
             }
             break;
         case COS_NODE_ARRAY:
         case COS_NODE_DICT:
             {
                 size_t i;
-                struct CosArrayishNode* a = (struct CosArrayishNode*)self;
+                struct CosArrayishNode* a = (void*)self;
                 for (i=0; i < a->elems; i++) {
-                    _crypt_node(a->values[i], crypt_ctx, crypt_cb);
+                    _crypt_node(a->values[i], crypt_ctx);
+                }
+            }
+            break;
+        case COS_NODE_STREAM:
+            {
+                CosStream* s = (void*) self;
+                _crypt_node((CosNode*)s->dict, crypt_ctx);
+
+                if (crypt_ctx->mode != COS_CRYPT_STRINGS) {
+                    (crypt_ctx->crypt_cb)(crypt_ctx, s->value, s->value_len);
                 }
             }
             break;
@@ -471,13 +460,15 @@ static void _crypt_node(CosNode* self, CosCryptNodeCtx* crypt_ctx, CosCryptFunc 
     }
 }
 
-DLLEXPORT void cos_ind_obj_crypt(CosIndObj* self, unsigned char* key, int key_len, CosCryptFunc crypt_cb) {
+DLLEXPORT void cos_ind_obj_crypt(CosIndObj* self, unsigned char* key, int key_len, CosCryptFunc crypt_cb, CosCryptMode mode) {
     CosCryptNodeCtx crypt_ctx = {
         key, key_len,
         self->obj_num, self->gen_num,
+        mode,
+        crypt_cb,
         malloc(512), 512
     };
-    _crypt_node(self->value, &crypt_ctx, crypt_cb);
+    _crypt_node(self->value, &crypt_ctx);
     free(crypt_ctx.buf);
 }
 

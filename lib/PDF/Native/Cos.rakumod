@@ -24,7 +24,13 @@ enum COS_CMP is export «
    COS_CMP_SLIGHTLY_DIFFERENT
    COS_CMP_DIFFERENT
    COS_CMP_DIFFERENT_TYPE
-»;
+   »;
+
+enum COS_CRYPT_MODE is export «
+    COS_CRYPT_ALL
+    COS_CRYPT_STRINGS
+    COS_CRYPT_STREAMS
+   »;
 
 our @ClassMap;
 
@@ -112,9 +118,13 @@ class CosCryptCtx is repr('CStruct') is export {
     has uint64 $.obj-num;
     has uint32 $.gen-num;
 
+    has uint32  $!crypt-mode;
+    has Pointer $!crypt-cb;
+
     # scratch buffer
     has CArray[uint8] $.buf;
     has size_t $buf-len;
+
 }
 
 class CosIndObj is repr('CStruct') is CosNode is export {
@@ -127,9 +137,9 @@ class CosIndObj is repr('CStruct') is CosNode is export {
 
     method !cos_ind_obj_new(uint64, uint32, CosNode --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_ind_obj_write(Blob, size_t --> size_t) is native(libpdf) {*}
-    method !cos_ind_obj_crypt(Blob, size_t, &crypt-cb (CosCryptCtx, CArray[uint8], size_t)) is native(libpdf) {*}
-    method crypt(Blob() $key, &crypt-func) {
-        self!cos_ind_obj_crypt($key, $key.bytes, &crypt-func);
+    method !cos_ind_obj_crypt(Blob, size_t, &crypt-cb (CosCryptCtx, CArray[uint8], size_t), int32 ) is native(libpdf) {*}
+    method crypt(Blob() $key, &crypt-func, UInt:D $mode) {
+        self!cos_ind_obj_crypt($key, $key.bytes, &crypt-func, $mode);
     }
     method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0, CosNode:D :$value!) {
         self!cos_ind_obj_new($obj-num, $gen-num, $value);
