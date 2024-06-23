@@ -25,7 +25,7 @@ subtest 'numeric', {
     my CosInt:D $two = parse("2");
 
     is $two.cmp(parse("2")), +COS_CMP_EQUAL;
-    is $two.cmp(parse("2.0")), +COS_CMP_SLIGHTLY_DIFFERENT;
+    is $two.cmp(parse("2.0")), +COS_CMP_SIMILAR;
     is $two.cmp(parse("2.1")), +COS_CMP_DIFFERENT;
     is $two.cmp($one), +COS_CMP_DIFFERENT;
     is $one.cmp($two), +COS_CMP_DIFFERENT;
@@ -40,7 +40,7 @@ subtest 'string', {
     is $lx.cmp($one), +COS_CMP_DIFFERENT_TYPE;
     is $lx.cmp($ly), +COS_CMP_DIFFERENT;
     is $ly.cmp($lx), +COS_CMP_DIFFERENT;
-    is $lx.cmp($hx), +COS_CMP_SLIGHTLY_DIFFERENT;
+    is $lx.cmp($hx), +COS_CMP_SIMILAR;
     is $lx.cmp($hy), +COS_CMP_DIFFERENT;
 }
 
@@ -66,14 +66,14 @@ subtest 'dict', {
     is parse("<</a 1>>").cmp(parse("<< /a 2 >>")), +COS_CMP_DIFFERENT;
     is parse("<</a 1>>").cmp(parse("<< /b 1 >>")), +COS_CMP_DIFFERENT;
     is parse("<</a 1>>").cmp(parse("<< /a 1 /b 2>>")), +COS_CMP_DIFFERENT;
-    is parse("<</a 1>>").cmp(parse("<< /a 1.0>>")), +COS_CMP_SLIGHTLY_DIFFERENT;
+    is parse("<</a 1>>").cmp(parse("<< /a 1.0>>")), +COS_CMP_SIMILAR;
     is parse("<</a [1 2 3]>>").cmp(parse("<< /a [1 2 3]>>")), +COS_CMP_EQUAL;
     is parse("<</a [1 2 3]>>").cmp(parse("<< /a [1 2]>>")), +COS_CMP_DIFFERENT;
-    is parse("<</a [1 2 3]>>").cmp(parse("<< /a [1 2.0 3]>>")), +COS_CMP_SLIGHTLY_DIFFERENT;
+    is parse("<</a [1 2 3]>>").cmp(parse("<< /a [1 2.0 3]>>")), +COS_CMP_SIMILAR;
     todo "null entries";
-    is parse("<</a 1>>").cmp(parse("<< /a 1 /b null>>")), +COS_CMP_SLIGHTLY_DIFFERENT;
+    is parse("<</a 1>>").cmp(parse("<< /a 1 /b null>>")), +COS_CMP_SIMILAR;
     todo "different keys order";
-    is parse("<</a 1 /b 2>>").cmp(parse("<< /b 2 /a 1>>")), +COS_CMP_SLIGHTLY_DIFFERENT;
+    is parse("<</a 1 /b 2>>").cmp(parse("<< /b 2 /a 1>>")), +COS_CMP_SIMILAR;
 }
 
 subtest 'indirect references', {
@@ -94,7 +94,7 @@ sub test-stream($entry, $data) {
 subtest 'streams', {
     is parse(test-stream(1, 'xxx')).cmp( parse(test-stream(1, 'xxx'))), +COS_CMP_EQUAL;
     is parse(test-stream(1, 'xxx')).cmp( parse(test-stream(2, 'xxx'))), +COS_CMP_DIFFERENT;
-    is parse(test-stream(1, 'xxx')).cmp( parse(test-stream('1.0', 'xxx'))), +COS_CMP_SLIGHTLY_DIFFERENT;
+    is parse(test-stream(1, 'xxx')).cmp( parse(test-stream('1.0', 'xxx'))), +COS_CMP_SIMILAR;
     is parse(test-stream(1, 'xxx')).cmp( parse(test-stream(1, 'xxy'))), +COS_CMP_DIFFERENT;
     is parse(test-stream(1, 'xxx')).cmp( parse(test-stream(1, 'xxxx'))), +COS_CMP_DIFFERENT;
 }
@@ -102,7 +102,7 @@ subtest 'streams', {
 subtest 'indirect objects', {
     is parse("42 0 obj\n1\nendobj", :rule<ind-obj>).cmp(parse("42 0 obj\n1\nendobj", :rule<ind-obj>)), +COS_CMP_EQUAL;
     is parse("42 0 obj\n1\nendobj", :rule<ind-obj>).cmp(parse("42 0 obj(x)\nendobj", :rule<ind-obj>)), +COS_CMP_DIFFERENT;
-    is parse("42 0 obj\n1\nendobj", :rule<ind-obj>).cmp(parse("42 0 obj\n1.0\nendobj", :rule<ind-obj>)), +COS_CMP_SLIGHTLY_DIFFERENT;
+    is parse("42 0 obj\n1\nendobj", :rule<ind-obj>).cmp(parse("42 0 obj\n1.0\nendobj", :rule<ind-obj>)), +COS_CMP_SIMILAR;
 }
 
 done-testing;

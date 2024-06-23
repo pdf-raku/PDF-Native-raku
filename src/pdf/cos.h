@@ -23,7 +23,7 @@ typedef enum COS_NODE_TYPE {
 
 typedef enum {
     COS_CMP_EQUAL,
-    COS_CMP_SLIGHTLY_DIFFERENT,
+    COS_CMP_SIMILAR,
     COS_CMP_DIFFERENT,
     COS_CMP_DIFFERENT_TYPE
 } CosCmpResult;
@@ -127,8 +127,8 @@ DLLEXPORT size_t cos_ind_obj_write(CosIndObj*, char*, size_t);
 
 typedef enum {
     COS_CRYPT_ALL,
-    COS_CRYPT_STRINGS,
-    COS_CRYPT_STREAMS
+    COS_CRYPT_ONLY_STRINGS,
+    COS_CRYPT_ONLY_STREAMS
 } CosCryptMode;
 
 typedef struct _CosCryptNodeCtx CosCryptNodeCtx;
@@ -136,20 +136,25 @@ typedef struct _CosCryptNodeCtx CosCryptNodeCtx;
 typedef void (*CosCryptFunc) (CosCryptNodeCtx*, PDF_TYPE_STRING, size_t);
 
 struct  _CosCryptNodeCtx {
+
     unsigned char *key;
     int key_len;
-
-    uint64_t obj_num;
-    uint32_t gen_num;
 
     CosCryptMode mode;
     CosCryptFunc crypt_cb;
 
     unsigned char *buf;
     size_t   buf_len;
+
+    uint64_t obj_num;
+    uint32_t gen_num;
+
 };
 
-DLLEXPORT void cos_ind_obj_crypt(CosIndObj* self, unsigned char* key, int key_len, CosCryptFunc crypt_cb, CosCryptMode mode);
+DLLEXPORT CosCryptNodeCtx* cos_crypt_ctx_new(CosCryptNodeCtx*, CosCryptFunc, CosCryptMode, unsigned char*, int);
+DLLEXPORT void cos_crypt_ctx_done(CosCryptNodeCtx*);
+
+DLLEXPORT void cos_ind_obj_crypt(CosIndObj*, CosCryptNodeCtx*);
 
 DLLEXPORT CosInt* cos_int_new(CosInt*, PDF_TYPE_INT);
 DLLEXPORT size_t cos_int_write(CosInt*, char*, size_t);

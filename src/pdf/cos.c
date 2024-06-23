@@ -130,7 +130,7 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
         if (_is_numeric_node(self) && _is_numeric_node(obj)) {
             /* presumably real vs integer */
             return (_int_value(self, &v1) && _int_value(obj, &v2) && v1 == v2)
-                ? COS_CMP_SLIGHTLY_DIFFERENT
+                ? COS_CMP_SIMILAR
                 : COS_CMP_DIFFERENT;
         }
         else if (_is_stringy_node(self) && _is_stringy_node(obj)) {
@@ -138,7 +138,7 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
             struct CosStringyNode* b = (void*)obj;
             if (a->value_len == b->value_len
                 && _cmp_chars(a->value, b->value, a->value_len) == COS_CMP_EQUAL) {
-                return COS_CMP_SLIGHTLY_DIFFERENT;
+                return COS_CMP_SIMILAR;
             }
             else {
                 return COS_CMP_DIFFERENT;
@@ -191,7 +191,7 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                     if (a->elems != b->elems) return COS_CMP_DIFFERENT;
                     for (i = 0; i < a->elems; i++) {
                         int cmp = cos_node_cmp(a->values[i], b->values[i]);
-                        if (cmp == COS_CMP_SLIGHTLY_DIFFERENT) {
+                        if (cmp == COS_CMP_SIMILAR) {
                             rv = cmp;
                         }
                         else if (cmp >= COS_CMP_DIFFERENT) {
@@ -212,7 +212,7 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                         if (cos_node_cmp((CosNode*)a->keys[i], (CosNode*)b->keys[i])) return COS_CMP_DIFFERENT;
                         {
                             int cmp = cos_node_cmp(a->values[i], b->values[i]);
-                            if (cmp == COS_CMP_SLIGHTLY_DIFFERENT) {
+                            if (cmp == COS_CMP_SIMILAR) {
                                 rv = cmp;
                             }
                             else if (cmp >= COS_CMP_DIFFERENT) {
@@ -430,9 +430,9 @@ static void _crypt_node(CosNode* self, CosCryptNodeCtx* crypt_ctx) {
     switch (self->type) {
         case COS_NODE_LITERAL:
         case COS_NODE_HEX:
-            if (crypt_ctx->mode != COS_CRYPT_STREAMS) {
+            if (crypt_ctx->mode != COS_CRYPT_ONLY_STREAMS) {
                 struct CosStringyNode* s = (void*) self;
-                (crypt_ctx->crypt_cb)(crypt_ctx, s->value, s->value_len);
+                crypt_ctx->crypt_cb(crypt_ctx, s->value, s->value_len);
             }
             break;
         case COS_NODE_ARRAY:
@@ -450,8 +450,8 @@ static void _crypt_node(CosNode* self, CosCryptNodeCtx* crypt_ctx) {
                 CosStream* s = (void*) self;
                 _crypt_node((CosNode*)s->dict, crypt_ctx);
 
-                if (crypt_ctx->mode != COS_CRYPT_STRINGS) {
-                    (crypt_ctx->crypt_cb)(crypt_ctx, s->value, s->value_len);
+                if (crypt_ctx->mode != COS_CRYPT_ONLY_STRINGS) {
+                    crypt_ctx->crypt_cb(crypt_ctx, s->value, s->value_len);
                 }
             }
             break;
@@ -460,16 +460,32 @@ static void _crypt_node(CosNode* self, CosCryptNodeCtx* crypt_ctx) {
     }
 }
 
-DLLEXPORT void cos_ind_obj_crypt(CosIndObj* self, unsigned char* key, int key_len, CosCryptFunc crypt_cb, CosCryptMode mode) {
-    CosCryptNodeCtx crypt_ctx = {
-        key, key_len,
-        self->obj_num, self->gen_num,
-        mode,
-        crypt_cb,
-        malloc(512), 512
-    };
-    _crypt_node(self->value, &crypt_ctx);
-    free(crypt_ctx.buf);
+DLLEXPORT CosCryptNodeCtx* cos_crypt_ctx_new(CosCryptNodeCtx* self, CosCryptFunc crypt_cb, CosCryptMode mode, unsigned char* key, int key_len) {
+    self = malloc(sizeof(CosCryptNodeCtx));
+
+    self->key = key;
+    self->key_len = key_len;
+    self->mode = mode;
+    self->crypt_cb = crypt_cb;
+    self->buf_len = 512;
+    self->buf = malloc(self->buf_len);
+    self->obj_num = 0;
+    self->gen_num = 0;
+
+    return self;
+}
+
+DLLEXPORT void cos_crypt_ctx_done(CosCryptNodeCtx* self) {
+    if (self->buf) free(self->buf);
+    free(self);
+}
+
+DLLEXPORT void cos_ind_obj_crypt(CosIndObj* self, CosCryptNodeCtx* crypt_ctx) {
+    crypt_ctx->obj_num = self->obj_num;
+    crypt_ctx->gen_num = self->gen_num;
+    _crypt_node(self->value, crypt_ctx);
+    crypt_ctx->obj_num = 0;
+    crypt_ctx->gen_num = 0;
 }
 
 DLLEXPORT CosStream* cos_stream_new(CosStream* self, CosDict* dict, unsigned char* value, size_t value_len) {

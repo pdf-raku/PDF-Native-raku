@@ -30,10 +30,12 @@ sub crypt-func(CosCryptCtx $ctx, CArray[uint8] $buf, size_t $buf-len ) {
     $buf[$_] = 256 - $buf[$_] for ^$buf-len;
 }
 
-$ind-obj.crypt($key, &crypt-func, COS_CRYPT_STRINGS);
+my CosCryptCtx $crypt-ctx .= new: :$key, :&crypt-func, :mode(COS_CRYPT_ONLY_STRINGS);
+
+$ind-obj.crypt(:$crypt-ctx);
 is-deeply $value7.Str, "(\x[88]\x[87]\x[86])";
 
-$ind-obj.crypt($key, &crypt-func, COS_CRYPT_STRINGS);
+$ind-obj.crypt(:$crypt-ctx);
 is $value7.Str, '(xyz)';
 
 is-deeply $ind-obj.Str.lines, (
