@@ -74,6 +74,8 @@ typedef struct {
     size_t          elems;
     CosNode**       values;
     CosName**       keys;
+    size_t*         index;
+    size_t          index_len;
 } CosDict;
 
 typedef struct {
@@ -169,6 +171,7 @@ DLLEXPORT CosArray* cos_array_new(CosArray*, CosNode**, size_t);
 DLLEXPORT size_t cos_array_write(CosArray*, char*, size_t);
 
 DLLEXPORT CosDict* cos_dict_new(CosDict*, CosName**, CosNode**, size_t);
+DLLEXPORT void cos_dict_build_index(CosDict*);
 DLLEXPORT CosNode* cos_dict_lookup(CosDict*, PDF_TYPE_CODE_POINTS, uint16_t);
 DLLEXPORT size_t cos_dict_write(CosDict*, char*, size_t);
 

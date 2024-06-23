@@ -56,6 +56,7 @@ DLLEXPORT void cos_node_done(CosNode* self) {
                 }
                 free(a->keys);
                 free(a->values);
+                if (a->index) free(a->index);
             }
             break;
         case COS_NODE_IND_OBJ:
@@ -80,15 +81,20 @@ DLLEXPORT void cos_node_done(CosNode* self) {
 static int _cmp_code_points(PDF_TYPE_CODE_POINTS v1, PDF_TYPE_CODE_POINTS v2, uint16_t key_len) {
     uint16_t i;
     for (i = 0; i < key_len; i++) {
-        if (v1[i] != v2[i]) return COS_CMP_DIFFERENT;
+        if (v1[i] != v2[i]) {
+            return v1[i] > v2[i] ? 1 : -1;
+        }
     }
-    return COS_CMP_EQUAL;
+    return 0;
 }
 
 static int _cmp_chars(char* v1, char* v2, uint16_t key_len) {
     uint16_t i;
     for (i = 0; i < key_len; i++) {
-        if (v1[i] != v2[i]) return COS_CMP_DIFFERENT;
+        if (v1[i] != v2[i]) {
+            return ((unsigned char)v1[i] > (unsigned char)v2[i]
+                    ? 1 : -1);
+        }
     }
     return COS_CMP_EQUAL;
 }
@@ -357,6 +363,9 @@ DLLEXPORT CosDict* cos_dict_new(CosDict* self, CosName** keys, CosNode** values,
         self->values[i] = values[i];
         cos_node_reference(values[i]);
     }
+    self->index = NULL;
+    self->index_len = 0;
+
     return self;
 }
 
@@ -374,6 +383,61 @@ DLLEXPORT CosNode* cos_dict_lookup(CosDict* self, PDF_TYPE_CODE_POINTS key, uint
         }
     }
     return NULL;
+}
+
+/* sorting comparision */
+static int _cmp_names(CosName* n1, CosName* n2) {
+    if (!n1 || !n2 || n1->type != COS_NODE_NAME || n1->type != COS_NODE_NAME) {
+        return 0;
+    }
+    else if (n1->value_len != n2->value_len) {
+        return n1->value_len > n2->value_len ? -1 : 1;
+    }
+    return _cmp_code_points(n1->value, n2->value, n1->value_len);
+}
+
+DLLEXPORT void cos_dict_build_index(CosDict* self) {
+    size_t i;
+
+    if (self->index) return;
+
+    self->index = malloc(self->elems * sizeof(size_t) );
+    self->index_len = 0;
+
+    /* pass 1 sequential */
+    for (i = 0; i < self->elems; i++) {
+        if (self->values[i]->type != COS_NODE_NULL) {
+            self->index[ self->index_len++ ] = i;
+        }
+    }
+    /* pass 2 stable sort */
+    {
+        int sorted = 0;
+        int pass = 0;
+        while (!sorted) {
+            sorted = 1;
+            for (i = 1; i < self->index_len - pass; i++) {
+                int cmp = _cmp_names(self->keys[ self->index[i-1] ], self->keys[ self->index[i] ]);
+                if (cmp > 0) {
+                    size_t tmp = self->index[i];
+                    self->index[i] = self->index[i-1];
+                    self->index[i-1] = tmp;
+                    sorted = 0;
+                }
+            }
+            pass++;
+        }
+    }
+    /* pass 3 remove dups */
+    if (self->index_len) {
+        size_t i, j;
+        for (i = 1, j = 1; j < self->index_len; j++) {
+            if (_cmp_names(self->keys[ self->index[i-1] ], self->keys[ self->index[j] ])) {
+                 self->index[i++] = self->index[j];
+            }
+        }
+        self->index_len = i;
+    }
 }
 
 DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len) {
