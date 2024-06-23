@@ -463,7 +463,8 @@ static void _crypt_node(CosNode* self, CosCryptNodeCtx* crypt_ctx) {
 DLLEXPORT CosCryptNodeCtx* cos_crypt_ctx_new(CosCryptNodeCtx* self, CosCryptFunc crypt_cb, CosCryptMode mode, unsigned char* key, int key_len) {
     self = malloc(sizeof(CosCryptNodeCtx));
 
-    self->key = key;
+    self->key = malloc(key_len);
+    memcpy(self->key, key, key_len);
     self->key_len = key_len;
     self->mode = mode;
     self->crypt_cb = crypt_cb;
@@ -476,6 +477,7 @@ DLLEXPORT CosCryptNodeCtx* cos_crypt_ctx_new(CosCryptNodeCtx* self, CosCryptFunc
 }
 
 DLLEXPORT void cos_crypt_ctx_done(CosCryptNodeCtx* self) {
+    if (self->key) free(self->key);
     if (self->buf) free(self->buf);
     free(self);
 }
