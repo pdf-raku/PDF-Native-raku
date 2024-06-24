@@ -78,7 +78,7 @@ DLLEXPORT void cos_node_done(CosNode* self) {
 
 #define COS_CMP(v1,v2) ((v1) == (v2) ? COS_CMP_EQUAL : COS_CMP_DIFFERENT)
 
-static int _cmp_code_points(PDF_TYPE_CODE_POINTS v1, PDF_TYPE_CODE_POINTS v2, uint16_t key_len) {
+static int _cmp_code_points(PDF_TYPE_CODE_POINTS v1, PDF_TYPE_CODE_POINTS v2, size_t key_len) {
     uint16_t i;
     for (i = 0; i < key_len; i++) {
         if (v1[i] != v2[i]) {
@@ -369,22 +369,6 @@ DLLEXPORT CosDict* cos_dict_new(CosDict* self, CosName** keys, CosNode** values,
     return self;
 }
 
-DLLEXPORT CosNode* cos_dict_lookup(CosDict* self, PDF_TYPE_CODE_POINTS key, uint16_t key_len) {
-    size_t i;
-
-    for (i = 0; i < self->elems; i++) {
-        if (self->keys[i]->value_len == key_len) {
-            if (_cmp_code_points(key, self->keys[i]->value, self->keys[i]->value_len) == 0) {
-                //* 32000-2 7.3.7: A null value implies a non-existent entry
-                if (self->values[i]->type != COS_NODE_NULL) {
-                    return self->values[i];
-                }
-            }
-        }
-    }
-    return NULL;
-}
-
 /* sorting comparision */
 static int _cmp_names(CosName* n1, CosName* n2) {
     if (!n1 || !n2 || n1->type != COS_NODE_NAME || n1->type != COS_NODE_NAME) {
@@ -396,21 +380,49 @@ static int _cmp_names(CosName* n1, CosName* n2) {
     return _cmp_code_points(n1->value, n2->value, n1->value_len);
 }
 
-DLLEXPORT void cos_dict_build_index(CosDict* self) {
-    size_t i;
+DLLEXPORT CosNode* cos_dict_lookup(CosDict* self, PDF_TYPE_CODE_POINTS key, uint16_t key_len) {
+    size_t low, high;
+    CosName key_name = { COS_NODE_NAME, 123+COS_NODE_NAME, 1, key, key_len };
+    size_t* index = self->index;
+    if (!index) index = cos_dict_build_index(self);
 
-    if (self->index) return;
+    for (low = 0, high = self->index_len;;) {
+        size_t mid = low + (high - low) / 2;
+        CosName* entry_name = self->keys[ index[mid] ];
+        int cmp = _cmp_names(&key_name, entry_name); 
+
+        if (cmp == 0) {
+            return self->values[ index[mid] ];
+        }
+        else if (low == high) {
+            break;
+        }
+        else if (cmp < 0) {
+            high = mid -1;
+        }
+        else {
+            low = mid;
+        }
+    }
+    return NULL;
+}
+
+DLLEXPORT size_t* cos_dict_build_index(CosDict* self) {
+    size_t i;
+    int have_dups = 0;
+
+    if (self->index) return self->index;
 
     self->index = malloc(self->elems * sizeof(size_t) );
     self->index_len = 0;
 
-    /* pass 1 sequential */
+    /* pass 1: sequence, ignoring nulls */
     for (i = 0; i < self->elems; i++) {
         if (self->values[i]->type != COS_NODE_NULL) {
             self->index[ self->index_len++ ] = i;
         }
     }
-    /* pass 2 stable sort */
+    /* pass 2: stable sort */
     {
         int sorted = 0;
         int pass = 0;
@@ -424,12 +436,15 @@ DLLEXPORT void cos_dict_build_index(CosDict* self) {
                     self->index[i-1] = tmp;
                     sorted = 0;
                 }
+                else if (cmp == 0) {
+                    have_dups = 1;
+                }
             }
             pass++;
         }
     }
-    /* pass 3 remove dups */
-    if (self->index_len) {
+    /* pass 3: remove dups */
+    if (have_dups) {
         size_t i, j;
         for (i = 1, j = 1; j < self->index_len; j++) {
             if (_cmp_names(self->keys[ self->index[i-1] ], self->keys[ self->index[j] ])) {
@@ -438,6 +453,7 @@ DLLEXPORT void cos_dict_build_index(CosDict* self) {
         }
         self->index_len = i;
     }
+    return self->index;
 }
 
 DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len) {

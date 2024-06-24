@@ -206,7 +206,7 @@ class CosDict is CosNode is repr('CStruct') is export {
     has size_t $.index-len;
     method !cos_dict_new(CArray[CosName], CArray[CosNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_dict_write(Blob, size_t --> size_t) is native(libpdf) {*}
-    method !cos_dict_build_index() is native(libpdf) {*}
+    method !cos_dict_build_index(--> Pointer[size_t]) is native(libpdf) {*}
     method !cos_dict_lookup(PDF_TYPE_CODE_POINTS, uint16 --> CosNode) is native(libpdf) {*}
 
     method new(
