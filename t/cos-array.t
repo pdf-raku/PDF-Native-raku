@@ -4,12 +4,12 @@ use Test;
 
 plan 10;
 
-my CosInt  $value1 .= new: :value(69);
-my CosRef  $value2 .= new: :obj-num(123);
-my CosName $value3 .= new: :value(CArray[uint32].new: 'Hi There'.ords);
-my CosBool $value4 .= new: :value;
-my CosNull $value5 .= new;
-my CosReal $value6 .= new: :value(12345e-1);
+my CosInt()  $value1  = 69;
+my CosRef    $value2 .= new: :obj-num(123);
+my CosName() $value3  = 'Hi There';
+my CosBool() $value4  = True;
+my CosNull   $value5;
+my CosReal() $value6  = 12345e-1;
 is $value1.ref-count, 1;
 my CArray[CosNode] $values .= new: $value1, $value2, $value3, $value4, $value5, $value6;
 is $values[0].ref-count, 1;

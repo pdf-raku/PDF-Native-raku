@@ -23,7 +23,7 @@ given PDF::Grammar::COS.parse('.45', :rule<object>, :$actions) {
 }
 
 given PDF::Grammar::COS.parse('(Hello,\40World\n)', :rule<object>, :$actions) {
-      my CosLiteral:D $node = .ast;
+      my CosLiteralString:D $node = .ast;
       is $node.Str, '(Hello, World\n)', 'parse literal';
 }
 

@@ -32,8 +32,8 @@ subtest 'numeric', {
 }
 
 subtest 'string', {
-    my CosLiteral:D $lx = parse("(x)");
-    my CosLiteral:D $ly = parse("(y)");
+    my CosLiteralString:D $lx = parse("(x)");
+    my CosLiteralString:D $ly = parse("(y)");
     my CosHexString:D $hx .= new: :value('x'.encode: "latin-1");
     my CosHexString:D $hy .= new: :value('y'.encode: "latin-1");
     is $lx.cmp( parse("(x)") ), +COS_CMP_EQUAL;

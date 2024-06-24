@@ -1,14 +1,12 @@
 use PDF::Native::Cos;
 use Test;
-use NativeCall;
 
 plan 4;
 
-my blob8 $value = 'Hello!'.encode: 'latin-1';
-my CosLiteral $literal .= new: :$value;
+my CosLiteralString() $literal = 'Hello!';
 is $literal.ref-count, 1;
 
-is $literal.type, +COS_NODE_LITERAL;
+is $literal.type, +COS_NODE_LIT_STR;
 is-deeply $literal.value, 'Hello!';
 is-deeply $literal.Str , '(Hello!)';
 

@@ -18,7 +18,7 @@ method number($/) {
 method string($/) {
     my Pair $ast = $<string>.ast;
     my Blob:D $value = $ast.value.encode: "latin-1";
-    make ($ast.key eq 'literal' ?? CosLiteral !! CosHexString).new: :$value;
+    make ($ast.key eq 'literal' ?? CosLiteralString !! CosHexString).new: :$value;
 }
 
 method name($/) {

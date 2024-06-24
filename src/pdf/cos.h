@@ -10,10 +10,10 @@ typedef enum COS_NODE_TYPE {
     COS_NODE_ARRAY,
     COS_NODE_BOOL,
     COS_NODE_DICT,
-    COS_NODE_HEX, /* 4 */
+    COS_NODE_HEX_STR, /* 4 */
     COS_NODE_IND_OBJ,
     COS_NODE_INT,
-    COS_NODE_LITERAL, /* 7 */
+    COS_NODE_LIT_STR, /* 7 */
     COS_NODE_NAME,
     COS_NODE_NULL,
     COS_NODE_REAL,
@@ -105,7 +105,7 @@ typedef struct CosStringyNode {
     uint16_t        ref_count;
     PDF_TYPE_STRING value;
     size_t          value_len;
-} CosHexString, CosLiteral;
+} CosHexString, CosLiteralStr;
 
 typedef struct {
     uint8_t         type;
@@ -172,14 +172,14 @@ DLLEXPORT size_t cos_array_write(CosArray*, char*, size_t);
 
 DLLEXPORT CosDict* cos_dict_new(CosDict*, CosName**, CosNode**, size_t);
 DLLEXPORT size_t* cos_dict_build_index(CosDict*);
-DLLEXPORT CosNode* cos_dict_lookup(CosDict*, PDF_TYPE_CODE_POINTS, uint16_t);
+DLLEXPORT CosNode* cos_dict_lookup(CosDict*, CosName*);
 DLLEXPORT size_t cos_dict_write(CosDict*, char*, size_t);
 
 DLLEXPORT CosName* cos_name_new(CosName*, PDF_TYPE_CODE_POINTS, uint16_t);
 DLLEXPORT size_t cos_name_write(CosName*, char*, size_t);
 
-DLLEXPORT CosLiteral* cos_literal_new(CosLiteral*, PDF_TYPE_STRING, size_t);
-DLLEXPORT size_t cos_literal_write(CosLiteral*, char*, size_t);
+DLLEXPORT CosLiteralStr* cos_literal_new(CosLiteralStr*, PDF_TYPE_STRING, size_t);
+DLLEXPORT size_t cos_literal_write(CosLiteralStr*, char*, size_t);
 
 DLLEXPORT CosHexString* cos_hex_string_new(CosHexString*, PDF_TYPE_STRING, size_t);
 DLLEXPORT size_t cos_hex_string_write(CosHexString*, char*, size_t);

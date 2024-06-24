@@ -5,8 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define COS_CHECK(n) ((n)->type + 123)
+
 DLLEXPORT void cos_node_reference(CosNode* self) {
-    if (self->check != self->type + 123) {
+    if (self == NULL) return;
+    if (self->check != COS_CHECK(self)) {
         fprintf(stderr, __FILE__ ":%d node %p (type %d) not owned by us or corrupted\n", __LINE__, (void*) self, self->type);
     }
     self->ref_count++;
@@ -14,7 +17,7 @@ DLLEXPORT void cos_node_reference(CosNode* self) {
 
 DLLEXPORT void cos_node_done(CosNode* self) {
     if (self == NULL) return;
-    if (self->check != self->type + 123) {
+    if (self->check != COS_CHECK(self)) {
         fprintf(stderr, __FILE__ ":%d node %p (type %d, ref %d) not owned by us or corrupted\n", __LINE__, (void*) self, self->type, self->ref_count);
     }
     else if (self->ref_count == 0) {
@@ -32,8 +35,8 @@ DLLEXPORT void cos_node_done(CosNode* self) {
         case COS_NODE_NAME:
             free(((CosName*)self)->value);
             break;
-        case COS_NODE_LITERAL:
-        case COS_NODE_HEX:
+        case COS_NODE_LIT_STR:
+        case COS_NODE_HEX_STR:
             free(((struct CosStringyNode*)self)->value);
             break;
         case COS_NODE_ARRAY:
@@ -116,7 +119,7 @@ static int _int_value(CosNode *node, PDF_TYPE_INT *value) {
 }
 
 static int _is_stringy_node(CosNode* self) {
-    return self != NULL && (self->type == COS_NODE_LITERAL || self->type == COS_NODE_HEX);
+    return self != NULL && (self->type == COS_NODE_LIT_STR || self->type == COS_NODE_HEX_STR);
 }
 
 static int _is_numeric_node(CosNode* self) {
@@ -179,8 +182,8 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                         ? COS_CMP_EQUAL
                         : COS_CMP_DIFFERENT;
                 }
-            case COS_NODE_LITERAL:
-            case COS_NODE_HEX:
+            case COS_NODE_LIT_STR:
+            case COS_NODE_HEX_STR:
                 {
                     struct CosStringyNode* a = (void*)self;
                     struct CosStringyNode* b = (void*)obj;
@@ -270,48 +273,48 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
 
 static int _node_write(CosNode* self, char* out, int out_len) {
     int n = 0;
-    if (self) {
-        switch (self->type) {
-        case COS_NODE_IND_OBJ:
-            n = cos_ind_obj_write((CosIndObj*)self, out, out_len);
-            break;
-        case COS_NODE_INT:
-            n = cos_int_write((CosInt*)self, out, out_len);
-            break;
-        case COS_NODE_BOOL:
-            n = cos_bool_write((CosBool*)self, out, out_len);
-            break;
-        case COS_NODE_NULL:
-            n = cos_null_write((CosNull*)self, out, out_len);
-            break;
-        case COS_NODE_REAL:
-            n = cos_real_write((CosReal*)self, out, out_len);
-            break;
-        case COS_NODE_REF:
-            n = cos_ref_write((CosRef*)self, out, out_len);
-            break;
-        case COS_NODE_ARRAY:
-            n = cos_array_write((CosArray*)self, out, out_len);
-            break;
-        case COS_NODE_DICT:
-            n = cos_dict_write((CosDict*)self, out, out_len);
-            break;
-        case COS_NODE_NAME:
-            n = cos_name_write((CosName*)self, out, out_len);
-            break;
-        case COS_NODE_LITERAL:
-            n = cos_literal_write((CosLiteral*)self, out, out_len);
-            break;
-        case COS_NODE_HEX:
-            n = cos_hex_string_write((CosHexString*)self, out, out_len);
-            break;
-        case COS_NODE_STREAM:
-            n = cos_stream_write((CosStream*)self, out, out_len);
-            break;
-        default:
-            fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
-        }
+
+    switch (self ? self->type : COS_NODE_NULL) {
+    case COS_NODE_IND_OBJ:
+        n = cos_ind_obj_write((CosIndObj*)self, out, out_len);
+        break;
+    case COS_NODE_INT:
+        n = cos_int_write((CosInt*)self, out, out_len);
+        break;
+    case COS_NODE_BOOL:
+        n = cos_bool_write((CosBool*)self, out, out_len);
+        break;
+    case COS_NODE_NULL:
+        n = cos_null_write((CosNull*)self, out, out_len);
+        break;
+    case COS_NODE_REAL:
+        n = cos_real_write((CosReal*)self, out, out_len);
+        break;
+    case COS_NODE_REF:
+        n = cos_ref_write((CosRef*)self, out, out_len);
+        break;
+    case COS_NODE_ARRAY:
+        n = cos_array_write((CosArray*)self, out, out_len);
+        break;
+    case COS_NODE_DICT:
+        n = cos_dict_write((CosDict*)self, out, out_len);
+        break;
+    case COS_NODE_NAME:
+        n = cos_name_write((CosName*)self, out, out_len);
+        break;
+    case COS_NODE_LIT_STR:
+        n = cos_literal_write((CosLiteralStr*)self, out, out_len);
+        break;
+    case COS_NODE_HEX_STR:
+        n = cos_hex_string_write((CosHexString*)self, out, out_len);
+        break;
+    case COS_NODE_STREAM:
+        n = cos_stream_write((CosStream*)self, out, out_len);
+        break;
+    default:
+        fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
     }
+
     return n;
 }
 
@@ -319,7 +322,7 @@ DLLEXPORT CosArray* cos_array_new(CosArray* self, CosNode** values, size_t elems
     size_t i;
     self = malloc(sizeof(CosArray));
     self->type = COS_NODE_ARRAY;
-    self->check = self->type + 123;
+    self->check = COS_CHECK(self);
     self->ref_count = 1;
     self->elems = elems;
     self->values = malloc(sizeof(CosNode*) * elems);
@@ -356,7 +359,7 @@ DLLEXPORT CosDict* cos_dict_new(CosDict* self, CosName** keys, CosNode** values,
     size_t i;
     self = malloc(sizeof(CosDict));
     self->type = COS_NODE_DICT;
-    self->check = self->type + 123;
+    self->check = COS_CHECK(self);
     self->ref_count = 1;
     self->elems = elems;
     self->keys   = malloc(sizeof(CosName*) * elems);
@@ -385,16 +388,16 @@ static int _cmp_names(CosName* n1, CosName* n2) {
     return _cmp_code_points(n1->value, n2->value, n1->value_len);
 }
 
-DLLEXPORT CosNode* cos_dict_lookup(CosDict* self, PDF_TYPE_CODE_POINTS key, uint16_t key_len) {
+DLLEXPORT CosNode* cos_dict_lookup(CosDict* self, CosName* key) {
     size_t low, high;
-    CosName key_name = { COS_NODE_NAME, 123+COS_NODE_NAME, 1, key, key_len };
     size_t* index = self->index;
+
     if (!index) index = cos_dict_build_index(self);
 
     for (low = 0, high = self->index_len;;) {
         size_t mid = low + (high - low) / 2;
-        CosName* entry_name = self->keys[ index[mid] ];
-        int cmp = _cmp_names(&key_name, entry_name); 
+        CosName* this_key = self->keys[ index[mid] ];
+        int cmp = _cmp_names(key, this_key); 
 
         if (cmp == 0) {
             return self->values[ index[mid] ];
@@ -467,7 +470,7 @@ DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len) {
 DLLEXPORT CosRef* cos_ref_new(CosRef* self, uint64_t obj_num, uint32_t gen_num) {
     self = malloc(sizeof(CosRef));
     self->type = COS_NODE_REF;
-    self->check = self->type + 123;
+    self->check = COS_CHECK(self);
     self->ref_count = 1;
     self->obj_num = obj_num;
     self->gen_num = gen_num;
@@ -481,7 +484,7 @@ DLLEXPORT size_t cos_ref_write(CosRef* self, char* out, size_t out_len) {
 DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj* self, uint64_t obj_num, uint32_t gen_num, CosNode* value) {
     self = malloc(sizeof(CosIndObj));
     self->type = COS_NODE_IND_OBJ;
-    self->check = self->type + 123;
+    self->check = COS_CHECK(self);
     self->ref_count = 1;
     self->obj_num = obj_num;
     self->gen_num = gen_num;
@@ -500,8 +503,8 @@ DLLEXPORT size_t cos_ind_obj_write(CosIndObj* self, char* out, size_t out_len) {
 
 static void _crypt_node(CosNode* self, CosCryptNodeCtx* crypt_ctx) {
     switch (self->type) {
-        case COS_NODE_LITERAL:
-        case COS_NODE_HEX:
+        case COS_NODE_LIT_STR:
+        case COS_NODE_HEX_STR:
             if (crypt_ctx->mode != COS_CRYPT_ONLY_STREAMS) {
                 struct CosStringyNode* s = (void*) self;
                 crypt_ctx->crypt_cb(crypt_ctx, s->value, s->value_len);
@@ -565,7 +568,7 @@ DLLEXPORT void cos_ind_obj_crypt(CosIndObj* self, CosCryptNodeCtx* crypt_ctx) {
 DLLEXPORT CosStream* cos_stream_new(CosStream* self, CosDict* dict, unsigned char* value, size_t value_len) {
     self = malloc(sizeof(CosStream));
     self->type = COS_NODE_STREAM;
-    self->check = self->type + 123;
+    self->check = COS_CHECK(self);
     self->ref_count = 1;
     self->dict = dict;
     cos_node_reference((CosNode*)dict);
@@ -599,7 +602,7 @@ DLLEXPORT size_t cos_stream_write(CosStream* self, char* out, size_t out_len) {
 DLLEXPORT CosInt* cos_int_new(CosInt* self, PDF_TYPE_INT value) {
     self = malloc(sizeof(CosInt));
     self->type = COS_NODE_INT;
-    self->check = self->type + 123;
+    self->check = COS_CHECK(self);
     self->ref_count = 1;
     self->value = value;
     return self;
@@ -612,7 +615,7 @@ DLLEXPORT size_t cos_int_write(CosInt* self, char* out, size_t out_len) {
 DLLEXPORT CosBool* cos_bool_new(CosBool* self, PDF_TYPE_BOOL value) {
     self = malloc(sizeof(CosBool));
     self->type = COS_NODE_BOOL;
-    self->check = self->type + 123;
+    self->check = COS_CHECK(self);
     self->ref_count = 1;
     self->value = value;
     return self;
@@ -625,7 +628,7 @@ DLLEXPORT size_t cos_bool_write(CosBool* self, char* out, size_t out_len) {
 DLLEXPORT CosReal* cos_real_new(CosReal* self, PDF_TYPE_REAL value) {
     self = malloc(sizeof(CosReal));
     self->type = COS_NODE_REAL;
-    self->check = self->type + 123;
+    self->check = COS_CHECK(self);
     self->ref_count = 1;
     self->value = value;
     return self;
@@ -639,7 +642,7 @@ DLLEXPORT size_t cos_real_write(CosReal* self, char* out, size_t out_len) {
 DLLEXPORT CosName* cos_name_new(CosName* self, PDF_TYPE_CODE_POINTS value, uint16_t value_len) {
     self = malloc(sizeof(CosName));
     self->type = COS_NODE_NAME;
-    self->check = self->type + 123;
+    self->check = COS_CHECK(self);
     self->ref_count = 1;
     self->value = malloc(sizeof(PDF_TYPE_CODE_POINT) * value_len);
     memcpy(self->value, value, sizeof(PDF_TYPE_CODE_POINT) * value_len);
@@ -651,10 +654,10 @@ DLLEXPORT size_t cos_name_write(CosName* self, char* out, size_t out_len) {
     return  pdf_write_name(self->value, self->value_len, out, out_len);
 }
 
-DLLEXPORT CosLiteral* cos_literal_new(CosLiteral* self, PDF_TYPE_STRING value, size_t value_len) {
-    self = malloc(sizeof(CosLiteral));
-    self->type = COS_NODE_LITERAL;
-    self->check = self->type + 123;
+DLLEXPORT CosLiteralStr* cos_literal_new(CosLiteralStr* self, PDF_TYPE_STRING value, size_t value_len) {
+    self = malloc(sizeof(CosLiteralStr));
+    self->type = COS_NODE_LIT_STR;
+    self->check = COS_CHECK(self);
     self->ref_count = 1;
     self->value = malloc(sizeof(*value) * value_len);
     memcpy(self->value, value, sizeof(*value) * value_len);
@@ -662,14 +665,14 @@ DLLEXPORT CosLiteral* cos_literal_new(CosLiteral* self, PDF_TYPE_STRING value, s
     return self;
  }
 
-DLLEXPORT size_t cos_literal_write(CosLiteral* self, char* out, size_t out_len) {
+DLLEXPORT size_t cos_literal_write(CosLiteralStr* self, char* out, size_t out_len) {
     return  pdf_write_literal(self->value, self->value_len, out, out_len);
 }
 
 DLLEXPORT CosHexString* cos_hex_string_new(CosHexString* self, PDF_TYPE_STRING value, size_t value_len) {
     self = malloc(sizeof(CosHexString));
-    self->type = COS_NODE_HEX;
-    self->check = self->type + 123;
+    self->type = COS_NODE_HEX_STR;
+    self->check = COS_CHECK(self);
     self->ref_count = 1;
     self->value = malloc(sizeof(*value) * value_len);
     memcpy(self->value, value, sizeof(*value) * value_len);
@@ -684,7 +687,7 @@ DLLEXPORT size_t cos_hex_string_write(CosHexString* self, char* out, size_t out_
 DLLEXPORT CosNull* cos_null_new(CosNull* self) {
     self = malloc(sizeof(CosNull));
     self->type = COS_NODE_NULL;
-    self->check = self->type + 123;
+    self->check = COS_CHECK(self);
     self->ref_count = 1;
     return self;
 }

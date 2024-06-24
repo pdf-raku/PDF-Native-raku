@@ -21,7 +21,7 @@ sub ind-obj-parse(Str:D $str, :$rule) {
 my CosIndObj $ind-obj = ind-obj-parse($lines.join: "\n");
 is $ind-obj.Str.lines.join("\n"), $lines.join("\n");
 my CosReal $value6 = $ind-obj.value[5];
-my CosLiteral $value7 = $ind-obj.value[6];
+my CosLiteralString $value7 = $ind-obj.value[6];
 
 my Buf[uint8] $key .= new(193,67,83,175,223);
 

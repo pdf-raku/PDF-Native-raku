@@ -1,3 +1,4 @@
+# Data structures for PDF parsing and serialization
 unit module PDF::Native::Cos;
 
 use PDF::Native::Defs :types, :libpdf;
@@ -8,10 +9,10 @@ enum COS_NODE_TYPE is export «
     COS_NODE_ARRAY
     COS_NODE_BOOL
     COS_NODE_DICT
-    COS_NODE_HEX
+    COS_NODE_HEX_STR
     COS_NODE_IND_OBJ
     COS_NODE_INT
-    COS_NODE_LITERAL
+    COS_NODE_LIT_STR
     COS_NODE_NAME
     COS_NODE_NULL
     COS_NODE_REAL
@@ -53,6 +54,7 @@ role CosType[$class, UInt:D $type] is export {
     }
 }
 
+#| Generic Cos objects
 class CosNode is repr('CStruct') is export {
     has uint8 $.type;
     has uint8 $!private;
@@ -108,6 +110,7 @@ class CosRef is repr('CStruct') is CosNode is export {
     }
 }
 
+#| An encryption context
 class CosCryptCtx is repr('CStruct') is export {
 
     # encryption key
@@ -134,6 +137,7 @@ class CosCryptCtx is repr('CStruct') is export {
     submethod DESTROY { self!cos_crypt_ctx_done() }
 }
 
+#| Indirect object
 class CosIndObj is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_IND_OBJ];
     has uint64 $.obj-num;
@@ -158,6 +162,7 @@ class CosIndObj is repr('CStruct') is CosNode is export {
     }
 }
 
+#| Array object
 class CosArray is CosNode is repr('CStruct') is export {
     also does CosType[$?CLASS, COS_NODE_ARRAY];
     has size_t $.elems;
@@ -180,6 +185,7 @@ class CosArray is CosNode is repr('CStruct') is export {
     }
 }
 
+#| Name object
 class CosName is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_NAME];
     has CArray[uint32] $.value; # code-points
@@ -195,8 +201,13 @@ class CosName is repr('CStruct') is CosNode is export {
         my $n = self!cos_name_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
+    multi method COERCE(Str:D $str) {
+        my CArray[uint32] $value .= new: $str.ords;
+        self.new: :$value;
+    }
 }
 
+#| Dictionary (hash) object
 class CosDict is CosNode is repr('CStruct') is export {
     also does CosType[$?CLASS, COS_NODE_DICT];
     has size_t $.elems;
@@ -207,7 +218,7 @@ class CosDict is CosNode is repr('CStruct') is export {
     method !cos_dict_new(CArray[CosName], CArray[CosNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_dict_write(Blob, size_t --> size_t) is native(libpdf) {*}
     method !cos_dict_build_index(--> Pointer[size_t]) is native(libpdf) {*}
-    method !cos_dict_lookup(PDF_TYPE_CODE_POINTS, uint16 --> CosNode) is native(libpdf) {*}
+    method !cos_dict_lookup(CosName --> CosNode) is native(libpdf) {*}
 
     method new(
         CArray[CosName] :$keys,
@@ -217,9 +228,8 @@ class CosDict is CosNode is repr('CStruct') is export {
         self!cos_dict_new($keys, $values, $elems);
     }
 
-    method AT-KEY(Str:D() $key) {
-        my PDF_TYPE_CODE_POINTS $cps .= new: $key.ords;
-        my CosNode $value = self!cos_dict_lookup($cps, $cps.elems);
+    method AT-KEY(CosName:D() $key) {
+        my CosNode $value = self!cos_dict_lookup($key);
         $value.defined ?? $value.delegate !! $value;
     }
     method AT-POS(UInt:D() $idx) {
@@ -239,6 +249,7 @@ class CosDict is CosNode is repr('CStruct') is export {
    
 }
 
+#| Stream object
 class CosStream is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_STREAM];
     has CosDict          $.dict;
@@ -259,6 +270,7 @@ class CosStream is repr('CStruct') is CosNode is export {
     }
 }
 
+#| Boolean object
 class CosBool is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_BOOL];
     has PDF_TYPE_BOOL $.value;
@@ -274,11 +286,15 @@ class CosBool is repr('CStruct') is CosNode is export {
         my $n = self!cos_bool_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
+    multi method COERCE(Bool() $value) {
+        self.new: :$value;
+    }
 }
 
+#| Integer object
 class CosInt is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_INT];
-    has PDF_TYPE_INT $.value;
+    has PDF_TYPE_INT $.value handles<Int>;
 
     method !cos_int_new(PDF_TYPE_INT --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_int_write(Blob, size_t --> size_t) is native(libpdf) {*}
@@ -291,11 +307,15 @@ class CosInt is repr('CStruct') is CosNode is export {
         my $n = self!cos_int_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
+    multi method COERCE(Int:D() $value) {
+        self.new: :$value;
+    }
 }
 
+#| Real object
 class CosReal is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_REAL];
-    has PDF_TYPE_REAL $.value;
+    has PDF_TYPE_REAL $.value handles<Num>;
     method !cos_real_new(PDF_TYPE_REAL --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_real_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
@@ -307,16 +327,30 @@ class CosReal is repr('CStruct') is CosNode is export {
         my $n = self!cos_real_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
+
+    multi method COERCE(Num:D() $value) {
+        self.new: :$value;
+    }
 }
 
 class _CosStringy is repr('CStruct') is CosNode {
     has CArray[uint8] $.value;
     has size_t $.value-len;
     method value { (^$!value-len).map({$!value[$_].chr}).join }
+    my subset LatinStr of Str:D where !.contains(/<-[\x0..\xff \n]>/);
+    multi method COERCE(LatinStr:D $str) {
+        my blob8:D $value = $str.encode: "latin-1";
+        self.new: :$value;
+    }
+    method Str {
+        fail "Please use CosLiteralString or CosHexString subclass";
+    }
 }
 
-class CosLiteral is repr('CStruct') is _CosStringy is export {
-    also does CosType[$?CLASS, COS_NODE_LITERAL];
+
+#| Literal string object
+class CosLiteralString is repr('CStruct') is _CosStringy is export {
+    also does CosType[$?CLASS, COS_NODE_LIT_STR];
     method !cos_literal_new(blob8, size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_literal_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
@@ -330,8 +364,9 @@ class CosLiteral is repr('CStruct') is _CosStringy is export {
     }
 }
 
+#| Hex string object
 class CosHexString is repr('CStruct') is _CosStringy is export {
-    also does CosType[$?CLASS, COS_NODE_HEX];
+    also does CosType[$?CLASS, COS_NODE_HEX_STR];
     method !cos_hex_string_new(blob8, size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_hex_string_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
@@ -345,6 +380,7 @@ class CosHexString is repr('CStruct') is _CosStringy is export {
     }
 }
 
+#| Null object
 class CosNull is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_NULL];
     method value { Any }

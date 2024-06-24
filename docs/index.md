@@ -21,12 +21,14 @@ So far, just a subset of potential areas are covered:
 - reading of cross reference tables and PDF 1.5+ cross reference streams.
 - writing of strings, numerics, cross-reference tables and streams.
 
+
 ## Classes in this Distribution
 
 - [PDF::Native::Filter::Predictors](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Filter/Predictors)
 - [PDF::Native::Buf](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Buf)
 - [PDF::Native::Reader](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Reader)
 - [PDF::Native::Writer](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Writer)
+- [PDF::Native::Cos](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Cos)
 
 
 ## Todo
@@ -36,6 +38,7 @@ Some other areas under consideration:
 - C equivalents for other PDF::IO::Filter encoding functions, including predictors, ASCII-Hex, ASCII-85 and run-length encoding
 - Support for type-1 character transcoding (PDF::Content::Font::Enc::Glyphic)
 - Support for PDF::Content::Image, including color-channel separation and (de)multiplexing. GIF decompression de-interlacing.
+- PDF parsing and serialization.
 
 There's sure to be others.
 

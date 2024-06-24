@@ -3,7 +3,7 @@ use Test;
 
 plan 8;
 
-my CosInt $value .= new: :value(69);
+my CosInt() $value = 69;
 is $value.ref-count, 1;
 my CosIndObj $ind-obj .= new: :obj-num(42), :gen-num(3), :$value;
 is $value.ref-count, 2;
