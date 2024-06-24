@@ -213,11 +213,16 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                     CosDict* a = (void*)self;
                     CosDict* b = (void*)obj;
                     int rv = COS_CMP_EQUAL;
-                    if (a->elems != b->elems) return COS_CMP_DIFFERENT;
-                    for (i = 0; i < a->elems; i++) {
-                        if (cos_node_cmp((CosNode*)a->keys[i], (CosNode*)b->keys[i])) return COS_CMP_DIFFERENT;
+                    if (!a->index) cos_dict_build_index(a);
+                    if (!b->index) cos_dict_build_index(b);
+                    if (a->index_len != b->index_len) return COS_CMP_DIFFERENT;
+                    for (i = 0; i < a->index_len; i++) {
+                        size_t ai = a->index[ i ];
+                        size_t bi = b->index[ i ];
+                        if (ai != bi) rv = COS_CMP_SIMILAR; /* keys in different order */
+                        if (cos_node_cmp((CosNode*)a->keys[ai], (CosNode*)b->keys[bi])) return COS_CMP_DIFFERENT;
                         {
-                            int cmp = cos_node_cmp(a->values[i], b->values[i]);
+                            int cmp = cos_node_cmp(a->values[ai], b->values[bi]);
                             if (cmp == COS_CMP_SIMILAR) {
                                 rv = cmp;
                             }
@@ -226,6 +231,7 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                             }
                         }
                     }
+                    if (a->elems != b->elems) rv = COS_CMP_SIMILAR;
                     return rv;
                  }
             case COS_NODE_IND_OBJ:

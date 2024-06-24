@@ -70,9 +70,7 @@ subtest 'dict', {
     is parse("<</a [1 2 3]>>").cmp(parse("<< /a [1 2 3]>>")), +COS_CMP_EQUAL;
     is parse("<</a [1 2 3]>>").cmp(parse("<< /a [1 2]>>")), +COS_CMP_DIFFERENT;
     is parse("<</a [1 2 3]>>").cmp(parse("<< /a [1 2.0 3]>>")), +COS_CMP_SIMILAR;
-    todo "null entries";
     is parse("<</a 1>>").cmp(parse("<< /a 1 /b null>>")), +COS_CMP_SIMILAR;
-    todo "different keys order";
     is parse("<</a 1 /b 2>>").cmp(parse("<< /b 2 /a 1>>")), +COS_CMP_SIMILAR;
 }
 
