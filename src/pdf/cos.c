@@ -231,7 +231,6 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                             }
                         }
                     }
-                    if (a->elems != b->elems) rv = COS_CMP_SIMILAR;
                     return rv;
                  }
             case COS_NODE_IND_OBJ:
@@ -415,7 +414,6 @@ DLLEXPORT CosNode* cos_dict_lookup(CosDict* self, PDF_TYPE_CODE_POINTS key, uint
 
 DLLEXPORT size_t* cos_dict_build_index(CosDict* self) {
     size_t i;
-    int have_dups = 0;
 
     if (self->index) return self->index;
 
@@ -442,23 +440,11 @@ DLLEXPORT size_t* cos_dict_build_index(CosDict* self) {
                     self->index[i-1] = tmp;
                     sorted = 0;
                 }
-                else if (cmp == 0) {
-                    have_dups = 1;
-                }
             }
             pass++;
         }
     }
-    /* pass 3: remove dups */
-    if (have_dups) {
-        size_t i, j;
-        for (i = 1, j = 1; j < self->index_len; j++) {
-            if (_cmp_names(self->keys[ self->index[i-1] ], self->keys[ self->index[j] ])) {
-                 self->index[i++] = self->index[j];
-            }
-        }
-        self->index_len = i;
-    }
+
     return self->index;
 }
 
