@@ -15,13 +15,13 @@ test-coverage :
 	cd src/pdf && %MAKE% coverage-reports
 
 test : all
-	@prove -e'perl6 -I .' -j 6 t
+	@prove6 -I. -j 8 t
 
 loudtest : all
-	@prove -v -e'perl6 -I .' t
+	@prove6 -v -I. t
 
 memtest : all
-	@prove -e'perl6-valgrind-m -I .' -v t
+	@prove6 -e'rakudo-valgrind-m -I.' -v t
 
 clean :
 	cd src/pdf && %MAKE% $@

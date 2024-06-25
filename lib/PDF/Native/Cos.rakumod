@@ -103,8 +103,7 @@ class CosRef is repr('CStruct') is CosNode is export {
     method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0) {
         self!cos_ref_new($obj-num, $gen-num);
     }
-    method Str {
-        my Buf[uint8] $buf .= allocate(20);
+    method Str(buf8 :$buf = buf8.allocate(20)) {
         my $n = self!cos_ref_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -155,8 +154,7 @@ class CosIndObj is repr('CStruct') is CosNode is export {
     method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0, CosNode:D :$value!) {
         self!cos_ind_obj_new($obj-num, $gen-num, $value);
     }
-    method Str {
-        my Buf[uint8] $buf .= allocate(200);
+    method Str(buf8 :$buf = buf8.allocate(200)) {
         my $n = self!cos_ind_obj_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -178,8 +176,7 @@ class CosArray is CosNode is repr('CStruct') is export {
     method new(CArray[CosNode] :$values!, UInt:D :$elems = $values.elems) {
         self!cos_array_new($values, $elems);
     }
-    method Str {
-        my Buf[uint8] $buf .= allocate(200);
+    method Str(buf8 :$buf = buf8.allocate(200)) {
         my $n = self!cos_array_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -196,8 +193,7 @@ class CosName is repr('CStruct') is CosNode is export {
     method new(CArray[uint32] :$value!, UInt:D :$value-len = $value.elems) {
         self!cos_name_new($value, $value-len);
     }
-    method Str {
-        my Buf[uint8] $buf .= allocate(20);
+    method Str(buf8 :$buf = buf8.allocate(32)) {
         my $n = self!cos_name_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
@@ -241,8 +237,7 @@ class CosDict is CosNode is repr('CStruct') is export {
         self!cos_dict_build_index() unless $!index;
     }
 
-    method Str {
-        my Buf[uint8] $buf .= allocate(200);
+    method Str(buf8 :$buf = buf8.allocate(200)) {
         my $n = self!cos_dict_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -263,8 +258,7 @@ class CosStream is repr('CStruct') is CosNode is export {
         self!cos_stream_new($dict, $value, $value-len);
     }
 
-    method Str {
-        my Buf[uint8] $buf .= allocate(500);
+    method Str(buf8 :$buf = buf8.allocate(500)) {
         my $n = self!cos_stream_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -281,8 +275,7 @@ class CosBool is repr('CStruct') is CosNode is export {
     method new(Bool:D :$value!) {
         self!cos_bool_new($value);
     }
-    method Str {
-        my Buf[uint8] $buf .= allocate(20);
+    method Str(buf8 :$buf = buf8.allocate(20)) {
         my $n = self!cos_bool_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
@@ -302,8 +295,7 @@ class CosInt is repr('CStruct') is CosNode is export {
     method new(Int:D :$value!) {
         self!cos_int_new($value);
     }
-    method Str {
-        my Buf[uint8] $buf .= allocate(20);
+    method Str(buf8 :$buf = buf8.allocate(20)) {
         my $n = self!cos_int_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
@@ -322,8 +314,7 @@ class CosReal is repr('CStruct') is CosNode is export {
     method new(Num:D() :$value!) {
         self!cos_real_new($value);
     }
-    method Str {
-        my Buf[uint8] $buf .= allocate(20);
+    method Str(buf8 :$buf = buf8.allocate(20)) {
         my $n = self!cos_real_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
@@ -357,8 +348,7 @@ class CosLiteralString is repr('CStruct') is _CosStringy is export {
     method new(blob8:D :$value!, UInt:D :$value-len = $value.elems) {
         self!cos_literal_new($value, $value-len);
     }
-    method Str {
-        my Buf[uint8] $buf .= allocate(50);
+    method Str(buf8 :$buf = buf8.allocate(50)) {
         my $n = self!cos_literal_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -373,8 +363,7 @@ class CosHexString is repr('CStruct') is _CosStringy is export {
     method new(blob8:D :$value!, UInt:D :$value-len = $value.elems) {
         self!cos_hex_string_new($value, $value-len);
     }
-    method Str {
-        my Buf[uint8] $buf .= allocate(50);
+    method Str(buf8 :$buf = buf8.allocate(50)) {
         my $n = self!cos_hex_string_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -391,8 +380,7 @@ class CosNull is repr('CStruct') is CosNode is export {
     method new {
         self!cos_null_new();
     }
-    method Str {
-        my Buf[uint8] $buf .= allocate(10);
+    method Str(buf8 :$buf = buf8.allocate(10)) {
         my $n = self!cos_null_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
