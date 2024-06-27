@@ -171,13 +171,13 @@ class CosArray is CosNode is repr('CStruct') is export {
             !! CosNode;
     }
     method !cos_array_new(CArray[CosNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
-    method !cos_array_write(Blob, size_t --> size_t) is native(libpdf) {*}
+    method !cos_array_write(Blob, size_t, int32 --> size_t) is native(libpdf) {*}
 
     method new(CArray[CosNode] :$values!, UInt:D :$elems = $values.elems) {
         self!cos_array_new($values, $elems);
     }
-    method Str(buf8 :$buf = buf8.allocate(200)) {
-        my $n = self!cos_array_write($buf, $buf.bytes);
+    method Str(buf8 :$buf = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
+        my $n = self!cos_array_write($buf, $buf.bytes, $indent);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
 }
@@ -212,7 +212,7 @@ class CosDict is CosNode is repr('CStruct') is export {
     has CArray[size_t] $.index;
     has size_t $.index-len;
     method !cos_dict_new(CArray[CosName], CArray[CosNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
-    method !cos_dict_write(Blob, size_t --> size_t) is native(libpdf) {*}
+    method !cos_dict_write(Blob, size_t, int32 --> size_t) is native(libpdf) {*}
     method !cos_dict_build_index(--> Pointer[size_t]) is native(libpdf) {*}
     method !cos_dict_lookup(CosName --> CosNode) is native(libpdf) {*}
 
@@ -237,8 +237,8 @@ class CosDict is CosNode is repr('CStruct') is export {
         self!cos_dict_build_index() unless $!index;
     }
 
-    method Str(buf8 :$buf = buf8.allocate(200)) {
-        my $n = self!cos_dict_write($buf, $buf.bytes);
+    method Str(buf8 :$buf = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
+        my $n = self!cos_dict_write($buf, $buf.bytes, $indent);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
    

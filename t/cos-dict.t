@@ -5,7 +5,7 @@ use PDF::Native::Cos::Actions;
 use NativeCall;
 use Test;
 
-plan 11;
+plan 13;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -29,5 +29,20 @@ is $dict{$key}.obj-num, 123;
 is-deeply $dict<not-present>, CosNode;
 is-deeply $dict<nullish>, CosNode;
 is-deeply $dict.Str, $str;
+
+$str = q:to<END>;
+<<
+  /Type /Page
+  /Contents 6 0 R
+  /MediaBox [ 0 0 420 595 ]
+  /Parent 4 0 R
+  /Resources << /Font << /F1 7 0 R >> /Procset [ /PDF /Text ] >>
+>>
+END
+
+$dict = parse($str);
+
+is-deeply $dict.Str.lines, $str.lines;
+is-deeply $dict.Str(:compact), $str.trim.subst(/[\s|\n]+/, ' ', :g);
 
 done-testing;

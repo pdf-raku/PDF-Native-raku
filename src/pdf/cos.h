@@ -168,12 +168,12 @@ DLLEXPORT CosReal* cos_real_new(CosReal* self, PDF_TYPE_REAL value);
 DLLEXPORT size_t cos_real_write(CosReal* self, char* out, size_t out_len);
 
 DLLEXPORT CosArray* cos_array_new(CosArray*, CosNode**, size_t);
-DLLEXPORT size_t cos_array_write(CosArray*, char*, size_t);
+DLLEXPORT size_t cos_array_write(CosArray*, char*, size_t, int);
 
 DLLEXPORT CosDict* cos_dict_new(CosDict*, CosName**, CosNode**, size_t);
 DLLEXPORT size_t* cos_dict_build_index(CosDict*);
 DLLEXPORT CosNode* cos_dict_lookup(CosDict*, CosName*);
-DLLEXPORT size_t cos_dict_write(CosDict*, char*, size_t);
+DLLEXPORT size_t cos_dict_write(CosDict*, char*, size_t, int);
 
 DLLEXPORT CosName* cos_name_new(CosName*, PDF_TYPE_CODE_POINTS, uint16_t);
 DLLEXPORT size_t cos_name_write(CosName*, char*, size_t);

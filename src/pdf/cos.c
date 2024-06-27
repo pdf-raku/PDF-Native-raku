@@ -271,7 +271,7 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
     }
 }
 
-static int _node_write(CosNode* self, char* out, int out_len) {
+static int _node_write(CosNode* self, char* out, int out_len, int indent) {
     int n = 0;
 
     switch (self ? self->type : COS_NODE_NULL) {
@@ -294,10 +294,10 @@ static int _node_write(CosNode* self, char* out, int out_len) {
         n = cos_ref_write((CosRef*)self, out, out_len);
         break;
     case COS_NODE_ARRAY:
-        n = cos_array_write((CosArray*)self, out, out_len);
+        n = cos_array_write((CosArray*)self, out, out_len, indent);
         break;
     case COS_NODE_DICT:
-        n = cos_dict_write((CosDict*)self, out, out_len);
+        n = cos_dict_write((CosDict*)self, out, out_len, indent);
         break;
     case COS_NODE_NAME:
         n = cos_name_write((CosName*)self, out, out_len);
@@ -341,13 +341,13 @@ static int _bufcat(char *in, char* out, int out_len) {
     return n;
 }
 
-DLLEXPORT size_t cos_array_write(CosArray* self, char* out, size_t out_len) {
+DLLEXPORT size_t cos_array_write(CosArray* self, char* out, size_t out_len, int indent) {
     size_t n = 0;
     size_t i;
     if (out && out_len) {
         n += _bufcat("[ ", out, out_len);
         for (i=0; i < self->elems; i++) {
-            n += _node_write(self->values[i], out+n, out_len - n);
+            n += _node_write(self->values[i], out+n, out_len - n, indent);
             if (n < out_len) out[n++] = ' ';
         }
         if (n < out_len) out[n++] = ']';
@@ -451,18 +451,58 @@ DLLEXPORT size_t* cos_dict_build_index(CosDict* self) {
     return self->index;
 }
 
-DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len) {
+static size_t _indent_items(CosDict* self, char *out, size_t out_len, size_t* pos, int indent) {
+    ssize_t i;
+    int j, pad_len;
+
+    if (indent < 0) return 0;
+    pad_len = indent; /* '\n' + indent */
+
+    for (i = self->elems - 1; i >= 0; i--) {
+        size_t shift = i * pad_len;
+        char* src = out + pos[i];
+        size_t elem_len = pos[i+1] - pos[i];
+        char* dest = src + shift + pad_len;
+        if (dest + elem_len >= out + out_len) {
+            return 0;
+        }
+        memmove(dest, src, elem_len);
+        for (j = 0; j < pad_len; j++) {
+            *(src + shift + j) = (j == 0 ? '\n' : ' ');
+        }
+    }
+
+    return pad_len * self->elems;
+}
+
+DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int indent) {
     size_t n = 0;
-    size_t i;
+
     if (out && out_len) {
+        size_t i;
+        size_t* pos = malloc((self->elems+1) * sizeof(size_t));
+        int elem_indent = indent >= 0 ? indent + 2 : -1;
+
         n += _bufcat("<< ", out, out_len);
+
         for (i=0; i < self->elems; i++) {
-            n += _node_write((CosNode*)self->keys[i], out+n, out_len - n);
+            pos[i] = n - 1;
+            n += _node_write((CosNode*)self->keys[i], out+n, out_len - n, 0);
             if (n < out_len) out[n++] = ' ';
-            n += _node_write(self->values[i], out+n, out_len - n);
+            n += _node_write(self->values[i], out+n, out_len - n, elem_indent);
             if (n < out_len) out[n++] = ' ';
         }
+        if (n >= 64 && elem_indent > 0) {
+            int m;
+            pos[self->elems] = n;
+            m = _indent_items(self, out, out_len, pos, elem_indent);
+            if (m > 0) {
+                n += m;
+                out[n-1] = '\n';
+            }
+        }
         n += _bufcat(">>", out+n, out_len-n);
+        free(pos);
     }
     return n;
 }
@@ -496,7 +536,7 @@ DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj* self, uint64_t obj_num, uint32_t
 DLLEXPORT size_t cos_ind_obj_write(CosIndObj* self, char* out, size_t out_len) {
     size_t n = 0;
     n = snprintf(out, out_len, "%ld %d obj\n", self->obj_num, self->gen_num);
-    n += _node_write(self->value, out+n, out_len-n);
+    n += _node_write(self->value, out+n, out_len-n, 0);
     n += _bufcat("\nendobj", out+n, out_len-n);
     return n;
 }
@@ -587,7 +627,7 @@ DLLEXPORT CosStream* cos_stream_new(CosStream* self, CosDict* dict, unsigned cha
 }
 
 DLLEXPORT size_t cos_stream_write(CosStream* self, char* out, size_t out_len) {
-    size_t n = cos_dict_write(self->dict, out, out_len);
+    size_t n = cos_dict_write(self->dict, out, out_len, 0);
     size_t i;
     n += _bufcat("\nstream\n", out+n, out_len-n);
     if (self->value) {
