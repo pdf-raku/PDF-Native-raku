@@ -5,7 +5,7 @@ use PDF::Native::Cos::Actions;
 use NativeCall;
 use Test;
 
-plan 13;
+plan 14;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -44,5 +44,8 @@ $dict = parse($str);
 
 is-deeply $dict.Str.lines, $str.lines;
 is-deeply $dict.Str(:compact), $str.trim.subst(/[\s|\n]+/, ' ', :g);
+
+my buf8 $buf .= allocate(20);
+is-deeply $dict.Str(:$buf).lines, $str.lines;
 
 done-testing;

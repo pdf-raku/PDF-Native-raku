@@ -20,6 +20,21 @@ enum COS_NODE_TYPE is export «
     COS_NODE_STREAM
 »;
 
+constant %TypeMap = %(
+    :array(COS_NODE_ARRAY),
+    :bool(COS_NODE_BOOL),
+    :dict(COS_NODE_DICT),
+    :int(COS_NODE_INT),
+    :hex-string(COS_NODE_HEX_STR),
+    :ind-obj(COS_NODE_IND_OBJ),
+    :literal(COS_NODE_LIT_STR),
+    :name(COS_NODE_NAME),
+    :null(COS_NODE_NULL),
+    :real(COS_NODE_REAL),
+    :ind-ref(COS_NODE_REF),
+    :stream(COS_NODE_STREAM),
+    %);
+
 enum COS_CMP is export «
    COS_CMP_EQUAL
    COS_CMP_SIMILAR
@@ -33,8 +48,8 @@ enum COS_CRYPT_MODE is export «
     COS_CRYPT_ONLY_STREAMS
    »;
 
+my subset LatinStr of Str:D where !.contains(/<-[\x0..\xff \n]>/);
 our @ClassMap;
-
 constant lock = Lock.new;
 
 role CosType[$class, UInt:D $type] is export {
@@ -88,6 +103,39 @@ class CosNode is repr('CStruct') is export {
     method cmp(CosNode $obj) {
         self!cos_node_cmp($obj);
     }
+    multi method COERCE(CosNode:D $_) is default { $_ }
+    multi method COERCE(Pair:D $_) {
+        my $type := %TypeMap{.key} // COS_NODE_NULL;
+        @ClassMap[$type].COERCE: .value;
+    }
+    multi method COERCE(Any:U) { @ClassMap[COS_NODE_NULL].new }
+    multi method COERCE(Str:D $_) {
+         @ClassMap[COS_NODE_LIT_STR].COERCE: $_
+    }
+    multi method COERCE(Bool:D $value) {
+         @ClassMap[COS_NODE_BOOL].new: :$value
+    }
+    multi method COERCE(Int:D $value) {
+         @ClassMap[COS_NODE_INT].new: :$value
+    }
+    multi method COERCE(Numeric:D $_) {
+         @ClassMap[COS_NODE_REAL].COERCE: $_
+    }
+    multi method COERCE(@a) {
+         @ClassMap[COS_NODE_ARRAY].COERCE: @a
+    }
+    multi method COERCE(Int:D :int($value)!) { @ClassMap[COS_NODE_INT].new: :$value }
+    multi method COERCE(%h) {
+        if %h.keys == 1 && %TypeMap{%h.keys[0]} {
+            self.COERCE: %h.pairs[0];
+        }
+        elsif (%h<dict>:exists) || (%h<encoded>:exists) {
+            @ClassMap[COS_NODE_STREAM].COERCE: %h
+        }
+        else {
+            @ClassMap[COS_NODE_DICT].COERCE: %h
+        }
+    }
     method new(|) { fail }
 }
 
@@ -106,6 +154,9 @@ class CosRef is repr('CStruct') is CosNode is export {
     method Str(buf8 :$buf = buf8.allocate(20)) {
         my $n = self!cos_ref_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
+    }
+    multi method COERCE( @ [ UInt:D $obj-num, UInt:D $gen-num ] ) {
+        self.new: :$obj-num, :$gen-num;
     }
 }
 
@@ -176,10 +227,20 @@ class CosArray is CosNode is repr('CStruct') is export {
     method new(CArray[CosNode] :$values!, UInt:D :$elems = $values.elems) {
         self!cos_array_new($values, $elems);
     }
-    method Str(buf8 :$buf = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
-        my $n = self!cos_array_write($buf, $buf.bytes, $indent);
+    method Str(buf8 :$buf is copy = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
+        my $n;
+        repeat {
+            $n = self!cos_array_write($buf, $buf.bytes, $indent);
+            $buf = buf8.allocate(3 * $buf.bytes + 1)
+                unless $n;
+        } until $n;
         $buf.subbuf(0,$n).decode: "latin-1";
     }
+    multi method COERCE(@array) {
+        my CArray[CosNode] $values .= new: @array.map: { CosNode.COERCE: $_ };
+        self.new: :$values;
+    }
+
 }
 
 #| Name object
@@ -237,19 +298,37 @@ class CosDict is CosNode is repr('CStruct') is export {
         self!cos_dict_build_index() unless $!index;
     }
 
-    method Str(buf8 :$buf = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
-        my $n = self!cos_dict_write($buf, $buf.bytes, $indent);
+    method Str(buf8 :$buf is copy = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
+        my $n;
+        repeat {
+            $n = self!cos_dict_write($buf, $buf.bytes, $indent);
+            $buf = buf8.allocate(3 * $buf.bytes + 1)
+                unless $n;
+        } until $n;
         $buf.subbuf(0,$n).decode: "latin-1";
     }
-   
+    multi method COERCE(%dict) {
+        my @keys = %dict.keys.sort: {
+            when 'Type'              {"0"}
+            when 'Subtype'|'S'       {"1"}
+            when .ends-with('Type')  {"1" ~ $_}
+            when 'Length'            {"z"}
+            default                  {$_}
+        };
+  
+        my CArray[CosName] $keys   .= new: @keys.map: { CosName.COERCE: $_ };
+        my CArray[CosNode] $values .= new: @keys.map: { CosNode.COERCE: %dict{$_} };
+
+        self.new: :$keys, :$values;
+    }
 }
 
 #| Stream object
 class CosStream is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_STREAM];
     has CosDict          $.dict;
-    has CArray[uint8]    $.stream;
-    has size_t           $.stream-len;
+    has CArray[uint8]    $.value;
+    has size_t           $.value-len;
 
     method !cos_stream_new(CosDict:D, Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_stream_write(Blob, size_t --> size_t) is native(libpdf) {*}
@@ -261,6 +340,13 @@ class CosStream is repr('CStruct') is CosNode is export {
     method Str(buf8 :$buf = buf8.allocate(500)) {
         my $n = self!cos_stream_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
+    }
+    multi sub coerce-stream(Blob $_) { $_ }
+    multi sub coerce-stream(LatinStr:D $_) { .encode: "latin-1" }
+    multi method COERCE(%s) {
+        my CosDict $dict .= COERCE(%s<dict> // {});
+        my $value := coerce-stream(%s<encoded> // '');
+        self.new: :$dict, :$value;
     }
 }
 
@@ -324,11 +410,11 @@ class CosReal is repr('CStruct') is CosNode is export {
     }
 }
 
-class _CosStringy is repr('CStruct') is CosNode {
+class _CosStringy is CosNode {
     has CArray[uint8] $.value;
     has size_t $.value-len;
     method value { (^$!value-len).map({$!value[$_].chr}).join }
-    my subset LatinStr of Str:D where !.contains(/<-[\x0..\xff \n]>/);
+
     multi method COERCE(LatinStr:D $str) {
         my blob8:D $value = $str.encode: "latin-1";
         self.new: :$value;
@@ -338,8 +424,6 @@ class _CosStringy is repr('CStruct') is CosNode {
     }
 }
 
-
-#| Literal string object
 class CosLiteralString is repr('CStruct') is _CosStringy is export {
     also does CosType[$?CLASS, COS_NODE_LIT_STR];
     method !cos_literal_new(blob8, size_t --> ::?CLASS:D) is native(libpdf) {*}
