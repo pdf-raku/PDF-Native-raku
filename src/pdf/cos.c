@@ -457,7 +457,7 @@ DLLEXPORT size_t* cos_dict_build_index(CosDict* self) {
 }
 
 static size_t _indent_items(CosDict* self, char *out, size_t out_len, size_t* pos, int indent) {
-    ssize_t i;
+    int64_t i;
     int j;
 
     if (indent < 0) return 0;
