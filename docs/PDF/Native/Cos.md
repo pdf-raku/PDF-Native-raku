@@ -3,7 +3,19 @@
  / [PDF::Native](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native)
  :: [Cos](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Cos)
 
-class submethod DESTROY (PDF::Native::Cos::CosNull $:: *%_) { #`(Submethod|3561285582376) ... }
+Description
+-----------
+
+This under development is a set of objects for the native construction and serialization of COS (PDF) objects.
+
+In particular, CosIndObj is designed as drop in replacement for [PDF::IO::IndObj](https://pdf-raku.github.io/PDF-raku).
+
+Todo
+----
+
+- `ast()` method on indirect objects - a native object parser
+
+class submethod DESTROY (PDF::Native::Cos::CosNull $:: *%_) { #`(Submethod|4680485064488) ... }
 -----------------------------------------------------------------------------------------------
 
 Only needed on tree/fragment root nodes.
@@ -74,11 +86,6 @@ class PDF::Native::Cos::CosReal
 -------------------------------
 
 Real object
-
-class PDF::Native::Cos::CosLiteralString
-----------------------------------------
-
-Literal string object
 
 class PDF::Native::Cos::CosHexString
 ------------------------------------

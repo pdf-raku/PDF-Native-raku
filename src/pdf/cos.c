@@ -345,15 +345,18 @@ DLLEXPORT size_t cos_array_write(CosArray* self, char* out, size_t out_len, int 
     size_t n = 0;
     size_t i;
     size_t m;
-    if (out && out_len) {
-        n += _bufcat("[ ", out, out_len);
-        for (i=0; i < self->elems; i++) {
-            n += (m = _node_write(self->values[i], out+n, out_len - n, indent));
-            if (m == 0 || n >= out_len) return 0;
-            out[n++] = ' ';
-        }
-        if (n < out_len) out[n++] = ']';
+
+    if (!out || out_len < 2) return 0;
+
+    n += _bufcat("[ ", out, out_len);
+    for (i=0; i < self->elems; i++) {
+        n += (m = _node_write(self->values[i], out+n, out_len - n, indent));
+        if (m == 0 || n >= out_len) return 0;
+        out[n++] = ' ';
     }
+    if (n >= out_len) return 0;
+    out[n++] = ']';
+
     return n;
 }
 
@@ -478,42 +481,45 @@ static size_t _indent_items(CosDict* self, char *out, size_t out_len, size_t* po
 
 DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int indent) {
     size_t n = 0;
+    size_t i, m;
+    size_t* pos;
+    int elem_indent = indent >= 0 ? indent + 2 : -1;
 
-    if (out && out_len) {
-        size_t i, m;
-        size_t* pos = malloc((self->elems+1) * sizeof(size_t));
-        int elem_indent = indent >= 0 ? indent + 2 : -1;
+    if (!out || out_len <= 4) return 0;
 
-        n += _bufcat("<< ", out, out_len);
+    pos = malloc((self->elems+1) * sizeof(size_t));
 
-        for (i = 0; i < self->elems; i++) {
-            pos[i] = n - 1;
+    n += _bufcat("<< ", out, out_len);
 
-            n += (m = _node_write((CosNode*)self->keys[i], out+n, out_len - n, 0));
-            if (m == 0 || n >= out_len) return 0;
-            out[n++] = ' ';
+    for (i = 0; i < self->elems; i++) {
+        pos[i] = n - 1;
 
-            n += (m = _node_write(self->values[i], out+n, out_len - n, elem_indent));
-            if (m == 0 || n >= out_len) return 0;
-            out[n++] = ' ';
-        }
-        if (n - self->elems >= 61 && elem_indent > 0) {
-            int m;
-            pos[self->elems] = n;
+        n += (m = _node_write((CosNode*)self->keys[i], out+n, out_len - n, 0));
+        if (m == 0 || n >= out_len) return 0;
+        out[n++] = ' ';
 
-            m = _indent_items(self, out, out_len, pos, elem_indent);
-            if (m > 0) {
-                n += m;
-                out[n-1] = '\n';
-                for (; indent > 0; indent--) {
-                    if (n >= out_len) return 0;
-                    out[n++] = ' ';
-                }
+        n += (m = _node_write(self->values[i], out+n, out_len - n, elem_indent));
+        if (m == 0 || n >= out_len) return 0;
+        out[n++] = ' ';
+    }
+    if (n - self->elems >= 61 && elem_indent > 0) {
+        int m;
+        pos[self->elems] = n;
+
+        m = _indent_items(self, out, out_len, pos, elem_indent);
+        if (m > 0) {
+            n += m;
+            out[n-1] = '\n';
+            for (; indent > 0; indent--) {
+                if (n >= out_len) return 0;
+                out[n++] = ' ';
             }
         }
-        n += _bufcat(">>", out+n, out_len-n);
-        free(pos);
     }
+    if (n >= out_len - 1) return 0;
+    n += _bufcat(">>", out+n, out_len-n);
+    free(pos);
+
     return n;
 }
 
@@ -547,6 +553,7 @@ DLLEXPORT size_t cos_ind_obj_write(CosIndObj* self, char* out, size_t out_len) {
     size_t n = 0;
     n = snprintf(out, out_len, "%ld %d obj\n", self->obj_num, self->gen_num);
     n += _node_write(self->value, out+n, out_len-n, 0);
+    if (n + 7 > out_len) return 0;
     n += _bufcat("\nendobj", out+n, out_len-n);
     return n;
 }
@@ -645,6 +652,7 @@ DLLEXPORT size_t cos_stream_write(CosStream* self, char* out, size_t out_len) {
             out[n++] = self->value[i];
         }
     }
+    if (n + 10 > out_len) return 0;
     n += _bufcat("\nendstream", out+n, out_len-n);
     return n;
 }
@@ -731,7 +739,7 @@ DLLEXPORT CosHexString* cos_hex_string_new(CosHexString* self, PDF_TYPE_STRING v
  }
 
 DLLEXPORT size_t cos_hex_string_write(CosHexString* self, char* out, size_t out_len) {
-    return  pdf_write_hex_string(self->value, self->value_len, out, out_len);
+    return pdf_write_hex_string(self->value, self->value_len, out, out_len);
 }
 
 DLLEXPORT CosNull* cos_null_new(CosNull* self) {

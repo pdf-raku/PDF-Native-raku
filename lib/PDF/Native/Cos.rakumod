@@ -1,6 +1,21 @@
 # Data structures for PDF parsing and serialization
 unit module PDF::Native::Cos;
 
+=begin pod
+
+=head2 Description
+
+This under development is a set of objects for the native construction and serialization of COS (PDF) objects.
+
+In particular, CosIndObj is designed as drop in replacement for L<PDF::IO::IndObj>.
+
+=head2 Todo
+
+- `ast()` method on indirect objects
+- a native object parser
+
+=end pod
+
 use PDF::Native::Defs :types, :libpdf;
 use NativeCall;
 
@@ -85,8 +100,6 @@ class CosNode is repr('CStruct') is export {
     }
 
     method done {
-        die "dodgey dereference of node of type: " ~ self.WHAT.raku
-            unless 0 < self.ref-count < 20000;
         self!cos_node_done();
     }
 
@@ -229,11 +242,13 @@ class CosArray is CosNode is repr('CStruct') is export {
     }
     method Str(buf8 :$buf is copy = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
         my $n;
+        my $tries;
         repeat {
             $n = self!cos_array_write($buf, $buf.bytes, $indent);
             $buf = buf8.allocate(3 * $buf.bytes + 1)
                 unless $n;
-        } until $n;
+        } until $n || ++$tries > 5;
+        fail "Unable to write array" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
     }
     multi method COERCE(@array) {
@@ -246,8 +261,10 @@ class CosArray is CosNode is repr('CStruct') is export {
 #| Name object
 class CosName is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_NAME];
+
     has CArray[uint32] $.value; # code-points
     has uint16 $.value-len;
+
     method !cos_name_new(CArray[CosName], uint16 --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_name_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
@@ -267,11 +284,13 @@ class CosName is repr('CStruct') is CosNode is export {
 #| Dictionary (hash) object
 class CosDict is CosNode is repr('CStruct') is export {
     also does CosType[$?CLASS, COS_NODE_DICT];
+
     has size_t $.elems;
     has CArray[CosNode] $.values;
     has CArray[CosName] $!keys;
     has CArray[size_t] $.index;
     has size_t $.index-len;
+
     method !cos_dict_new(CArray[CosName], CArray[CosNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_dict_write(Blob, size_t, int32 --> size_t) is native(libpdf) {*}
     method !cos_dict_build_index(--> Pointer[size_t]) is native(libpdf) {*}
@@ -289,22 +308,26 @@ class CosDict is CosNode is repr('CStruct') is export {
         my CosNode $value = self!cos_dict_lookup($key);
         $value.defined ?? $value.delegate !! $value;
     }
+
     method AT-POS(UInt:D() $idx) {
         $idx < $!elems
             ?? $!values[$idx].delegate
             !! CosNode;
     }
+
     method build-index {
         self!cos_dict_build_index() unless $!index;
     }
 
     method Str(buf8 :$buf is copy = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
         my $n;
+        my $tries;
         repeat {
             $n = self!cos_dict_write($buf, $buf.bytes, $indent);
             $buf = buf8.allocate(3 * $buf.bytes + 1)
                 unless $n;
-        } until $n;
+        } until $n || ++$tries > 5;
+        fail "Unable to write dictionary" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
     }
     multi method COERCE(%dict) {

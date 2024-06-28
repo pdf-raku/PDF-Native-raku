@@ -59,8 +59,8 @@ method count-entries(Blob $buf) {
 }
 multi method read-xref(Blob $buf) {
     my $rows = $.count-entries($buf);
-    my $xref //= array[uint64].new;
-    $xref[($rows||1) * 4  -  1] ||= 0;
+    my $xref = array[uint64].new;
+    $xref[($rows||1) * 4  -  1] = 0;
     $!xref-bytes = pdf_read_xref($xref, $buf, $buf.bytes);
     $xref = Nil
         if $rows && $!xref-bytes == 0;

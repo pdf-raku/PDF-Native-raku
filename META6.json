@@ -6,7 +6,7 @@
   "build-depends": [
   ],
   "depends": [
-    "LibraryMake"
+      "LibraryMake", "PDF::Grammar"
   ],
   "description": "Native drop-in routines for PDF",
   "license": "Artistic-2.0",

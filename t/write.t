@@ -1,13 +1,13 @@
 use v6;
 use Test;
-plan 35;
+plan 34;
 
 use PDF::Native::Writer;
 
 given PDF::Native::Writer {
      is .write-bool(False), "false";
      is .write-bool(True), "true";
-     is .write-bool(False, Blob[uint8].allocate(4)), "fals";
+     is .write-bool(False, Blob[uint8].allocate(4)), "";
      is .write-real(pi), "3.14159";
      is .write-real(0.074877), "0.07488";
      is .write-real(42), "42";
@@ -24,13 +24,10 @@ given PDF::Native::Writer {
      is .write-literal(""), '()';
      is .write-literal("\\ % # / ( ) < > [ ] \{ \}"), '(\\\\ % # / \( \) < > [ ] { })';
      is .write-literal("\x0E\x0\xA0"),"(\o016\o0\o240)";
-     is .write-literal("a(b", Blob[uint8].allocate(4)), "(a)";
-     is .write-literal("a(b", Blob[uint8].allocate(5)), "(a\\()";
+     is .write-literal("a(b", Blob[uint8].allocate(5)), "";
      is .write-literal("a(b", Blob[uint8].allocate(6)), "(a\\(b)";
-     is .write-hex-string("snoopy"),'<736e6f6f7079>';
-     is .write-hex-string("snoopy", Blob[uint8].allocate(4)),'<73>';
-     is .write-hex-string("snoopy", Blob[uint8].allocate(5)),'<73>';
-     is .write-hex-string("snoopy", Blob[uint8].allocate(6)),'<736e>';
+     is .write-hex-string("snoopy", Blob[uint8].allocate(13)),'';
+     is .write-hex-string("snoopy", Blob[uint8].allocate(14)),'<736e6f6f7079>';
 
      enum <free inuse>;
 
@@ -47,6 +44,8 @@ given PDF::Native::Writer {
          '0000000100 00002 n '
      );
      is .write-name('Hi'), '/Hi';
+     is .write-name('Hi', Blob[uint8].allocate(2)), '';
+     is .write-name('Hi', Blob[uint8].allocate(3)), '/Hi';
      is .write-name('Hi#there'), '/Hi##there';
      is .write-name("A\fB\xE C"), '/A#0cB#0e#20C';
      is .write-name("Zsófia"), '/Zs#c3#b3fia';
