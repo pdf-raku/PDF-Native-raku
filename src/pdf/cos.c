@@ -495,11 +495,11 @@ DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int in
         pos[i] = n - 1;
 
         n += (m = _node_write((CosNode*)self->keys[i], out+n, out_len - n, 0));
-        if (m == 0 || n >= out_len) return 0;
+        if (m == 0 || n >= out_len) goto bail;
         out[n++] = ' ';
 
         n += (m = _node_write(self->values[i], out+n, out_len - n, elem_indent));
-        if (m == 0 || n >= out_len) return 0;
+        if (m == 0 || n >= out_len) goto bail;
         out[n++] = ' ';
     }
     if (n - self->elems >= 61 && elem_indent > 0) {
@@ -511,16 +511,19 @@ DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int in
             n += m;
             out[n-1] = '\n';
             for (; indent > 0; indent--) {
-                if (n >= out_len) return 0;
+                if (n >= out_len) goto bail;
                 out[n++] = ' ';
             }
         }
     }
-    if (n >= out_len - 1) return 0;
+    if (n >= out_len - 1) goto bail;
     n += _bufcat(">>", out+n, out_len-n);
     free(pos);
 
     return n;
+bail:
+    free(pos);
+    return 0;
 }
 
 DLLEXPORT CosRef* cos_ref_new(CosRef* self, uint64_t obj_num, uint32_t gen_num) {
