@@ -460,17 +460,20 @@ static size_t _indent_items(CosDict* self, char *out, size_t out_len, size_t* po
     int64_t i;
     int j;
 
-    if (indent < 0) return 0;
+    if (indent <= 0) return 0;
 
     for (i = self->elems - 1; i >= 0; i--) {
         size_t shift = i * indent;
-        char* src = out + pos[i];
         size_t elem_len = pos[i+1] - pos[i];
+        char* src = out + pos[i];
         char* dest = src + shift + indent;
+
         if (dest + elem_len >= out + out_len) {
             return 0;
         }
+
         memmove(dest, src, elem_len);
+
         for (j = 0; j < indent; j++) {
             *(src + shift + j) = (j == 0 ? '\n' : ' ');
         }
@@ -479,15 +482,16 @@ static size_t _indent_items(CosDict* self, char *out, size_t out_len, size_t* po
     return indent * self->elems;
 }
 
+/* Same as PDF::IO::Writer::MultiLineDictSize constant */
+#define MultiLineDictSize 65
+
 DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int indent) {
     size_t n = 0;
     size_t i, m;
-    size_t* pos;
+    size_t* pos = malloc((self->elems+1) * sizeof(size_t));
     int elem_indent = indent >= 0 ? indent + 2 : -1;
 
-    if (!out || out_len <= 4) return 0;
-
-    pos = malloc((self->elems+1) * sizeof(size_t));
+    if (!out || out_len <= 4) goto bail;
 
     n += _bufcat("<< ", out, out_len);
 
@@ -502,25 +506,27 @@ DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int in
         if (m == 0 || n >= out_len) goto bail;
         out[n++] = ' ';
     }
-    if (n - self->elems >= 61 && elem_indent > 0) {
-        int m;
-        pos[self->elems] = n;
 
-        m = _indent_items(self, out, out_len, pos, elem_indent);
-        if (m > 0) {
-            n += m;
-            out[n-1] = '\n';
-            for (; indent > 0; indent--) {
-                if (n >= out_len) goto bail;
-                out[n++] = ' ';
-            }
+    if (elem_indent > 0 && n - self->elems -3 >= MultiLineDictSize) {
+        int m;
+
+        pos[self->elems] = n;
+        n += (m = _indent_items(self, out, out_len, pos, elem_indent));
+        if (m == 0 || n + indent >= out_len) goto bail;
+
+        out[n-1] = '\n';
+        for (; indent > 0; indent--) {
+            if (n >= out_len) goto bail;
+            out[n++] = ' ';
         }
     }
-    if (n >= out_len - 1) goto bail;
-    n += _bufcat(">>", out+n, out_len-n);
-    free(pos);
 
+    if (n+1 >= out_len) goto bail;
+    n += _bufcat(">>", out+n, out_len-n);
+
+    free(pos);
     return n;
+
 bail:
     free(pos);
     return 0;
