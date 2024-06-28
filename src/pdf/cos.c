@@ -507,9 +507,7 @@ DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int in
         out[n++] = ' ';
     }
 
-    if (elem_indent > 0 && n - self->elems -3 >= MultiLineDictSize) {
-        int m;
-
+    if (elem_indent > 0 && n - self->elems - 3 >= MultiLineDictSize) {
         pos[self->elems] = n;
         n += (m = _indent_items(self, out, out_len, pos, elem_indent));
         if (m == 0 || n + indent >= out_len) goto bail;
