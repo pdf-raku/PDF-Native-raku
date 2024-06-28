@@ -15,11 +15,6 @@ Todo
 
 - `ast()` method on indirect objects - a native object parser
 
-class submethod DESTROY (PDF::Native::Cos::CosNull $:: *%_) { #`(Submethod|4680485064488) ... }
------------------------------------------------------------------------------------------------
-
-Only needed on tree/fragment root nodes.
-
 class PDF::Native::Cos::CosNode
 -------------------------------
 

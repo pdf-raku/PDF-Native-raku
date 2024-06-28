@@ -70,8 +70,7 @@ constant lock = Lock.new;
 role CosType[$class, UInt:D $type] is export {
     @ClassMap[$type] = $class;
 
-    #| Only needed on tree/fragment root nodes.
-
+    # Only needed on tree/fragment root nodes.
     submethod DESTROY {
         self.done();
     }
