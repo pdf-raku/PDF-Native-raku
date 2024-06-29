@@ -5,7 +5,7 @@ plan 12;
 
 my CosInt() $value = 69;
 
-for (CosIndObj.new(:obj-num(42), :gen-num(3), :$value), CosIndObj.COERCE($[42, 3, :int(69)])) -> $ind-obj {
+for (CosIndObj.new(:obj-num(42), :gen-num(3), :$value), CosIndObj.COERCE([42, 3, :int(69)])) -> $ind-obj {
     is $ind-obj.type, +COS_NODE_IND_OBJ;
     is $ind-obj.obj-num, 42;
     is $ind-obj.gen-num, 3;

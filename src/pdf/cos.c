@@ -561,8 +561,8 @@ DLLEXPORT size_t cos_ind_obj_write(CosIndObj* self, char* out, size_t out_len) {
     size_t m;
     n = snprintf(out, out_len, "%ld %d obj\n", self->obj_num, self->gen_num);
     n += (m = _node_write(self->value, out+n, out_len-n, 0));
-    if (m == 0 || n + 7 > out_len) return 0;
-    n += _bufcat("\nendobj", out+n, out_len-n);
+    if (m == 0 || n + 8 > out_len) return 0;
+    n += _bufcat("\nendobj\n", out+n, out_len-n);
     return n;
 }
 
@@ -655,7 +655,7 @@ DLLEXPORT size_t cos_stream_write(CosStream* self, char* out, size_t out_len) {
     size_t n = cos_dict_write(self->dict, out, out_len, 0);
     if (n == 0) return 0;
 
-    n += _bufcat("\nstream\n", out+n, out_len-n);
+    n += _bufcat(" stream\n", out+n, out_len-n);
 
     if (self->value) {
         size_t i;
@@ -664,7 +664,7 @@ DLLEXPORT size_t cos_stream_write(CosStream* self, char* out, size_t out_len) {
         }
     }
 
-    if (n + 10 > out_len) return 0;
+    if (n + 11 > out_len) return 0;
     n += _bufcat("\nendstream", out+n, out_len-n);
 
     return n;

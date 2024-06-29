@@ -217,9 +217,22 @@ class CosIndObj is repr('CStruct') is CosNode is export {
     method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0, CosNode:D :$value!) {
         self!cos_ind_obj_new($obj-num, $gen-num, $value);
     }
-    method Str(buf8 :$buf = buf8.allocate(200)) {
-        my $n = self!cos_ind_obj_write($buf, $buf.bytes);
+    method Str(buf8 :$buf is copy = buf8.allocate(512)) {
+        my $n;
+        my $tries;
+        repeat {
+            $n = self!cos_ind_obj_write($buf, $buf.bytes);
+            $buf = buf8.allocate(3 * $buf.bytes + 1)
+                unless $n;
+        } until $n || ++$tries > 5;
+        fail "Unable to write indirect object" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
+    }
+    multi method COERCE(@a where .elems >= 3) {
+        my UInt:D $obj-num = @a[0];
+        my UInt:D $gen-num = @a[1];
+        my CosNode:D() $value = @a[2];
+        self.new: :$obj-num, :$gen-num, :$value;
     }
 }
 

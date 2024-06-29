@@ -70,8 +70,7 @@ given PDF::Grammar::COS.parse('<</a 42/BB(Hi)>>', :rule<object>, :$actions) {
 }
 
 my $stream = q:to<--END-->;
-    << /Length 45 >>
-    stream
+    << /Length 45 >> stream
     BT
     /F1 24 Tf
     100 250 Td (Hello, world!) Tj
@@ -89,5 +88,5 @@ my $ind-obj = "123 4 obj\n{$stream}endobj";
 with PDF::Grammar::COS.parse( $ind-obj, :rule<ind-obj>, :$actions) {
     my CosIndObj:D $node = .ast;
     note $/.from.raku;
-    is $node.Str, $ind-obj, 'parse indirect object';
+    is $node.Str.chomp, $ind-obj, 'parse indirect object';
 }
