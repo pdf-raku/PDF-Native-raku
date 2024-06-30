@@ -33,6 +33,9 @@ enum COS_NODE_TYPE is export «
     COS_NODE_REAL
     COS_NODE_REF
     COS_NODE_STREAM
+    COS_NODE_CONTENT
+    COS_NODE_OP
+    COS_NODE_OP_IMAGE_DATA
 »;
 
 constant %TypeMap = %(
@@ -48,6 +51,8 @@ constant %TypeMap = %(
     :real(COS_NODE_REAL),
     :ind-ref(COS_NODE_REF),
     :stream(COS_NODE_STREAM),
+    :content(COS_NODE_CONTENT),
+    :op(COS_NODE_OP),
     %);
 
 enum COS_CMP is export «
@@ -223,9 +228,10 @@ class CosIndObj is repr('CStruct') is CosNode is export {
         my $tries;
         repeat {
             $n = self!cos_ind_obj_write($buf, $buf.bytes);
+            last if ++$tries > 5;
             $buf = buf8.allocate(3 * $buf.bytes + 1)
                 unless $n;
-        } until $n || ++$tries > 5;
+        } until $n;
         fail "Unable to write indirect object" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -259,9 +265,10 @@ class CosArray is CosNode is repr('CStruct') is export {
         my $tries;
         repeat {
             $n = self!cos_array_write($buf, $buf.bytes, $indent);
+            last if ++$tries > 5;
             $buf = buf8.allocate(3 * $buf.bytes + 1)
                 unless $n;
-        } until $n || ++$tries > 5;
+        } until $n;
         fail "Unable to write array" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -335,16 +342,17 @@ class CosDict is CosNode is repr('CStruct') is export {
         self!cos_dict_build_index() unless $!index;
     }
 
-    method ast { :dict(%( (^$!elems).map: { $!keys[$_].ast.value => $!values[$_].delegate.ast } )) }
+    method ast { dict => %( (^$!elems).map: { $!keys[$_].ast.value => $!values[$_].delegate.ast }) }
 
     method Str(buf8 :$buf is copy = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
         my $n;
         my $tries;
         repeat {
             $n = self!cos_dict_write($buf, $buf.bytes, $indent);
+            last if ++$tries > 5;
             $buf = buf8.allocate(3 * $buf.bytes + 1)
                 unless $n;
-        } until $n || ++$tries > 5;
+        } until $n;
         fail "Unable to write dictionary" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -392,7 +400,7 @@ class CosStream is repr('CStruct') is CosNode is export {
     }
     multi sub coerce-stream(Blob $_) { $_ }
     multi sub coerce-stream(LatinStr:D $_) { .encode: "latin-1" }
-    method ast { :stream(%( $!dict.ast, encoded => $!value.&to-blob($!value-len))) }
+    method ast { stream => %( $!dict.ast, encoded => $!value.&to-blob($!value-len)) }
     multi method COERCE(%s) {
         my CosDict $dict .= COERCE(%s<dict> // {});
         my $value := coerce-stream(%s<encoded> // '');
@@ -525,3 +533,53 @@ class CosNull is repr('CStruct') is CosNode is export {
     }
 }
 
+class CosOp is repr('CStruct') is CosNode is export {
+    also does CosType[$?CLASS, COS_NODE_OP];
+    has size_t $.elems;
+    has CArray[CosNode] $.values;
+    has Str $.opn;
+    #| Indirect objects the top of the tree and always fragments
+    method AT-POS(UInt:D() $idx) {
+        $idx < $!elems
+            ?? $!values[$idx].delegate
+            !! CosNode;
+    }
+
+    method !cos_op_new(Str, CArray[CosNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_op_write(Blob, size_t, int32 --> size_t) is native(libpdf) {*}
+
+    method new(Str:D :$opn!, CArray[CosNode] :$values, UInt:D :$elems = $values ?? $values.elems !! 0) {
+        self!cos_op_new($opn, $values, $elems);
+    }
+    method Str(buf8 :$buf is copy = buf8.allocate(512), Int:D :$indent = 0;) {
+        my $n = self!cos_op_write($buf, $buf.bytes, $indent);
+        $buf.subbuf(0,$n).decode: "latin-1";
+    }
+    method ast {...}
+    multi method COERCE(@content) {...}
+}
+
+class CosContent is repr('CStruct') is CosNode is export {
+    also does CosType[$?CLASS, COS_NODE_CONTENT];
+    has size_t $.elems;
+    has CArray[CosOp] $.values;
+    #| Indirect objects the top of the tree and always fragments
+    method AT-POS(UInt:D() $idx) {
+        $idx < $!elems
+            ?? $!values[$idx].delegate
+            !! CosNode;
+    }
+
+    method !cos_content_new(CArray[CosOp], size_t --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_content_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(CArray[CosOp] :$values!, UInt:D :$elems = $values.elems) {
+        self!cos_content_new($values, $elems);
+    }
+    method Str(buf8 :$buf is copy = buf8.allocate(512)) {
+        my $n = self!cos_content_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode: "latin-1";
+    }
+    method ast {...}
+    multi method COERCE(@content) {...}
+}

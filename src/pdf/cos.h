@@ -18,7 +18,10 @@ typedef enum COS_NODE_TYPE {
     COS_NODE_NULL,
     COS_NODE_REAL,
     COS_NODE_REF,
-    COS_NODE_STREAM
+    COS_NODE_STREAM,
+    COS_NODE_CONTENT,
+    COS_NODE_OP,
+    COS_NODE_OP_IMG_DATA
 } CosNodeType;
 
 typedef enum {
@@ -116,6 +119,31 @@ typedef struct {
     size_t          value_len;
 } CosStream;
 
+typedef struct {
+    uint8_t         type;
+    uint8_t         check;
+    uint16_t        ref_count;
+    size_t          elems;
+    CosNode**       values;
+    char*           opn;
+} CosOp;
+
+typedef struct {
+    uint8_t         type;
+    uint8_t         check;
+    uint16_t        ref_count;
+    char*           value;
+    size_t          value_len;
+} CosOpImageData;
+
+typedef struct {
+    uint8_t         type;
+    uint8_t         check;
+    uint16_t        ref_count;
+    size_t          elems;
+    CosOp**         values;
+} CosContent;
+
 DLLEXPORT void cos_node_reference(CosNode*);
 DLLEXPORT void cos_node_done(CosNode*);
 
@@ -192,5 +220,13 @@ DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj*, uint64_t, uint32_t, CosNode*);
 DLLEXPORT CosStream* cos_stream_new(CosStream*, CosDict*, unsigned char*, size_t);
 
 DLLEXPORT size_t cos_stream_write(CosStream*, char*, size_t);
+
+DLLEXPORT CosOp* cos_op_new(CosOp*, char*, CosNode**, size_t);
+DLLEXPORT size_t cos_op_write(CosOp*, char*, size_t, int);
+
+DLLEXPORT CosContent* cos_content_new(CosContent*, CosOp**, size_t);
+DLLEXPORT size_t cos_content_write(CosContent*, char*, size_t);
+
+DLLEXPORT CosOpImageData* cos_op_image_data_new(CosOpImageData*, char*, size_t);
 
 #endif
