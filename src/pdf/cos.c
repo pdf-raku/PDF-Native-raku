@@ -46,7 +46,7 @@ DLLEXPORT void cos_node_done(CosNode* self) {
         case COS_NODE_ARRAY:
             {
                 size_t i;
-                CosArray* a = (void*)self;
+                struct CosArrayishNode* a = (void*)self;
                 for (i=0; i < a->elems; i++) {
                     cos_node_done(a->values[i]);
                 }
@@ -198,32 +198,16 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                         ? COS_CMP_EQUAL
                         : COS_CMP_DIFFERENT;
                 }
+            case COS_NODE_OP:
+                if (strcmp(((CosOp*)self)->opn, ((CosOp*)obj)->opn)) return  COS_CMP_DIFFERENT;
+                    /* fallthrough */
+            case COS_NODE_CONTENT:
             case COS_NODE_ARRAY:
                 {
-                    size_t i;
-                    CosArray* a = (void*)self;
-                    CosArray* b = (void*)obj;
+                    struct CosArrayishNode* a = (void*)self;
+                    struct CosArrayishNode* b = (void*)obj;
                     int rv = COS_CMP_EQUAL;
-                    if (a->elems != b->elems) return COS_CMP_DIFFERENT;
-                    for (i = 0; i < a->elems; i++) {
-                        int cmp = cos_node_cmp(a->values[i], b->values[i]);
-                        if (cmp == COS_CMP_SIMILAR) {
-                            rv = cmp;
-                        }
-                        else if (cmp >= COS_CMP_DIFFERENT) {
-                            return COS_CMP_DIFFERENT;
-                        }
-                    }
-                    return rv;
-                }
-                break;
-            case COS_NODE_OP:
-                {
                     size_t i;
-                    CosOp* a = (void*)self;
-                    CosOp* b = (void*)obj;
-                    int rv = COS_CMP_EQUAL;
-                    if (strcmp(a->opn, b->opn)) return COS_CMP_DIFFERENT;
                     if (a->elems != b->elems) return COS_CMP_DIFFERENT;
                     for (i = 0; i < a->elems; i++) {
                         int cmp = cos_node_cmp(a->values[i], b->values[i]);
