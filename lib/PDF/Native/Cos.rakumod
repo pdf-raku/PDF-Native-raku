@@ -78,7 +78,7 @@ role CosType[$class, UInt:D $type] is export {
     method delegate {
         fail "expected node of type $type, got {self.type}"
             unless self.type == $type;
-        
+
         self;
     }
 }
@@ -116,7 +116,7 @@ class CosNode is repr('CStruct') is export {
         self!cos_node_cmp($obj);
     }
     multi method COERCE(CosNode:D $_) is default { $_ }
-    multi method COERCE(Pair:D $_) {
+    multi method COERCE(Pair:D $_) is default {
         my $type := %TypeMap{.key} // COS_NODE_NULL;
         @ClassMap[$type].COERCE: .value;
     }
@@ -167,6 +167,7 @@ class CosRef is repr('CStruct') is CosNode is export {
         my $n = self!cos_ref_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
+    method ast { :ind-ref[ $!obj-num, $!gen-num] }
     multi method COERCE( @ [ UInt:D $obj-num, UInt:D $gen-num ] ) {
         self.new: :$obj-num, :$gen-num;
     }
@@ -228,6 +229,7 @@ class CosIndObj is repr('CStruct') is CosNode is export {
         fail "Unable to write indirect object" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
     }
+    method ast { :ind-obj[ $!obj-num, $!gen-num, $.value.ast ] }
     multi method COERCE(@a where .elems >= 3) {
         my UInt:D $obj-num = @a[0];
         my UInt:D $gen-num = @a[1];
@@ -263,6 +265,7 @@ class CosArray is CosNode is repr('CStruct') is export {
         fail "Unable to write array" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
     }
+    method ast { :array[ (^$!elems).map: { $!values[$_].delegate.ast } ] }
     multi method COERCE(@array) {
         my CArray[CosNode] $values .= new: @array.map: { CosNode.COERCE: $_ };
         self.new: :$values;
@@ -287,6 +290,7 @@ class CosName is repr('CStruct') is CosNode is export {
         my $n = self!cos_name_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
+    method ast { name => (^$!value-len).map({$!value[$_].chr}).join }
     multi method COERCE(Str:D $str) {
         my CArray[uint32] $value .= new: $str.ords;
         self.new: :$value;
@@ -331,6 +335,8 @@ class CosDict is CosNode is repr('CStruct') is export {
         self!cos_dict_build_index() unless $!index;
     }
 
+    method ast { :dict(%( (^$!elems).map: { $!keys[$_].ast.value => $!values[$_].delegate.ast } )) }
+
     method Str(buf8 :$buf is copy = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
         my $n;
         my $tries;
@@ -342,20 +348,28 @@ class CosDict is CosNode is repr('CStruct') is export {
         fail "Unable to write dictionary" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
     }
-    multi method COERCE(%dict) {
-        my @keys = %dict.keys.sort: {
+    multi method COERCE(Hash $dict) {
+        my @keys = $dict.keys.sort: {
             when 'Type'              {"0"}
             when 'Subtype'|'S'       {"1"}
             when .ends-with('Type')  {"1" ~ $_}
             when 'Length'            {"z"}
             default                  {$_}
         };
-  
+
         my CArray[CosName] $keys   .= new: @keys.map: { CosName.COERCE: $_ };
-        my CArray[CosNode] $values .= new: @keys.map: { CosNode.COERCE: %dict{$_} };
+        my CArray[CosNode] $values .= new: @keys.map: { CosNode.COERCE: $dict{$_} };
 
         self.new: :$keys, :$values;
     }
+}
+
+constant $CLIB is export(:CLIB) = BEGIN Rakudo::Internals.IS-WIN ?? 'msvcrt' !! Str;
+sub memcpy(Blob $dest, CArray $chars, size_t $n) is native($CLIB) {*};
+sub to-blob( CArray[uint8] $value, UInt:D $len ) {
+    my blob8 $buf .= allocate($len);
+    memcpy($buf, $value, $len);
+    $buf;
 }
 
 #| Stream object
@@ -378,6 +392,7 @@ class CosStream is repr('CStruct') is CosNode is export {
     }
     multi sub coerce-stream(Blob $_) { $_ }
     multi sub coerce-stream(LatinStr:D $_) { .encode: "latin-1" }
+    method ast { :stream{ $!dict.ast, encoded => $!value.&to-blob($!value-len) } }
     multi method COERCE(%s) {
         my CosDict $dict .= COERCE(%s<dict> // {});
         my $value := coerce-stream(%s<encoded> // '');
@@ -396,6 +411,7 @@ class CosBool is repr('CStruct') is CosNode is export {
     method new(Bool:D :$value!) {
         self!cos_bool_new($value);
     }
+    method ast { $!value.so }
     method Str(buf8 :$buf = buf8.allocate(20)) {
         my $n = self!cos_bool_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
@@ -420,6 +436,7 @@ class CosInt is repr('CStruct') is CosNode is export {
         my $n = self!cos_int_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
+    method ast { $!value }
     multi method COERCE(Int:D() $value) {
         self.new: :$value;
     }
@@ -435,6 +452,7 @@ class CosReal is repr('CStruct') is CosNode is export {
     method new(Num:D() :$value!) {
         self!cos_real_new($value);
     }
+    method ast { $!value }
     method Str(buf8 :$buf = buf8.allocate(20)) {
         my $n = self!cos_real_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
@@ -482,6 +500,7 @@ class CosHexString is repr('CStruct') is _CosStringy is export {
     method new(blob8:D :$value!, UInt:D :$value-len = $value.elems) {
         self!cos_hex_string_new($value, $value-len);
     }
+    method ast { hex-string => self.Str }
     method Str(buf8 :$buf = buf8.allocate(50)) {
         my $n = self!cos_hex_string_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
@@ -499,6 +518,7 @@ class CosNull is repr('CStruct') is CosNode is export {
     method new {
         self!cos_null_new();
     }
+    method ast { :null(Any) }
     method Str(buf8 :$buf = buf8.allocate(10)) {
         my $n = self!cos_null_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;

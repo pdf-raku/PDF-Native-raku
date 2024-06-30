@@ -5,7 +5,7 @@ use PDF::Native::Cos::Actions;
 use NativeCall;
 use Test;
 
-plan 14;
+plan 15;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -47,5 +47,7 @@ is-deeply $dict.Str(:compact), $str.trim.subst(/[\s|\n]+/, ' ', :g);
 
 my buf8 $buf .= allocate(20);
 is-deeply $dict.Str(:$buf).lines, $str.lines;
+
+is-deeply CosNode.COERCE($dict.ast).Str.lines, $str.lines;
 
 done-testing;
