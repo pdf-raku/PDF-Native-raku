@@ -3,7 +3,7 @@ use PDF::Native::Cos;
 use PDF::Native::Cos::Actions;
 use Test;
 
-plan 15;
+plan 16;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -81,12 +81,12 @@ my $stream = q:to<--END-->;
 given PDF::Grammar::COS.parse( $stream, :rule<object>, :$actions) {
     my CosStream:D $node = .ast;
     is $node.Str, $stream.chomp, 'parse stream';
+    is-deeply CosNode.COERCE($node.ast).Str.lines, $stream.lines;
 }
 
 my $ind-obj = "123 4 obj\n{$stream}endobj";
 
 with PDF::Grammar::COS.parse( $ind-obj, :rule<ind-obj>, :$actions) {
     my CosIndObj:D $node = .ast;
-    note $/.from.raku;
     is $node.Str.chomp, $ind-obj, 'parse indirect object';
 }

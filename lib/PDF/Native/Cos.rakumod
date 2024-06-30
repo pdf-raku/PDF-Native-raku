@@ -392,7 +392,7 @@ class CosStream is repr('CStruct') is CosNode is export {
     }
     multi sub coerce-stream(Blob $_) { $_ }
     multi sub coerce-stream(LatinStr:D $_) { .encode: "latin-1" }
-    method ast { :stream{ $!dict.ast, encoded => $!value.&to-blob($!value-len) } }
+    method ast { :stream(%( $!dict.ast, encoded => $!value.&to-blob($!value-len))) }
     multi method COERCE(%s) {
         my CosDict $dict .= COERCE(%s<dict> // {});
         my $value := coerce-stream(%s<encoded> // '');
