@@ -11,7 +11,7 @@
 
 static int _bufcat(char* out, int out_len, char *in) {
     int n;
-    for (n=0; in[n] && out_len > 0; n++) {
+    for (n=0; in[n] && out_len-- > 0; n++) {
         out[n] = in[n];
     }
     return n;

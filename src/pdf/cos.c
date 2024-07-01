@@ -11,6 +11,7 @@ DLLEXPORT void cos_node_reference(CosNode* self) {
     if (self == NULL) return;
     if (self->check != COS_CHECK(self)) {
         fprintf(stderr, __FILE__ ":%d node %p (type %d) not owned by us or corrupted\n", __LINE__, (void*) self, self->type);
+        return;
     }
     self->ref_count++;
 }
@@ -21,7 +22,7 @@ DLLEXPORT void cos_node_done(CosNode* self) {
         fprintf(stderr, __FILE__ ":%d node %p (type %d, ref %d) not owned by us or corrupted\n", __LINE__, (void*) self, self->type, self->ref_count);
     }
     else if (self->ref_count == 0) {
-        fprintf(stderr, __FILE__ ":%d dead object\n", __LINE__);
+        fprintf(stderr, __FILE__ ":%d node was not referenced: %p\n", __LINE__, (void*) self);
     }
     else if (--(self->ref_count) <= 0) {
         switch (self->type) {
@@ -200,7 +201,7 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                 }
             case COS_NODE_OP:
                 if (strcmp(((CosOp*)self)->opn, ((CosOp*)obj)->opn)) return  COS_CMP_DIFFERENT;
-                    /* fallthrough */
+                /* fallthrough */
             case COS_NODE_CONTENT:
             case COS_NODE_ARRAY:
                 {
@@ -223,10 +224,10 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                 break;
             case COS_NODE_DICT:
                 {
-                    size_t i;
                     CosDict* a = (void*)self;
                     CosDict* b = (void*)obj;
                     int rv = COS_CMP_EQUAL;
+                    size_t i;
                     if (!a->index) cos_dict_build_index(a);
                     if (!b->index) cos_dict_build_index(b);
                     if (a->index_len != b->index_len) return COS_CMP_DIFFERENT;
@@ -352,7 +353,7 @@ DLLEXPORT CosArray* cos_array_new(CosArray* self, CosNode** values, size_t elems
 
 static int _bufcat(char *in, char* out, int out_len) {
     int n;
-    for (n=0; in[n] && out_len > 0; n++) {
+    for (n=0; in[n] && out_len-- > 0; n++) {
         out[n] = in[n];
     }
     return n;
@@ -363,7 +364,7 @@ DLLEXPORT size_t cos_array_write(CosArray* self, char* out, size_t out_len, int 
     size_t i;
     size_t m;
 
-    if (!out || out_len < 2) return 0;
+    if (!out || out_len < 3) return 0;
 
     n += _bufcat("[ ", out, out_len);
     for (i=0; i < self->elems; i++) {
@@ -508,7 +509,7 @@ DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int in
     size_t* pos = malloc((self->elems+1) * sizeof(size_t));
     int elem_indent = indent >= 0 ? indent + 2 : -1;
 
-    if (!out || out_len <= 4) goto bail;
+    if (!out || out_len <= 5) goto bail;
 
     n += _bufcat("<< ", out, out_len);
 
