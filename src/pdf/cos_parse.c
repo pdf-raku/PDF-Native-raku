@@ -38,7 +38,7 @@ static void _tk_cpy(CosTk *dest, CosTk *src) {
         dest->len   = src->len;
 }
 
-static void _ctx_shift(CosParserCtx* ctx) {
+static void _ctx_advance(CosParserCtx* ctx) {
     if (ctx->n_tk) {
         if (ctx->n_tk >= 2) {
             _tk_cpy( &ctx->tk[0], &ctx->tk[1]);
@@ -154,6 +154,17 @@ static void _ctx_scan_tk(CosParserCtx* ctx) {
     if (tk->type == COS_TK_NONE) tk->type = COS_TK_DONE;
 }
 
+static CosTk* _ctx_look_ahead(CosParserCtx* ctx, int n) {
+    int i = 0;
+    CosTk* tk = NULL;
+    if (n < 1 || n > 3) return NULL;
+    while (ctx->n_tk < n && i++ < n) {
+        _ctx_scan_tk(ctx);
+    }
+    if (ctx->n_tk >= n) tk = &ctx->tk[n - 1];
+    return tk;
+}
+
 static PDF_TYPE_INT _ctx_read_int(CosParserCtx* ctx, CosTk* tk) {
     PDF_TYPE_INT val = 0;
     size_t i;
@@ -164,55 +175,27 @@ static PDF_TYPE_INT _ctx_read_int(CosParserCtx* ctx, CosTk* tk) {
     return val;
 }
 
-static int _ctx_looking_ahead(CosParserCtx* ctx) {
-    if (ctx->tk[0].type == COS_TK_INT
-        && (ctx->n_tk == 1 || (ctx->n_tk == 2 && (ctx->tk[1].type == COS_TK_INT)))) {
-        /* e.g. could be <int> <int> R for an indirect reference */
-        return 1;
-    }
-    return 0;
-}
-
 static int _at_word(CosParserCtx* ctx, CosTk* tk, char* word) {
        return tk->len == strlen(word) && strncmp(ctx->buf + tk->pos, word, tk->len) == 0;
 }
 
-static int _find_word(CosParserCtx* ctx, char* word) {
+static int _scan_word(CosParserCtx* ctx, char* word) {
     int found = 0;
-    if (ctx->n_tk == 0) _ctx_scan_tk(ctx);
-    if (ctx->n_tk > 0) {
-        CosTk* tk = & ctx->tk[0];
-        found = _at_word(ctx, tk, word);
-        if (found) _ctx_shift(ctx);
-    }
+    CosTk* tk = _ctx_look_ahead(ctx, 1);
+    found = _at_word(ctx, tk, word);
+    if (found) _ctx_advance(ctx);
+
     return found;
 }
 
-static void _ctx_scan(CosParserCtx* ctx) {
-    while (ctx->buf_pos < ctx->buf_len && (ctx->n_tk == 0 || _ctx_looking_ahead(ctx))) {
-        _ctx_scan_tk(ctx);
-    }
-}
-
-static void _ctx_flush(CosParserCtx* ctx) {
-    if (ctx->n_tk) {
-        CosTk* tk = &ctx->tk[ ctx->n_tk - 1];
-        ctx->buf_pos = tk->pos + tk->len + 1;
-        ctx->n_tk = 0;
-    }
-}
-
 static CosNode* _parse_obj(CosParserCtx* ctx) {
-    CosTk* tk1 = &ctx->tk[0];
-    CosTk* tk2 = &ctx->tk[1];
-    CosTk* tk3 = &ctx->tk[1];
     CosNode* node = NULL;
-
-    _ctx_scan(ctx);
+    CosTk* tk1 = _ctx_look_ahead(ctx, 1);
 
     switch (tk1->type) {
     case COS_TK_INT:
-        if (ctx->n_tk == 3 && tk2->type == COS_TK_INT && _at_word(ctx, tk3, "R")) {
+        CosTk* tk2 =  _ctx_look_ahead(ctx, 2);
+        if (tk2->type == COS_TK_INT && _at_word(ctx, _ctx_look_ahead(ctx, 3), "R")) {
             /* indirect object <int> <int> R */
             uint64_t obj_num = _ctx_read_int(ctx, tk1);
             uint32_t gen_num = _ctx_read_int(ctx, tk2);
@@ -222,8 +205,8 @@ static CosNode* _parse_obj(CosParserCtx* ctx) {
         else {
             /* continue with simple integer */
             PDF_TYPE_INT val = _ctx_read_int(ctx, tk1);
+            _ctx_advance(ctx);
             node = (CosNode*)cos_int_new(NULL, val);
-            _ctx_shift(ctx);
         }
         break;
     case COS_TK_FAIL:
@@ -240,17 +223,15 @@ static CosNode* _parse_obj(CosParserCtx* ctx) {
     return node;
 }
 
-DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char *in_buf, size_t in_len) {
+DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_len) {
     CosParserCtx _ctx = { in_buf, in_len, 0, {{COS_TK_NONE, 0, 0}, {COS_TK_NONE, 0, 0}, {COS_TK_NONE, 0, 0}}, 0};
     CosParserCtx* ctx = &_ctx;
-    CosTk* tk1 = &ctx->tk[0];
-    CosTk* tk2 = &ctx->tk[1];
-    CosTk* tk3 = &ctx->tk[2];
+    CosTk* tk1 = _ctx_look_ahead(ctx, 1);
+    CosTk* tk2 = _ctx_look_ahead(ctx, 2);
+    CosTk* tk3 = _ctx_look_ahead(ctx, 3);
     CosIndObj* ind_obj = NULL;
 
-    _ctx_scan(ctx);
-
-    if (ctx->n_tk == 3 && tk1->type == COS_TK_INT && tk2->type == COS_TK_INT && _at_word(ctx, tk3, "obj") ) {
+    if (tk1->type == COS_TK_INT && tk2->type == COS_TK_INT && _at_word(ctx, tk3, "obj") ) {
         /* at indirect object starter: <int> <int> obj */
         uint64_t obj_num = _ctx_read_int(ctx, tk1);
         uint32_t gen_num = _ctx_read_int(ctx, tk2);
@@ -260,7 +241,7 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char *in_buf, size_t in_le
 
         if (object) {
             /* todo detect <dict> followed by stream ... endstream */
-            if ( _find_word(ctx, "endobj")) {
+            if ( _scan_word(ctx, "endobj")) {
                 ind_obj = cos_ind_obj_new(NULL, obj_num, gen_num, object);
             }
             else {
