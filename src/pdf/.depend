@@ -8,3 +8,5 @@ read.o: read.c ../pdf.h ../pdf/types.h ../pdf/read.h
 write.o: write.c ../pdf.h ../pdf/types.h ../pdf/write.h
 version.o: version.c ../pdf.h ../pdf/version.h
 cos.o: cos.c ../pdf.h ../pdf/cos.h ../pdf/types.h ../pdf/write.h
+cos_parse.o: cos_parse.c ../pdf.h ../pdf/cos.h ../pdf/types.h \
+ ../pdf/cos_parse.h

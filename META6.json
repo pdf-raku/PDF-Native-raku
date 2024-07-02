@@ -6,7 +6,7 @@
   "build-depends": [
   ],
   "depends": [
-      "LibraryMake", "PDF::Grammar"
+      "LibraryMake", "PDF::Grammar", "Method::Also"
   ],
   "description": "Native drop-in routines for PDF",
   "license": "Artistic-2.0",
@@ -19,6 +19,7 @@
     "PDF::Native::Cos::Actions": "lib/PDF/Native/Cos/Actions.rakumod",
     "PDF::Native::Defs": "lib/PDF/Native/Defs.rakumod",
     "PDF::Native::Filter::Predictors": "lib/PDF/Native/Filter/Predictors.rakumod",
+    "PDF::Native::Parser": "lib/PDF/Native/Parser.rakumod",
     "PDF::Native::Reader": "lib/PDF/Native/Reader.rakumod",
     "PDF::Native::Writer": "lib/PDF/Native/Writer.rakumod"
   },

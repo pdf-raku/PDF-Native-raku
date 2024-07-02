@@ -820,7 +820,7 @@ DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent
     }
 
     if (strlen(self->opn) > out_len-n) return 0;
-    n += _bufcat(self->opn, out+n, out_len);
+    n += _bufcat(self->opn, out+n, out_len-n);
 
     return n;
 }

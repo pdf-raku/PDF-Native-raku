@@ -168,7 +168,7 @@ class CosRef is repr('CStruct') is CosNode is export {
     method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0) {
         self!cos_ref_new($obj-num, $gen-num);
     }
-    method Str(buf8 :$buf = buf8.allocate(20)) {
+    method Str(::?CLASS:D: buf8 :$buf = buf8.allocate(20)) {
         my $n = self!cos_ref_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -217,13 +217,18 @@ class CosIndObj is repr('CStruct') is CosNode is export {
     method !cos_ind_obj_new(uint64, uint32, CosNode --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_ind_obj_write(Blob, size_t --> size_t) is native(libpdf) {*}
     method !cos_ind_obj_crypt(CosCryptCtx:D) is native(libpdf) {*}
+    method !cos_parse_ind_obj(Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
     method crypt(CosCryptCtx:D :$crypt-ctx!) {
         self!cos_ind_obj_crypt($crypt-ctx);
     }
     method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0, CosNode:D :$value!) {
         self!cos_ind_obj_new($obj-num, $gen-num, $value);
     }
-    method Str(buf8 :$buf is copy = buf8.allocate(512)) {
+    multi method parse(LatinStr:D $str) {
+        my blob8 $buf = $str.encode: "latin-1";
+        self!cos_parse_ind_obj($buf, $buf.bytes);
+    }
+    method Str(::?CLASS:D: buf8 :$buf is copy = buf8.allocate(512)) {
         my $n;
         my $tries;
         repeat {
@@ -260,7 +265,7 @@ class CosArray is CosNode is repr('CStruct') is export {
     method new(CArray[CosNode] :$values!, UInt:D :$elems = $values.elems) {
         self!cos_array_new($values, $elems);
     }
-    method Str(buf8 :$buf is copy = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
+    method Str(::?CLASS:D: buf8 :$buf is copy = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
         my $n;
         my $tries;
         repeat {
@@ -293,7 +298,7 @@ class CosName is repr('CStruct') is CosNode is export {
     method new(CArray[uint32] :$value!, UInt:D :$value-len = $value.elems) {
         self!cos_name_new($value, $value-len);
     }
-    method Str(buf8 :$buf = buf8.allocate(32)) {
+    method Str(::?CLASS:D: buf8 :$buf = buf8.allocate(32)) {
         my $n = self!cos_name_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
@@ -344,7 +349,7 @@ class CosDict is CosNode is repr('CStruct') is export {
 
     method ast { dict => %( (^$!elems).map: { $!keys[$_].ast.value => $!values[$_].delegate.ast }) }
 
-    method Str(buf8 :$buf is copy = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
+    method Str(::?CLASS:D: buf8 :$buf is copy = buf8.allocate(200), Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) {
         my $n;
         my $tries;
         repeat {
@@ -394,7 +399,7 @@ class CosStream is repr('CStruct') is CosNode is export {
         self!cos_stream_new($dict, $value, $value-len);
     }
 
-    method Str(buf8 :$buf = buf8.allocate(500)) {
+    method Str(::?CLASS:D: buf8 :$buf = buf8.allocate(500)) {
         my $n = self!cos_stream_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -420,7 +425,7 @@ class CosBool is repr('CStruct') is CosNode is export {
         self!cos_bool_new($value);
     }
     method ast { $!value.so }
-    method Str(buf8 :$buf = buf8.allocate(20)) {
+    method Str(::?CLASS:D: buf8 :$buf = buf8.allocate(20)) {
         my $n = self!cos_bool_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
@@ -440,7 +445,7 @@ class CosInt is repr('CStruct') is CosNode is export {
     method new(Int:D :$value!) {
         self!cos_int_new($value);
     }
-    method Str(buf8 :$buf = buf8.allocate(20)) {
+    method Str(::?CLASS:D: buf8 :$buf = buf8.allocate(20)) {
         my $n = self!cos_int_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
@@ -461,7 +466,7 @@ class CosReal is repr('CStruct') is CosNode is export {
         self!cos_real_new($value);
     }
     method ast { $!value }
-    method Str(buf8 :$buf = buf8.allocate(20)) {
+    method Str(::?CLASS:D: buf8 :$buf = buf8.allocate(20)) {
         my $n = self!cos_real_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
@@ -493,7 +498,7 @@ class CosLiteralString is repr('CStruct') is _CosStringy is export {
     method new(blob8:D :$value!, UInt:D :$value-len = $value.elems) {
         self!cos_literal_new($value, $value-len);
     }
-    method Str(buf8 :$buf = buf8.allocate(50)) {
+    method Str(::?CLASS:D: buf8 :$buf = buf8.allocate(50)) {
         my $n = self!cos_literal_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -509,7 +514,7 @@ class CosHexString is repr('CStruct') is _CosStringy is export {
         self!cos_hex_string_new($value, $value-len);
     }
     method ast { hex-string => self.Str }
-    method Str(buf8 :$buf = buf8.allocate(50)) {
+    method Str(::?CLASS:D: buf8 :$buf = buf8.allocate(50)) {
         my $n = self!cos_hex_string_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -551,12 +556,11 @@ class CosOp is repr('CStruct') is CosNode is export {
     method new(Str:D :$opn!, CArray[CosNode] :$values, UInt:D :$elems = $values ?? $values.elems !! 0) {
         self!cos_op_new($opn, $values, $elems);
     }
-    method Str(buf8 :$buf is copy = buf8.allocate(512), Int:D :$indent = 0;) {
+    method Str(::?CLASS:D: buf8 :$buf is copy = buf8.allocate(512), Int:D :$indent = 0;) {
         my $n = self!cos_op_write($buf, $buf.bytes, $indent);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
-    method ast {...}
-    multi method COERCE(@content) {...}
+    method ast { $!opn => [ (^$!elems).map: { $!values[$_].delegate.ast } ] }
 }
 
 class CosContent is repr('CStruct') is CosNode is export {
@@ -576,10 +580,11 @@ class CosContent is repr('CStruct') is CosNode is export {
     method new(CArray[CosOp] :$values!, UInt:D :$elems = $values.elems) {
         self!cos_content_new($values, $elems);
     }
-    method Str(buf8 :$buf is copy = buf8.allocate(512)) {
+    method Str(::?CLASS:D: buf8 :$buf is copy = buf8.allocate(512)) {
         my $n = self!cos_content_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
-    method ast {...}
-    multi method COERCE(@content) {...}
+    method ast {
+        :content[ (^$!elems).map: { $!values[$_].delegate.ast } ]
+    }
 }
