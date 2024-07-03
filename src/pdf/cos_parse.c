@@ -49,6 +49,9 @@ static void _ctx_skip_ws(CosParserCtx* ctx) {
         if (in_comment) {
             if (ch == '\n' || ch == '\r') in_comment = 0;
         }
+        else if (ch == '%') {
+            in_comment = 1;
+        }
         else if (ch && !isspace(ch)) {
             return;
         }
