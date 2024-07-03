@@ -30,16 +30,18 @@ typedef struct {
     uint8_t n_tk;
 } CosParserCtx;
 
-static void _ctx_advance(CosParserCtx* ctx) {
+static CosTk*  _ctx_shift(CosParserCtx* ctx) {
     assert(ctx->n_tk >= 1);
     if (ctx->n_tk) {
         /* recycle buffers */
-        CosTk* tmp = ctx->tk[0];
+        CosTk* tk = ctx->tk[0];
         ctx->tk[0] = ctx->tk[1];
         ctx->tk[1] = ctx->tk[2];
-        ctx->tk[2] = tmp;
+        ctx->tk[2] = tk;
         ctx->n_tk--;
+        return tk;
     }
+    return NULL;
 }
 
 static void _ctx_skip_ws(CosParserCtx* ctx) {
@@ -175,11 +177,42 @@ static CosTk* _ctx_look_ahead(CosParserCtx* ctx, int n) {
 static PDF_TYPE_INT _ctx_read_int(CosParserCtx* ctx, CosTk* tk) {
     PDF_TYPE_INT val = 0;
     size_t i;
+
+    assert(tk->type == COS_TK_INT);
+
     for (i = 0; i < tk->len; i++) {
         val *= 10;
         val += ctx->buf[tk->pos + i] - '0';
     }
     return val;
+}
+
+static PDF_TYPE_REAL _ctx_read_real(CosParserCtx* ctx, CosTk* tk) {
+    PDF_TYPE_REAL val = 0.0;
+    PDF_TYPE_REAL frac = 0.0;
+    PDF_TYPE_REAL magn = 1.0;
+    char *buf = ctx->buf + tk->pos;
+    char *dp  = strchr(buf, '.');
+    char *end = buf + tk->len;
+    char *p;
+
+    assert(tk->type == COS_TK_REAL);
+    assert(dp <= end);
+
+    while (*end == '0' && end > dp) end--;
+
+    for (p = buf; p < dp; p++) {
+        val *= 10;
+        val += (*p - '0');
+    }
+
+    for (p = dp + 1; p < end; p++) {
+        magn *= 10;
+        frac *= 10;
+        frac += (*p - '0');
+    }
+
+    return val  +  frac / magn;
 }
 
 static int _at_word(CosParserCtx* ctx, CosTk* tk, char* word) {
@@ -190,7 +223,7 @@ static int _scan_word(CosParserCtx* ctx, char* word) {
     int found = 0;
     CosTk* tk = _ctx_look_ahead(ctx, 1);
     found = _at_word(ctx, tk, word);
-    if (found) _ctx_advance(ctx);
+    if (found) _ctx_shift(ctx);
 
     return found;
 }
@@ -201,20 +234,22 @@ static CosNode* _parse_obj(CosParserCtx* ctx) {
 
     switch (tk1->type) {
     case COS_TK_INT:
-        CosTk* tk2 = _ctx_look_ahead(ctx, 2);
-        if (tk2->type == COS_TK_INT && _at_word(ctx, _ctx_look_ahead(ctx, 3), "R")) {
+        if (_ctx_look_ahead(ctx, 2)->type == COS_TK_INT && _at_word(ctx, _ctx_look_ahead(ctx, 3), "R")) {
             /* indirect object <int> <int> R */
-            uint64_t obj_num = _ctx_read_int(ctx, tk1);
-            uint32_t gen_num = _ctx_read_int(ctx, tk2);
+            uint64_t obj_num = _ctx_read_int(ctx, _ctx_shift(ctx));
+            uint32_t gen_num = _ctx_read_int(ctx, _ctx_shift(ctx));
+            _ctx_shift(ctx); /* consume 'R' */
             node = (CosNode*)cos_ref_new(NULL, obj_num, gen_num);
-            ctx->n_tk = 0;
         }
         else {
             /* continue with simple integer */
-            PDF_TYPE_INT val = _ctx_read_int(ctx, tk1);
-            _ctx_advance(ctx);
+            PDF_TYPE_INT val = _ctx_read_int(ctx, _ctx_shift(ctx));
             node = (CosNode*)cos_int_new(NULL, val);
         }
+        break;
+    case COS_TK_REAL:
+        PDF_TYPE_REAL val = _ctx_read_real(ctx, _ctx_shift(ctx));
+        node = (CosNode*)cos_real_new(NULL, val);
         break;
     case COS_TK_DONE:
         fprintf(stderr, "ended at position %ld\n", ctx->buf_pos);

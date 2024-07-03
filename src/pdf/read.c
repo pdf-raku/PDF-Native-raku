@@ -9,7 +9,7 @@
 #include "pdf/read.h"
 
 static uint8_t eoln_char(uint8_t c) {
-  return (c == 10 || c == 13);
+  return (c == '\n' || c == '\r');
 }
 
 static uint8_t _line_length(PDF_TYPE_STRING buf_start, PDF_TYPE_STRING buf_end) {

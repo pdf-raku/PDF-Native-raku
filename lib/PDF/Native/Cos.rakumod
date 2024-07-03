@@ -97,6 +97,17 @@ class CosNode is repr('CStruct') is export {
     method !cos_node_reference() is native(libpdf) {*}
     method !cos_node_done() is native(libpdf) {*}
     method !cos_node_cmp(CosNode --> int32) is native(libpdf) {*}
+    method !cos_parse_obj(Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
+
+    multi method parse(LatinStr:D $str) {
+        my blob8 $buf = $str.encode: "latin-1";
+        with self!cos_parse_obj($buf, $buf.bytes) {
+            .delegate;
+        }
+        else {
+            $_;
+        }
+    }
 
     method reference {
         self!cos_node_reference();
