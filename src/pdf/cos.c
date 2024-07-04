@@ -656,14 +656,13 @@ DLLEXPORT CosStream* cos_stream_new(CosStream* self, CosDict* dict, unsigned cha
     self->dict = dict;
     cos_node_reference((CosNode*)dict);
 
-    if (value && value_len) {
+    if (value) {
         self->value = malloc(value_len);
         memcpy(self->value, value, value_len);
         self->value_len = value_len;
     }
     else {
-        self->value = NULL;
-        self->value_len = 0;
+        self->value_pos = value_len;
     }
 
     return self;
@@ -680,10 +679,10 @@ DLLEXPORT size_t cos_stream_write(CosStream* self, char* out, size_t out_len) {
         for (i = 0; i < self->value_len && n < out_len; i++) {
             out[n++] = self->value[i];
         }
-    }
 
-    if (n + 11 > out_len) return 0;
-    n += _bufcat("\nendstream", out+n, out_len-n);
+        if (n + 11 > out_len) return 0;
+        n += _bufcat("\nendstream", out+n, out_len-n);
+    }
 
     return n;
 }

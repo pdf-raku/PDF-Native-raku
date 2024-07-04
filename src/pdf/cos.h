@@ -116,7 +116,10 @@ typedef struct {
     uint16_t        ref_count;
     CosDict*        dict;
     char*           value;
-    size_t          value_len;
+    union {
+        size_t          value_len; /* buffer length, if fetched */
+        size_t          value_pos; /* start position in buffer, otherwise */
+    };
 } CosStream;
 
 typedef struct {
@@ -214,8 +217,6 @@ DLLEXPORT size_t cos_hex_string_write(CosHexString*, char*, size_t);
 
 DLLEXPORT CosNull* cos_null_new(CosNull*);
 DLLEXPORT size_t cos_null_write(CosNull* self, char*, size_t);
-
-DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj*, uint64_t, uint32_t, CosNode*);
 
 DLLEXPORT CosStream* cos_stream_new(CosStream*, CosDict*, unsigned char*, size_t);
 

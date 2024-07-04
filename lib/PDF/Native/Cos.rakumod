@@ -219,9 +219,10 @@ class CosCryptCtx is repr('CStruct') is export {
 #| Indirect object
 class CosIndObj is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_IND_OBJ];
-    has uint64 $.obj-num;
-    has uint32 $.gen-num;
+    has uint64  $.obj-num;
+    has uint32  $.gen-num;
     has CosNode $.value;
+
     method value { $!value.delegate }
     #| Indirect objects the top of the tree and always fragments
 
@@ -401,7 +402,11 @@ class CosStream is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_STREAM];
     has CosDict          $.dict;
     has CArray[uint8]    $.value;
-    has size_t           $.value-len;
+    class ValDesc is repr('CUnion') {
+        has size_t  $.len; # buffer size, if fetched
+        has size_t  $.pos; # position in buffer otherwise
+    }
+    HAS ValDesc $.buf;
 
     method !cos_stream_new(CosDict:D, Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_stream_write(Blob, size_t --> size_t) is native(libpdf) {*}
@@ -416,7 +421,10 @@ class CosStream is repr('CStruct') is CosNode is export {
     }
     multi sub coerce-stream(Blob $_) { $_ }
     multi sub coerce-stream(LatinStr:D $_) { .encode: "latin-1" }
-    method ast { stream => %( $!dict.ast, encoded => $!value.&to-blob($!value-len)) }
+    method ast {
+        my Pair $body = do with $!value { encoded => .&to-blob($!buf.len) } else { start => $!buf.pos };
+        stream => %( $!dict.ast, $body );
+    }
     multi method COERCE(%s) {
         my CosDict $dict .= COERCE(%s<dict> // {});
         my $value := coerce-stream(%s<encoded> // '');
