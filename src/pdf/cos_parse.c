@@ -5,6 +5,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
 typedef enum {
     COS_TK_START,
@@ -33,7 +34,7 @@ typedef struct {
 static size_t _skip_ws(CosParserCtx* ctx) {
     int in_comment = 0;
 
-    for (; ctx->buf_pos <= ctx->buf_len; ctx->buf_pos++) {
+    for (; ctx->buf_pos < ctx->buf_len; ctx->buf_pos++) {
         char ch = ctx->buf[ctx->buf_pos];
         if (in_comment) {
             if (ch == '\n' || ch == '\r') in_comment = 0;
@@ -79,7 +80,7 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
     tk->pos  = ctx->buf_pos;
     tk->len  = 0;
 
-    for (; ctx->buf_pos <= ctx->buf_len && !wb; ctx->buf_pos++) {
+    for (; ctx->buf_pos < ctx->buf_len && !wb; ctx->buf_pos++) {
         char ch = ctx->buf[ctx->buf_pos];
         tk->len++;
         switch (ch) {
@@ -160,10 +161,14 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
         prev_ch = ch;
     }
 
+    if (wb) {
+        tk->len--;
+    }
+    else if (tk->type == COS_TK_START) {
+        tk->type = COS_TK_DONE;
+    }
     ctx->buf_pos--;
-    tk->len--;
 
-    if (tk->type == COS_TK_START) tk->type = COS_TK_DONE;
     return tk;
 }
 
@@ -189,6 +194,7 @@ static CosTk* _shift(CosParserCtx* ctx) {
 
     return tk;
 }
+
 
 static void _advance(CosParserCtx* ctx) {
     ctx->n_tk = 0;
@@ -235,26 +241,38 @@ static PDF_TYPE_REAL _read_real(CosParserCtx* ctx, CosTk* tk) {
     return val  +  frac / magn;
 }
 
-static int _at_word(CosParserCtx* ctx, CosTk* tk, char* word) {
+static int _at_token(CosParserCtx* ctx, CosTk* tk, char* word) {
     return tk->len == strlen(word) && strncmp(ctx->buf + tk->pos, word, tk->len) == 0;
 }
 
-static int _scan_word(CosParserCtx* ctx, char* word) {
+static int _get_token(CosParserCtx* ctx, char* word) {
     int found = 0;
     CosTk* tk = _look_ahead(ctx, 1);
-    found = _at_word(ctx, tk, word);
+    found = _at_token(ctx, tk, word);
     if (found) _shift(ctx);
 
     return found;
 }
 
-static CosNode* _parse_obj(CosParserCtx* ctx) {
+static void _done_objects(CosNode** objects, size_t n) {
+    if (objects) {
+        size_t i;
+        for (i = 0; i < n; i++) {
+            if (objects[i]) cos_node_done(objects[i]);
+        }
+        free(objects);
+    }
+}
+
+static CosNode** _parse_objects(CosParserCtx*, size_t*);
+
+static CosNode* _parse_object(CosParserCtx* ctx) {
     CosNode* node = NULL;
     CosTk* tk1 = _look_ahead(ctx, 1);
 
     switch (tk1->type) {
     case COS_TK_INT:
-        if (_look_ahead(ctx, 2)->type == COS_TK_INT && _at_word(ctx, _look_ahead(ctx, 3), "R")) {
+        if (_look_ahead(ctx, 2)->type == COS_TK_INT && _at_token(ctx, _look_ahead(ctx, 3), "R")) {
             /* indirect object <int> <int> R */
             uint64_t obj_num = _read_int(ctx, _shift(ctx));
             uint32_t gen_num = _read_int(ctx, _shift(ctx));
@@ -272,18 +290,39 @@ static CosNode* _parse_obj(CosParserCtx* ctx) {
         break;
     case COS_TK_WORD:
         if (tk1->len == 4) {
-            if (_at_word(ctx, tk1, "true")) {
+            if (_at_token(ctx, tk1, "true")) {
                 node = (CosNode*)cos_bool_new(NULL, 1);
             }
-            else if (_at_word(ctx, tk1, "null")) {
+            else if (_at_token(ctx, tk1, "null")) {
                 node = (CosNode*)cos_null_new(NULL);
             }
         }
-        else if (_at_word(ctx, tk1, "false")) {
+        else if (_at_token(ctx, tk1, "false")) {
             node = (CosNode*)cos_bool_new(NULL, 0);
         }
         if (!node) {
             fprintf(stderr, "ignoring word at position %ld\n", tk1->pos);
+        }
+        break;
+    case COS_TK_DELIM:
+        _shift(ctx);
+        switch (ctx->buf[tk1->pos]) {
+        case '[': {
+            {   size_t n = 0;
+                CosNode** objects = _parse_objects(ctx, &n);
+                if (_get_token(ctx, "]") && (n == 0 || objects[n-1] != NULL)) {
+                    node = (CosNode*) cos_array_new(NULL, objects, n);
+                }
+                _done_objects(objects, n);
+            }
+            break;
+        }
+        case ']': case '>':
+        case '{': case '}':
+            break;
+        default:
+            fprintf(stderr, "Unhandled delimiter: %d\n", ctx->buf[tk1->pos]);
+            break;
         }
         break;
     case COS_TK_DONE:
@@ -299,6 +338,33 @@ static CosNode* _parse_obj(CosParserCtx* ctx) {
     return node;
 }
 
+static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n) {
+    CosNode* object;
+    CosNode** objects;
+    size_t i = *n;
+    switch (_look_ahead(ctx,1)->type) {
+    case COS_TK_INT:
+    case COS_TK_REAL:
+    case COS_TK_NAME:
+    case COS_TK_WORD:
+        (*n)++;
+        object = _parse_object(ctx);
+        if (object) {
+            objects = _parse_objects(ctx, n);
+        }
+        else {
+            objects = malloc(*n * sizeof(CosNode*));
+            memset(objects, 0, *n * sizeof(CosNode*));
+        }
+        objects[i] = object;
+        break;
+    default:
+        objects = malloc(*n * sizeof(CosTk*));
+        memset(objects, 0, *n * sizeof(CosNode*));
+    }
+    return objects;
+}
+
 DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_len) {
     CosTk tk1 = {COS_TK_START, 0, 0}, tk2 = {COS_TK_START, 0, 0}, tk3 = {COS_TK_START, 0, 0};
     CosParserCtx _ctx = { in_buf, in_len, 0, {&tk1, &tk2, &tk3}, 0};
@@ -308,24 +374,24 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_le
 
     _look_ahead(ctx, 3); /* load tokens: tk1, tk2, tk3 */
 
-    if (tk1.type == COS_TK_INT && tk2.type == COS_TK_INT && _at_word(ctx, &tk3, "obj") ) {
+    if (tk1.type == COS_TK_INT && tk2.type == COS_TK_INT && _at_token(ctx, &tk3, "obj") ) {
         /* valid indirect object header: <int> <int> obj */
         uint64_t obj_num = _read_int(ctx, &tk1);
         uint32_t gen_num = _read_int(ctx, &tk2);
         CosNode* object;
 
         _advance(ctx); /* done parsing header */
-        object = _parse_obj(ctx);
+        object = _parse_object(ctx);
 
         if (object && object->type == COS_NODE_DICT) {
             CosDict* dict = (void*)object;
-            if ( _scan_word(ctx, "stream") && _scan_new_line(ctx)) {
+            if ( _get_token(ctx, "stream") && _scan_new_line(ctx)) {
                 size_t stream_pos = ctx->buf_pos - start_pos;
                 object = (CosNode*) cos_stream_new(NULL, dict, NULL, stream_pos);
             }
         }
         if (object) {
-            if (object->type == COS_NODE_STREAM || _scan_word(ctx, "endobj")) {
+            if (object->type == COS_NODE_STREAM || _get_token(ctx, "endobj")) {
                 ind_obj = cos_ind_obj_new(NULL, obj_num, gen_num, object);
             }
             else {
@@ -340,5 +406,5 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_le
 DLLEXPORT CosNode* cos_parse_obj(CosNode* self, char *in_buf, size_t in_len) {
     CosTk tk1 = {COS_TK_START, 0, 0}, tk2 = {COS_TK_START, 0, 0}, tk3 = {COS_TK_START, 0, 0};
     CosParserCtx ctx = { in_buf, in_len, 0, {&tk1, &tk2, &tk3}, 0};
-    return _parse_obj(&ctx);
+    return _parse_object(&ctx);
 }

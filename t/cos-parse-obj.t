@@ -3,7 +3,7 @@ use PDF::Native::Cos;
 use PDF::Native::Cos::Actions;
 use Test;
 
-plan 23;
+plan 27;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -20,6 +20,16 @@ given CosNode.parse('123.45') {
 given CosNode.parse('.45') {
     .&isa-ok: CosReal;
     is .Str, '0.45', 'parse real fraction';
+}
+
+given CosNode.parse('[]') {
+    .&isa-ok: CosArray;
+    is .Str, '[ ]', 'parse array';
+}
+
+given CosNode.parse('[123 .45 true false null]') {
+    .&isa-ok: CosArray;
+    is .Str, '[ 123 0.45 true false null ]', 'parse array';
 }
 
 todo 'native parse';
