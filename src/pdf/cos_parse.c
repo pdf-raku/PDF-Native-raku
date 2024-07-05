@@ -50,19 +50,23 @@ static size_t _skip_ws(CosParserCtx* ctx) {
     return ctx->buf_pos;
 }
 
-static int _scan_new_line(CosParserCtx* ctx) {
+// strict scan for crlf or lf. This may matter at a binary-data boundaries such
+// as 'stream'...'endstream', or 'ID'...'EI'.
+static int _scan_new_line(CosParserCtx* ctx, int* dos_mode) {
     if (ctx->buf[ctx->buf_pos] == '\n' && ctx->buf_pos < ctx->buf_len) {
         ctx->buf_pos++;
+        *dos_mode = 0;
         return 1;
     }
     else if (ctx->buf[ctx->buf_pos] == '\r' && ctx->buf_pos < ctx->buf_len-1 && ctx->buf[ctx->buf_pos+1] == '\n') {
         ctx->buf_pos += 2;
+        *dos_mode = 1;
         return 1;
     }
     return 0;
 }
 
-/* Scan for the next start token: */
+/* Outer scan for the next start token: */
 /* - preceding comments and whitespace are skipped */
 /* - names, numbers, words and indirect references are returned as tokens */
 /* - returns opening delimiter for strings, arrays and dictionaries */
@@ -85,27 +89,55 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
         tk->len++;
         switch (ch) {
         case '+': case '-':
-            if (tk->type == COS_TK_START) {
+            switch (tk->type) {
+            case COS_TK_START:
                 tk->type = COS_TK_INT;
-            }
-            else if (tk->type != COS_TK_WORD && tk->type != COS_TK_NAME) {
+                break;
+            case COS_TK_INT:
+            case COS_TK_REAL:
+                tk->type = COS_TK_WORD;
+                break;
+            case COS_TK_WORD:
+            case COS_TK_NAME:
+                break;
+            case COS_TK_DONE:
+            case COS_TK_DELIM:
                 wb = 1;
+                break;
             }
             break;
         case '.':
-            if (tk->type == COS_TK_START || tk->type == COS_TK_INT) {
+            switch (tk->type) {
+            case COS_TK_START:
+            case COS_TK_INT:
                 tk->type = COS_TK_REAL;
-            }
-            else if (tk->type != COS_TK_WORD && tk->type != COS_TK_NAME)  {
+                break;
+            case COS_TK_REAL:
+                tk->type = COS_TK_WORD;
+                break;
+            case COS_TK_WORD:
+            case COS_TK_NAME:
+                break;
+            case COS_TK_DONE:
+            case COS_TK_DELIM:
                 wb = 1;
+                break;
             }
             break;
         case '0'...'9':
-            if (tk->type == COS_TK_START) {
+            switch (tk->type) {
+            case COS_TK_START:
                 tk->type = COS_TK_INT;
-            }
-            else if (tk->type == COS_TK_DELIM) {
+                break;
+            case COS_TK_INT:
+            case COS_TK_REAL:
+            case COS_TK_NAME:
+            case COS_TK_WORD:
+                break;
+            case COS_TK_DELIM:
+            case COS_TK_DONE:
                 wb = 1;
+                break;
             }
             break;
         case '/':
@@ -114,16 +146,6 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
             }
             else {
                 wb = 1;
-            }
-            break;
-        case '#':
-            if (tk->type != COS_TK_NAME) {
-                if (tk->type == COS_TK_START) {
-                    tk->type = COS_TK_WORD;
-                }
-                else if (tk->type != COS_TK_WORD) {
-                    wb = 1;
-                }
             }
             break;
         case '<': case '>':
@@ -141,20 +163,29 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
                 wb = 1;
             }
             break;
-        case 'a'...'z': case 'A'...'Z': case '*': case '"': case '\'':
-            if (tk->type == COS_TK_START || tk->type == COS_TK_INT || tk->type == COS_TK_REAL) {
-                tk->type = COS_TK_WORD;
-            }
-            else if (tk->type != COS_TK_NAME && tk->type != COS_TK_WORD) {
-                wb = 1;
-            }
-            break;
         default:
-            if (!ch || ch == '%' || isspace(ch) || tk->type == COS_TK_DELIM) {
+            if (!ch || ch == '%' || isspace(ch)) {
+                /* whitespace or starting comment */
                 wb = 1;
             }
-            else if (tk->type != COS_TK_NAME) {
-                tk->type = COS_TK_WORD;
+            else {
+                /* misc character */
+                switch (tk->type) {
+                case COS_TK_NAME:
+                    if (ch < '!' ||ch > '~') tk->type = COS_TK_WORD;
+                    break;
+                case COS_TK_INT:
+                case COS_TK_REAL:
+                case COS_TK_START:
+                    tk->type = COS_TK_WORD;
+                    break;
+                case COS_TK_WORD:
+                    break;
+                case COS_TK_DELIM:
+                case COS_TK_DONE:
+                    wb = 1;
+                    break;
+                }
             }
             break;
         }
@@ -195,7 +226,7 @@ static CosTk* _shift(CosParserCtx* ctx) {
     return tk;
 }
 
-
+/* consume look-ahead buffer */
 static void _advance(CosParserCtx* ctx) {
     ctx->n_tk = 0;
 }
@@ -213,17 +244,25 @@ static PDF_TYPE_INT _read_int(CosParserCtx* ctx, CosTk* tk) {
     return val;
 }
 
+static char* _strnchr(char* buf, char c, size_t n) {
+    size_t i;
+    for (i = 0; i < n; i++) {
+        if (*(buf + i) == c) return (buf + i);
+    }
+    return NULL;
+}
+
 static PDF_TYPE_REAL _read_real(CosParserCtx* ctx, CosTk* tk) {
     PDF_TYPE_REAL val = 0.0;
     PDF_TYPE_REAL frac = 0.0;
     PDF_TYPE_REAL magn = 1.0;
-    char *buf = ctx->buf + tk->pos;
-    char *dp  = strchr(buf, '.');
-    char *end = buf + tk->len;
-    char *p;
+    char* buf = ctx->buf + tk->pos;
+    char* end = buf + tk->len;
+    char* dp  = _strnchr(buf, '.', tk->len);
+    char* p;
 
     assert(tk->type == COS_TK_REAL);
-    assert(dp <= end);
+    if (!dp) dp = end;
 
     while (*end == '0' && end > dp) end--;
 
@@ -264,11 +303,61 @@ static void _done_objects(CosNode** objects, size_t n) {
     }
 }
 
-static CosNode** _parse_objects(CosParserCtx*, size_t*);
+static int _get_hex_value(char** pos, char* end) {
+
+    do {
+        (*pos)++;
+    }
+    while (isspace(**pos) && *pos < end);
+
+    if (*pos < end) {
+        switch (**pos) {
+        case '0'...'9':
+            return **pos - '0';
+        case 'A'...'F':
+            return **pos - 'A' + 10;
+        case 'a'...'f':
+            return **pos - 'a' + 10;
+        default:
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static CosHexString* _parse_hex_string(CosParserCtx* ctx) {
+    CosHexString* hex_string = NULL;
+    char* hex_pos = ctx->buf + ctx->buf_pos - 1;
+    char* hex_end = _strnchr(hex_pos, '>', ctx->buf_len - ctx->buf_pos + 1);
+    size_t n = 0;
+    if (hex_end) {
+        /* create our object early to get a buffer */
+        size_t max_bytes = (hex_end - hex_pos + 1) / 2; /* two hex chars per byte   */
+        PDF_TYPE_STRING hex_bytes = malloc(max_bytes);
+        while (hex_pos < hex_end) {
+            int d1, d2;
+            d1 = _get_hex_value(&hex_pos, hex_end);
+            if (d1 < 0) goto bail;
+            if (hex_pos >= hex_end) break;
+            d2 = _get_hex_value(&hex_pos, hex_end);
+            if (d2 < 0 || n >= max_bytes) goto bail;
+            hex_bytes[n++] = d1 * 16  +  d2;
+        }
+        hex_string = cos_hex_string_new(NULL, hex_bytes, n);
+    bail:
+        free(hex_bytes);
+        ctx->buf_pos = hex_end - ctx->buf + 1;
+    }
+
+    return hex_string;
+}
+
+static CosNode** _parse_objects(CosParserCtx*, size_t*, char*);
 
 static CosNode* _parse_object(CosParserCtx* ctx) {
     CosNode* node = NULL;
     CosTk* tk1 = _look_ahead(ctx, 1);
+    char ch = ctx->buf[tk1->pos];
 
     switch (tk1->type) {
     case COS_TK_INT:
@@ -289,33 +378,46 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
         node = (CosNode*)cos_real_new(NULL, val);
         break;
     case COS_TK_WORD:
-        if (tk1->len == 4) {
+        switch (tk1->len) {
+        case 4:
             if (_at_token(ctx, tk1, "true")) {
                 node = (CosNode*)cos_bool_new(NULL, 1);
             }
             else if (_at_token(ctx, tk1, "null")) {
                 node = (CosNode*)cos_null_new(NULL);
             }
+            break;
+        case 5:
+            if (_at_token(ctx, tk1, "false")) {
+                node = (CosNode*)cos_bool_new(NULL, 0);
+            }
+            break;
         }
-        else if (_at_token(ctx, tk1, "false")) {
-            node = (CosNode*)cos_bool_new(NULL, 0);
-        }
-        if (!node) {
+        /* if (!node) {
             fprintf(stderr, "ignoring word at position %ld\n", tk1->pos);
-        }
+            } */
         break;
     case COS_TK_DELIM:
         _shift(ctx);
-        switch (ctx->buf[tk1->pos]) {
-        case '[': {
+        switch (ch) {
+        case '[': { /* '[' array ']' */
             {   size_t n = 0;
-                CosNode** objects = _parse_objects(ctx, &n);
+                CosNode** objects = _parse_objects(ctx, &n, "]");
                 if (_get_token(ctx, "]") && (n == 0 || objects[n-1] != NULL)) {
                     node = (CosNode*) cos_array_new(NULL, objects, n);
                 }
                 _done_objects(objects, n);
             }
             break;
+        }
+        case '<': {
+            switch (tk1->len) {
+            case 1: /* '<' hex string '>' */
+                node = (void*) _parse_hex_string(ctx);
+                break;
+            case 2: /* '<<' dictionary '>>' */
+                break;
+            }
         }
         case ']': case '>':
         case '{': case '}':
@@ -333,35 +435,35 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
         break;
     }
 
-    _shift(ctx);
+    if (ctx->n_tk) _shift(ctx);
 
     return node;
 }
 
-static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n) {
+static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n, char *stopper) {
     CosNode* object;
     CosNode** objects;
     size_t i = *n;
-    switch (_look_ahead(ctx,1)->type) {
-    case COS_TK_INT:
-    case COS_TK_REAL:
-    case COS_TK_NAME:
-    case COS_TK_WORD:
+    CosTk* tk = _look_ahead(ctx,1);
+    if (_at_token(ctx, tk, stopper)) {
+        if (n) {
+            objects = malloc(*n * sizeof(CosTk*));
+            memset(objects, 0, *n * sizeof(CosNode*));
+        }
+    }
+    else {
         (*n)++;
         object = _parse_object(ctx);
         if (object) {
-            objects = _parse_objects(ctx, n);
+            objects = _parse_objects(ctx, n, stopper);
         }
         else {
             objects = malloc(*n * sizeof(CosNode*));
             memset(objects, 0, *n * sizeof(CosNode*));
         }
         objects[i] = object;
-        break;
-    default:
-        objects = malloc(*n * sizeof(CosTk*));
-        memset(objects, 0, *n * sizeof(CosNode*));
     }
+
     return objects;
 }
 
@@ -370,7 +472,6 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_le
     CosParserCtx _ctx = { in_buf, in_len, 0, {&tk1, &tk2, &tk3}, 0};
     CosParserCtx* ctx = &_ctx;
     CosIndObj* ind_obj = NULL;
-    size_t start_pos = ctx->buf_pos;
 
     _look_ahead(ctx, 3); /* load tokens: tk1, tk2, tk3 */
 
@@ -385,9 +486,12 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_le
 
         if (object && object->type == COS_NODE_DICT) {
             CosDict* dict = (void*)object;
-            if ( _get_token(ctx, "stream") && _scan_new_line(ctx)) {
-                size_t stream_pos = ctx->buf_pos - start_pos;
-                object = (CosNode*) cos_stream_new(NULL, dict, NULL, stream_pos);
+            int dos_mode;
+            if ( _get_token(ctx, "stream") && _scan_new_line(ctx, &dos_mode)) {
+                CosStream* stream = cos_stream_new(NULL, dict, NULL, 0);
+                stream->src_buf.pos    = ctx->buf_pos;
+                stream->src_buf.is_dos = dos_mode;
+                object = (void*) stream;
             }
         }
         if (object) {

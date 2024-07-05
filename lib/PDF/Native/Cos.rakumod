@@ -400,18 +400,25 @@ sub to-blob( CArray[uint8] $value, UInt:D $len ) {
 #| Stream object
 class CosStream is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_STREAM];
+
+    class SourceBuf is repr('CStruct') {
+        has uint32 $.pos;    # offset in indirect-object input buffer
+        has uint8  $.is-dos; # written in dos mode
+    }
+
+    class ValueUnion is repr('CUnion') {
+        has size_t    $.value-len;  # value length, if data attached
+        HAS SourceBuf $.src-buf;    # source buffer details
+    }
+
     has CosDict          $.dict;
     has CArray[uint8]    $.value;
-    class ValDesc is repr('CUnion') {
-        has size_t  $.len; # buffer size, if fetched
-        has size_t  $.pos; # position in buffer otherwise
-    }
-    HAS ValDesc $.buf;
+    HAS ValueUnion       $.u;
 
     method !cos_stream_new(CosDict:D, Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_stream_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
-    method new(CosDict:D :$dict!, Blob:D :$value!, UInt:D :$value-len = $value.bytes) {
+    method new(CosDict:D :$dict!, Blob :$value, UInt:D :$value-len = $value ?? $value.bytes !! 0) {
         self!cos_stream_new($dict, $value, $value-len);
     }
 
@@ -422,7 +429,14 @@ class CosStream is repr('CStruct') is CosNode is export {
     multi sub coerce-stream(Blob $_) { $_ }
     multi sub coerce-stream(LatinStr:D $_) { .encode: "latin-1" }
     method ast {
-        my Pair $body = do with $!value { encoded => .&to-blob($!buf.len) } else { start => $!buf.pos };
+        my Pair $body = do with $!value {
+            # stream attached
+            encoded => .&to-blob($!u.value-len)
+        }
+        else {
+            # stream not attached
+            start => $!u.src-buf.pos;
+        };
         stream => %( $!dict.ast, $body );
     }
     multi method COERCE(%s) {

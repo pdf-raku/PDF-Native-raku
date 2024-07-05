@@ -3,7 +3,7 @@ use PDF::Native::Cos;
 use PDF::Native::Cos::Actions;
 use Test;
 
-plan 27;
+plan 34;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -27,9 +27,9 @@ given CosNode.parse('[]') {
     is .Str, '[ ]', 'parse array';
 }
 
-given CosNode.parse('[123 .45 true false null]') {
+given CosNode.parse("\n \%xxx\n[\%yyy\n]\%zzz\n ") {
     .&isa-ok: CosArray;
-    is .Str, '[ 123 0.45 true false null ]', 'parse array';
+    is .Str, '[ ]', 'parse array + ws/comments';
 }
 
 todo 'native parse';
@@ -38,12 +38,14 @@ given PDF::Grammar::COS.parse('(Hello,\40World\n)', :rule<object>, :$actions) {
     is $node.Str, '(Hello, World\n)', 'parse literal';
 }
 
-todo 'native parse';
 my $hex = '<4E6F762073686D6F7A206B6120706f702e>';
-given PDF::Grammar::COS.parse($hex, :rule<object>, :$actions) {
-    my CosHexString:D $node = .ast;
-    is $node.value, 'Nov shmoz ka pop.';
-    is $node.Str, $hex.lc, 'parse hex';
+given CosNode.parse($hex) {
+    .&isa-ok: CosHexString;
+    is .Str.lc, $hex.lc, 'parse hex';
+}
+
+for ('<4E60>' ,'< 4 E 6 0 >', '<4E6>', '<4E6 >') {
+    is CosNode.parse($_).Str, '<4e60>', "parse: $_";
 }
 
 todo 'native parse';
@@ -70,6 +72,17 @@ given CosNode.parse('null') {
 given CosNode.parse('12 3 R') {
     .&isa-ok: CosRef;
     is .Str, '12 3 R', 'parse indirect reference';
+}
+
+given CosNode.parse('[123 .45<aa>true 12 3 R false null]') {
+    .&isa-ok: CosArray;
+    is .Str, '[ 123 0.45 <aa> true 12 3 R false null ]', 'parse array';
+}
+
+subtest 'invalid numbers', {
+    for <++0 0+0 0.. ..0 0a 0..0> {
+        is-deeply CosNode.parse($_), CosNode, "invalid number: $_";
+    }
 }
 
 todo 'native parse';
