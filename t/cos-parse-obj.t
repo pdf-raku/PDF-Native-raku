@@ -3,7 +3,7 @@ use PDF::Native::Cos;
 use PDF::Native::Cos::Actions;
 use Test;
 
-plan 34;
+plan 35;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -48,10 +48,9 @@ for ('<4E60>' ,'< 4 E 6 0 >', '<4E6>', '<4E6 >') {
     is CosNode.parse($_).Str, '<4e60>', "parse: $_";
 }
 
-todo 'native parse';
-given PDF::Grammar::COS.parse('/Hello,#20World#21', :rule<object>, :$actions) {
-    my CosName:D $node = .ast;
-    is $node.Str, '/Hello,#20World!', 'parse name';
+given CosNode.parse('/Hello,#20World#21') {
+    .&isa-ok: CosName;
+    is .Str, '/Hello,#20World!', 'parse name';
 }
 
 given CosNode.parse('true') {
@@ -74,9 +73,9 @@ given CosNode.parse('12 3 R') {
     is .Str, '12 3 R', 'parse indirect reference';
 }
 
-given CosNode.parse('[123 .45<aa>true 12 3 R false null]') {
+given CosNode.parse('[123 .45/foo<aa>true 12 3 R false null]') {
     .&isa-ok: CosArray;
-    is .Str, '[ 123 0.45 <aa> true 12 3 R false null ]', 'parse array';
+    is .Str, '[ 123 0.45 /foo <aa> true 12 3 R false null ]', 'parse array';
 }
 
 subtest 'invalid numbers', {

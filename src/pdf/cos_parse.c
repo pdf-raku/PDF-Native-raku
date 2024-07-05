@@ -1,6 +1,7 @@
 #include "pdf.h"
 #include "pdf/cos.h"
 #include "pdf/cos_parse.h"
+#include "pdf/utf8.h"
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
@@ -244,6 +245,84 @@ static PDF_TYPE_INT _read_int(CosParserCtx* ctx, CosTk* tk) {
     return val;
 }
 
+static int _get_hex_value(char** pos, char* end, int required) {
+
+    do {
+        (*pos)++;
+    }
+    while (isspace(**pos) && *pos < end);
+
+    if (*pos < end) {
+        switch (**pos) {
+        case '0'...'9':
+            return **pos - '0';
+        case 'A'...'F':
+            return **pos - 'A' + 10;
+        case 'a'...'f':
+            return **pos - 'a' + 10;
+        default:
+            return -1;
+        }
+    }
+    return required ? -1 : 0;
+}
+
+static CosName* _read_name(CosParserCtx* ctx, CosTk* tk) {
+    uint8_t* bytes = malloc(tk->len + 1);
+    size_t n_bytes;
+    PDF_TYPE_CODE_POINTS codes = NULL;
+    size_t n_codes;
+    size_t i = 0;
+    char* pos = ctx->buf + tk->pos + 1; /* consume '/' */
+    char* end = pos + tk->len - 1;
+    CosName* name = NULL;
+
+    assert(tk->type == COS_TK_NAME);
+
+    /* 1st pass: collect bytes */
+    for (n_bytes = 0; pos < end; pos++) {
+        char ch = *pos;
+
+        if (ch == '#') {
+            if (pos >= end) goto bail;
+            if (*(pos+1) == '#') {
+                bytes[n_bytes++] = *(++pos);
+            }
+            else {
+                int d1 = _get_hex_value(&pos, end, 1);
+                if (d1 < 0) goto bail;
+
+                int d2 = _get_hex_value(&pos, end, 1);
+                if (d2 < 0) goto bail;
+
+                bytes[n_bytes++] = d1 * 16  +  d2;
+            }
+        }
+        else {
+            bytes[n_bytes++] = ch;
+        }
+    }
+
+    /* 2nd pass: count codes */
+    for (n_codes = 0, i = 0; i < n_bytes; n_codes++) {
+        int char_len = utf8_char_len(bytes[i]);
+        if (char_len <= 0 || i + char_len >= tk->len) goto bail;
+        i += char_len;
+    }
+    codes = malloc(n_codes * sizeof(PDF_TYPE_CODE_POINT));
+    for (n_codes = 0, i = 0; i < n_bytes; n_codes++) {
+        codes[n_codes] = utf8_to_code(bytes + i);
+        i += utf8_char_len(bytes[i]);
+    }
+
+    name = cos_name_new(NULL, codes, n_codes);
+    
+bail:
+    free(bytes);
+    if (codes) free(codes);
+    return name;
+}
+
 static char* _strnchr(char* buf, char c, size_t n) {
     size_t i;
     for (i = 0; i < n; i++) {
@@ -303,28 +382,6 @@ static void _done_objects(CosNode** objects, size_t n) {
     }
 }
 
-static int _get_hex_value(char** pos, char* end) {
-
-    do {
-        (*pos)++;
-    }
-    while (isspace(**pos) && *pos < end);
-
-    if (*pos < end) {
-        switch (**pos) {
-        case '0'...'9':
-            return **pos - '0';
-        case 'A'...'F':
-            return **pos - 'A' + 10;
-        case 'a'...'f':
-            return **pos - 'a' + 10;
-        default:
-            return -1;
-        }
-    }
-    return 0;
-}
-
 static CosHexString* _parse_hex_string(CosParserCtx* ctx) {
     CosHexString* hex_string = NULL;
     char* hex_pos = ctx->buf + ctx->buf_pos - 1;
@@ -335,10 +392,10 @@ static CosHexString* _parse_hex_string(CosParserCtx* ctx) {
         PDF_TYPE_STRING hex_bytes = malloc(max_bytes);
         while (hex_pos < hex_end) {
             int d1, d2;
-            d1 = _get_hex_value(&hex_pos, hex_end);
+            d1 = _get_hex_value(&hex_pos, hex_end, 0);
             if (d1 < 0) goto bail;
             if (hex_pos >= hex_end) break;
-            d2 = _get_hex_value(&hex_pos, hex_end);
+            d2 = _get_hex_value(&hex_pos, hex_end, 0);
             if (d2 < 0) goto bail;
             hex_bytes[n++] = d1 * 16  +  d2;
         }
@@ -371,6 +428,9 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
             PDF_TYPE_INT val = _read_int(ctx, tk1);
             node = (CosNode*)cos_int_new(NULL, val);
         }
+        break;
+    case COS_TK_NAME:
+        node = (CosNode*) _read_name(ctx, _shift(ctx));
         break;
     case COS_TK_REAL:
         PDF_TYPE_REAL val = _read_real(ctx, tk1);
@@ -443,8 +503,9 @@ static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n, char *stopper) {
     CosNode* object;
     CosNode** objects;
     size_t i = *n;
+    CosTk* tk = _look_ahead(ctx,1);
 
-    if (_at_token(ctx,  _look_ahead(ctx,1), stopper)) {
+    if (_at_token(ctx, tk, stopper)) {
         if (n) {
             objects = malloc(*n * sizeof(CosNode*));
             memset(objects, 0, *n * sizeof(CosNode*));
