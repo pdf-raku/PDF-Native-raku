@@ -331,7 +331,6 @@ static CosHexString* _parse_hex_string(CosParserCtx* ctx) {
     char* hex_end = _strnchr(hex_pos, '>', ctx->buf_len - ctx->buf_pos + 1);
     size_t n = 0;
     if (hex_end) {
-        /* create our object early to get a buffer */
         size_t max_bytes = (hex_end - hex_pos + 1) / 2; /* two hex chars per byte   */
         PDF_TYPE_STRING hex_bytes = malloc(max_bytes);
         while (hex_pos < hex_end) {
@@ -340,7 +339,7 @@ static CosHexString* _parse_hex_string(CosParserCtx* ctx) {
             if (d1 < 0) goto bail;
             if (hex_pos >= hex_end) break;
             d2 = _get_hex_value(&hex_pos, hex_end);
-            if (d2 < 0 || n >= max_bytes) goto bail;
+            if (d2 < 0) goto bail;
             hex_bytes[n++] = d1 * 16  +  d2;
         }
         hex_string = cos_hex_string_new(NULL, hex_bytes, n);
@@ -444,10 +443,10 @@ static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n, char *stopper) {
     CosNode* object;
     CosNode** objects;
     size_t i = *n;
-    CosTk* tk = _look_ahead(ctx,1);
-    if (_at_token(ctx, tk, stopper)) {
+
+    if (_at_token(ctx,  _look_ahead(ctx,1), stopper)) {
         if (n) {
-            objects = malloc(*n * sizeof(CosTk*));
+            objects = malloc(*n * sizeof(CosNode*));
             memset(objects, 0, *n * sizeof(CosNode*));
         }
     }

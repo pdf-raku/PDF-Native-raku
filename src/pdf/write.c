@@ -8,6 +8,7 @@
 #include "pdf.h"
 #include "pdf/types.h"
 #include "pdf/write.h"
+#include "pdf/utf8.h"
 
 static int _bufcat(char* out, int out_len, char *in) {
     int n;
@@ -106,7 +107,7 @@ DLLEXPORT size_t pdf_write_hex_string(PDF_TYPE_STRING val, size_t in_len, char* 
   PDF_TYPE_STRING in_end = val + in_len;
   size_t n = 0;
 
-  if (out_len <= 2) return 0;
+  if (out_len < 2) return 0;
   out[n++] = '<';
 
   while (in_p < in_end) {
@@ -139,36 +140,6 @@ DLLEXPORT size_t pdf_write_xref_seg(PDF_TYPE_XREF xref, PDF_TYPE_UINT length, PD
   return n;
 }
 
-static uint8_t utf8_encode(uint8_t *bp, uint32_t cp) {
-    if (cp <= 0x7F) {
-        bp[0] = (uint8_t)cp;
-        return 1;
-    }
-
-    if (cp <= 0x07FF) {
-        bp[0] = (uint8_t)(( 6 << 5) |  (cp >> 6));
-        bp[1] = (uint8_t)(( 2 << 6) |  (cp &  0x3F));
-        return 2;
-    }
-
-    if (cp <= 0xFFFF) {
-        bp[0] = (uint8_t)((14 << 4) |  (cp >> 12));
-        bp[1] = (uint8_t)(( 2 << 6) | ((cp >> 6) & 0x3F));
-        bp[2] = (uint8_t)(( 2 << 6) | ( cp       & 0x3F));
-        return 3;
-    }
-
-    if (cp <= 0x10FFFF) {
-        bp[0] = (uint8_t)((30 << 3) |  (cp >> 18));
-        bp[1] = (uint8_t)(( 2 << 6) | ((cp >> 12) & 0x3F));
-        bp[2] = (uint8_t)(( 2 << 6) | ((cp >>  6) & 0x3F));
-        bp[3] = (uint8_t)(( 2 << 6) | ( cp        & 0x3F));
-        return 4;
-    }
-
-    return 0;
-}
-
 DLLEXPORT size_t pdf_write_name(PDF_TYPE_CODE_POINTS name, size_t in_len, char* out, size_t out_len) {
 
   PDF_TYPE_CODE_POINTS in_p = name;
@@ -199,7 +170,7 @@ DLLEXPORT size_t pdf_write_name(PDF_TYPE_CODE_POINTS name, size_t in_len, char* 
           continue;
       }
     }
-    m = utf8_encode(bp, cp);
+    m = utf8_from_code(cp, bp);
     for (i = 0; i < m; i++) {
       if (n+1 >= out_len) return 0;
       byte = bp[i];

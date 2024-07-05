@@ -5,8 +5,9 @@ filt_predict_png.o: filt_predict_png.c ../pdf.h ../pdf/filt_predict_png.h
 filt_predict_tiff.o: filt_predict_tiff.c ../pdf.h \
  ../pdf/filt_predict_tiff.h
 read.o: read.c ../pdf.h ../pdf/types.h ../pdf/read.h
-write.o: write.c ../pdf.h ../pdf/types.h ../pdf/write.h
+write.o: write.c ../pdf.h ../pdf/types.h ../pdf/write.h ../pdf/utf8.h
 version.o: version.c ../pdf.h ../pdf/version.h
 cos.o: cos.c ../pdf.h ../pdf/cos.h ../pdf/types.h ../pdf/write.h
 cos_parse.o: cos_parse.c ../pdf.h ../pdf/cos.h ../pdf/types.h \
  ../pdf/cos_parse.h
+utf8.o: utf8.c ../pdf/utf8.h
