@@ -3,7 +3,7 @@ unit module PDF::Native::Cos;
 
 =begin pod
 
-=head Synopsis
+=head2 Synopsis
 
 =begin code :lang<raku>
 use PDF::Native::COS;
@@ -283,7 +283,7 @@ class CosArray is CosNode is repr('CStruct') is export {
     also does CosType[$?CLASS, COS_NODE_ARRAY];
     has size_t $.elems;
     has CArray[CosNode] $.values;
-    method AT-POS(UInt:D() $idx) {
+    method AT-POS(UInt:D() $idx --> CosNode) {
         $idx < $!elems
             ?? $!values[$idx].delegate
             !! CosNode;
@@ -361,12 +361,12 @@ class CosDict is CosNode is repr('CStruct') is export {
         self!cos_dict_new($keys, $values, $elems);
     }
 
-    method AT-KEY(CosName:D() $key) {
+    method AT-KEY(CosName:D() $key --> CosNode) {
         my CosNode $value = self!cos_dict_lookup($key);
         $value.defined ?? $value.delegate !! $value;
     }
 
-    method AT-POS(UInt:D() $idx) {
+    method AT-POS(UInt:D() $idx --> CosNode) {
         $idx < $!elems
             ?? $!values[$idx].delegate
             !! CosNode;
@@ -594,7 +594,7 @@ class CosOp is repr('CStruct') is CosNode is export {
     has CArray[CosNode] $.values;
     has Str $.opn;
     #| Indirect objects the top of the tree and always fragments
-    method AT-POS(UInt:D() $idx) {
+    method AT-POS(UInt:D() $idx --> CosNode) {
         $idx < $!elems
             ?? $!values[$idx].delegate
             !! CosNode;
@@ -618,7 +618,7 @@ class CosContent is repr('CStruct') is CosNode is export {
     has size_t $.elems;
     has CArray[CosOp] $.values;
     #| Indirect objects the top of the tree and always fragments
-    method AT-POS(UInt:D() $idx) {
+    method AT-POS(UInt:D() $idx --> CosNode) {
         $idx < $!elems
             ?? $!values[$idx].delegate
             !! CosNode;

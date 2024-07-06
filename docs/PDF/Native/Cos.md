@@ -3,10 +3,8 @@
  / [PDF::Native](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native)
  :: [Cos](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Cos)
 
-head
-====
-
 Synopsis
+--------
 
 ```raku
 use PDF::Native::COS;
@@ -116,7 +114,7 @@ Null object
 ```raku
 method AT-POS(
     UInt:D(Any):D $idx
-) returns Mu
+) returns PDF::Native::Cos::CosNode
 ```
 
 Indirect objects the top of the tree and always fragments
@@ -126,7 +124,7 @@ Indirect objects the top of the tree and always fragments
 ```raku
 method AT-POS(
     UInt:D(Any):D $idx
-) returns Mu
+) returns PDF::Native::Cos::CosNode
 ```
 
 Indirect objects the top of the tree and always fragments
