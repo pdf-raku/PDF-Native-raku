@@ -3,7 +3,7 @@ use PDF::Native::Cos;
 use PDF::Native::Cos::Actions;
 use Test;
 
-plan 44;
+plan 47;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -32,10 +32,9 @@ given CosNode.parse("\n \%xxx\n[\%yyy\n]\%zzz\n ") {
     is .Str, '[ ]', 'parse array + ws/comments';
 }
 
-todo 'native parse';
-given PDF::Grammar::COS.parse('(Hello,\40World\n)', :rule<object>, :$actions) {
-    my CosLiteralString:D $node = .ast;
-    is $node.Str, '(Hello, World\n)', 'parse literal';
+given CosNode.parse('(Hello,\40World\n)') {
+    .&isa-ok: CosLiteralString;
+    is .Str, '(Hello, World\n)', 'parse literal';
 }
 
 my $hex = '<4E6F762073686D6F7A206B6120706f702e>';
@@ -103,16 +102,14 @@ subtest 'invalid numbers', {
     }
 }
 
-todo 'native parse';
-given PDF::Grammar::COS.parse('[1(2) /3  ]', :rule<object>, :$actions) {
-    my CosArray:D $node = .ast;
-    is $node.Str, '[ 1 (2) /3 ]', 'parse array';
+given CosNode.parse('[1(2) /3  ]') {
+    .&isa-ok: CosArray;
+    is .Str, '[ 1 (2) /3 ]', 'parse array';
 }
 
-todo 'native parse';
-given PDF::Grammar::COS.parse('<</a 42/BB(Hi)>>', :rule<object>, :$actions) {
-    my CosDict:D $node = .ast;
-    is $node.Str, '<< /a 42 /BB (Hi) >>', 'parse dict';
+given CosNode.parse('<</a 42/BB(Hi)>>') {
+    .&isa-ok: CosDict;
+    is .Str, '<< /a 42 /BB (Hi) >>', 'parse dict';
 }
 
 todo 'native parse';

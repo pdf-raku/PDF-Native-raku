@@ -260,7 +260,7 @@ static int _hex_value(char ch) {
 }
 
 static CosName* _read_name(CosParserCtx* ctx, CosTk* tk) {
-    uint8_t* bytes = malloc(tk->len + 1);
+    uint8_t* bytes = malloc(tk->len + 5);
     size_t n_bytes;
     PDF_TYPE_CODE_POINTS codes = NULL;
     size_t n_codes;
@@ -299,13 +299,17 @@ static CosName* _read_name(CosParserCtx* ctx, CosTk* tk) {
     /* 2nd pass: count codes */
     for (n_codes = 0, i = 0; i < n_bytes; n_codes++) {
         int char_len = utf8_char_len(bytes[i]);
-        if (char_len <= 0 || i + char_len >= tk->len) goto bail;
+        if (char_len <= 0) char_len = 1;
         i += char_len;
     }
+
     codes = malloc(n_codes * sizeof(PDF_TYPE_CODE_POINT));
+
     for (n_codes = 0, i = 0; i < n_bytes; n_codes++) {
+        int char_len = utf8_char_len(bytes[i]);
+        if (char_len <= 0) char_len = 1;
         codes[n_codes] = utf8_to_code(bytes + i);
-        i += utf8_char_len(bytes[i]);
+        i += char_len;
     }
 
     name = cos_name_new(NULL, codes, n_codes);
@@ -375,6 +379,85 @@ static void _done_objects(CosNode** objects, size_t n) {
     }
 }
 
+static int _octal_nibble(char **pos, char *end, int val, int n) {
+    char digit = *((*pos)++) - '0';
+
+    val *= 8;
+    val += digit;
+
+    if (*pos < end && n > 1 && **pos >= '0' && **pos <= '7') {
+        return _octal_nibble(pos, end, val, n - 1);
+    }
+    else {
+        (*pos)--;
+        return val;
+    }
+}
+
+static int _lit_str_nibble(char **pos, char *end, int *nesting) {
+    char ch = *(++(*pos));
+    switch (ch) {
+    case '\\': {
+        if (*pos >= end) return -1;
+        switch (*(++(*pos))) {
+        case 'n': return '\n';
+        case 'r': return '\r';
+        case 't': return '\t';
+        case 'b': return '\b';
+        case 'f': return '\f';
+        case '(': return '(';
+        case ')': return ')';
+        case '\\': return '\\';
+        case '0' ... '7':
+            return _octal_nibble(pos, end, 0, 3);
+        case '\r':
+        case '\n':
+            if (**pos == '\n') ++(*pos);
+            return _lit_str_nibble(pos, end, nesting);
+        default:
+            return **pos;
+        }
+    }
+    case '(':
+        (*nesting)++;
+        return ch;
+    case ')':
+        return --*nesting <= 0 ? -1 : ch;
+    default:
+        return ch;
+    }
+}
+
+static CosLiteralStr* _parse_lit_string(CosParserCtx* ctx) {
+    CosLiteralStr* lit_string = NULL;
+    char* lit_pos = ctx->buf + ctx->buf_pos - 1;
+    char* end = ctx->buf + ctx->buf_len;
+    size_t n_lit_bytes = 0;
+    int nesting = 1;
+    char* lit_end = NULL;
+    /* find the byte length */
+
+    while (_lit_str_nibble(&lit_pos, end, &nesting) >= 0) n_lit_bytes++;
+
+    if (nesting == 0) {
+        /* found a properly terminated string */
+        size_t n = 0;
+        int byte;
+        PDF_TYPE_STRING lit_bytes = malloc(n_lit_bytes);
+        lit_end = lit_pos; /* we've found the end of the string */
+        lit_pos = ctx->buf + ctx->buf_pos -1 ;
+        nesting = 1;
+        while ((byte = _lit_str_nibble(&lit_pos, lit_end, &nesting)) >= 0) lit_bytes[n++] = byte;
+        lit_string = cos_literal_new(NULL, lit_bytes, n);
+        free(lit_bytes);
+    }
+
+    if (!lit_end) lit_end = end; /* presume it's unterminated */
+    ctx->buf_pos = lit_end - ctx->buf + 1;
+
+    return lit_string;
+}
+
 static void _scan_ws(char** pos, char* end) {
 
     while (isspace(**pos) && *pos < end) {
@@ -386,9 +469,9 @@ static CosHexString* _parse_hex_string(CosParserCtx* ctx) {
     CosHexString* hex_string = NULL;
     char* hex_pos = ctx->buf + ctx->buf_pos;
     char* hex_end = _strnchr(hex_pos, '>', ctx->buf_len - ctx->buf_pos);
-    size_t n = 0;
 
     if (hex_end) {
+        size_t n = 0;
         size_t max_bytes = (hex_end - hex_pos + 1) / 2; /* two hex chars per byte   */
         PDF_TYPE_STRING hex_bytes = malloc(max_bytes);
         while (hex_pos < hex_end) {
@@ -413,7 +496,7 @@ static CosHexString* _parse_hex_string(CosParserCtx* ctx) {
 
 static CosNode** _parse_objects(CosParserCtx*, size_t*, char*);
 
-static CosArray* _read_array(CosParserCtx* ctx) {
+static CosArray* _parse_array(CosParserCtx* ctx) {
     size_t n = 0;
     CosArray* array = NULL;
     CosNode** objects = _parse_objects(ctx, &n, "]");
@@ -470,7 +553,7 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
         }
         break;
     case COS_TK_NAME:
-        node = (CosNode*) _read_name(ctx, _shift(ctx));
+        node = (CosNode*) _read_name(ctx, tk1);
         break;
     case COS_TK_REAL:
         PDF_TYPE_REAL val = _read_real(ctx, tk1);
@@ -500,7 +583,11 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
         _shift(ctx);
         switch (ch) {
         case '[': { /* '[' array ']' */
-            node = (void*) _read_array(ctx);
+            node = (void*) _parse_array(ctx);
+            break;
+        }
+        case '(': { /* '(' string ')' */
+            node = (void*) _parse_lit_string(ctx);
             break;
         }
         case '<': {
