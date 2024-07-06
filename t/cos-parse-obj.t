@@ -3,7 +3,7 @@ use PDF::Native::Cos;
 use PDF::Native::Cos::Actions;
 use Test;
 
-plan 47;
+plan 55;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -35,6 +35,23 @@ given CosNode.parse("\n \%xxx\n[\%yyy\n]\%zzz\n ") {
 given CosNode.parse('(Hello,\40World\n)') {
     .&isa-ok: CosLiteralString;
     is .Str, '(Hello, World\n)', 'parse literal';
+}
+
+given CosNode.parse('(\((\{}\)))') {
+    .&isa-ok: CosLiteralString;
+    is .Str, '(\(\({}\)\))', 'parse parens';
+}
+
+given CosNode.parse('(\7\07\007\7)') {
+    .&isa-ok: CosLiteralString;
+    is-deeply .Str, (flat '(', 7.chr xx 4, ')').join, 'parse octal escapes';
+}
+
+for '(\n\r\t\f\b\\' ~ 10.chr ~ 'X)', '(\n\r\t\f\b\\' ~ 13.chr ~ 10.chr ~ 'X)' {
+    given CosNode.parse($_) {
+        .&isa-ok: CosLiteralString;
+        is-deeply .Str, "(\\n\\r\\t\\f\\bX)", 'parse: '~.raku;
+    }
 }
 
 my $hex = '<4E6F762073686D6F7A206B6120706f702e>';

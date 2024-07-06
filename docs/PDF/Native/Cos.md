@@ -37,6 +37,16 @@ class PDF::Native::Cos::CosNode
 
 Generic Cos objects
 
+### multi method parse
+
+```raku
+multi method parse(
+    Str:D $str where { ... }
+) returns PDF::Native::Cos::CosNode
+```
+
+Parse a COS object
+
 class PDF::Native::Cos::CosRef
 ------------------------------
 

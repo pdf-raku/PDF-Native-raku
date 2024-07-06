@@ -381,11 +381,10 @@ static void _done_objects(CosNode** objects, size_t n) {
 
 static int _octal_nibble(char **pos, char *end, int val, int n) {
     char digit = *((*pos)++) - '0';
-
     val *= 8;
     val += digit;
 
-    if (*pos < end && n > 1 && **pos >= '0' && **pos <= '7') {
+    if (*pos < end && n < 3 && **pos >= '0' && **pos <= '7') {
         return _octal_nibble(pos, end, val, n - 1);
     }
     else {
@@ -409,10 +408,11 @@ static int _lit_str_nibble(char **pos, char *end, int *nesting) {
         case ')': return ')';
         case '\\': return '\\';
         case '0' ... '7':
-            return _octal_nibble(pos, end, 0, 3);
+            return _octal_nibble(pos, end, 0, 1);
         case '\r':
+            if (*(*pos+1) == '\n') ++(*pos);
+            /* fallthrough */
         case '\n':
-            if (**pos == '\n') ++(*pos);
             return _lit_str_nibble(pos, end, nesting);
         default:
             return **pos;
