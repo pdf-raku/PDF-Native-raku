@@ -3,7 +3,7 @@ use PDF::Native::Cos;
 use PDF::Native::Cos::Actions;
 use Test;
 
-plan 35;
+plan 44;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -48,11 +48,19 @@ for ('<4E60>' ,'< 4 E 6 0 >', '<4E6>', '<4E6 >') {
     is CosNode.parse($_).Str, '<4e60>', "parse: $_";
 }
 
+for ('<>' ,'< >', '<  >') {
+    is CosNode.parse($_).Str, '<>', "parse: $_";
+}
+
 given CosNode.parse('/Hello,#20World#21') {
     .&isa-ok: CosName;
     is .Str, '/Hello,#20World!', 'parse name';
 }
 
+given CosNode.parse('/') {
+    .&isa-ok: CosName;
+    is .Str, '/', 'parse empty name';
+}
 given CosNode.parse('true') {
     .&isa-ok: CosBool;
     is .Str, 'true', 'parse bool';
@@ -67,6 +75,17 @@ given CosNode.parse('null') {
     .&isa-ok: CosNull;
     is .Str, 'null', 'parse null';
 }
+
+given CosNode.parse('<< /a 42 >>') {
+    .&isa-ok: CosDict;
+    is .Str, '<< /a 42 >>', 'parse dict';
+}
+
+given CosNode.parse('<</<>>>') {
+    .&isa-ok: CosDict;
+    is .Str, '<< / <> >>', 'parse dict';
+}
+
 
 given CosNode.parse('12 3 R') {
     .&isa-ok: CosRef;
