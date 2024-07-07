@@ -19,7 +19,7 @@ is $op.type, +COS_NODE_OP;
 isa-ok $op[0], CosInt;
 isa-ok $op[1], CosName;
 is $op[0].value, 69;
-is-deeply $op.Str(:indent(4)), '    69 /Hi#20There true null 1234.5 Foo';
+is-deeply $op.write(:indent(4)), '    69 /Hi#20There true null 1234.5 Foo';
 
 my CosOp $op1 .= new: :opn<BT>;
 my CosOp $op2 .= new: :opn<ET>;

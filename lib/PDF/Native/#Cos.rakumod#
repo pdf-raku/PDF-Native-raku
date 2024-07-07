@@ -472,7 +472,7 @@ class CosStream is repr('CStruct') is CosNode is export {
 #| Boolean object
 class CosBool is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_BOOL];
-    has PDF_TYPE_BOOL $.value;
+    has PDF_TYPE_BOOL $.value handles <so>;
 
     method !cos_bool_new(PDF_TYPE_BOOL --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_bool_write(Blob, size_t --> size_t) is native(libpdf) {*}
@@ -535,13 +535,12 @@ class CosReal is repr('CStruct') is CosNode is export {
 class _CosStringy is CosNode {
     has CArray[uint8] $.value;
     has size_t $.value-len;
-    method value { (^$!value-len).map({$!value[$_].chr}).join }
 
     multi method COERCE(LatinStr:D $str) {
         my blob8:D $value = $str.encode: "latin-1";
         self.new: :$value;
     }
-    method Str {
+    method Str handles<value> {
         $!value.&to-blob($!value-len).decode: "latin-1";
     }
 }
@@ -580,7 +579,7 @@ class CosHexString is repr('CStruct') is _CosStringy is export {
 #| Null object
 class CosNull is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_NULL];
-    method value { Any }
+    method value handles <defined> { Any }
 
     method !cos_null_new(--> ::?CLASS:D) is native(libpdf) {*}
     method !cos_null_write(Blob, size_t --> size_t) is native(libpdf) {*}

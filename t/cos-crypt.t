@@ -37,11 +37,11 @@ my CosCryptCtx $crypt-ctx .= new: :$key, :&crypt-func, :$mode;
 
 $ind-obj.crypt(:$crypt-ctx);
 is $value6.Str, '1234.5';
-is-deeply $value7.Str, "(\x[88]\x[87]\x[86])";
+is-deeply $value7.Str, "\x[88]\x[87]\x[86]";
 isnt $ind-obj.Str.lines.join("\n"), $lines.join("\n");
 
 $ind-obj.crypt(:$crypt-ctx);
-is $value7.Str, '(xyz)';
+is $value7.Str, 'xyz';
 
 is $ind-obj.Str.lines.join("\n"), $lines.join("\n");
 

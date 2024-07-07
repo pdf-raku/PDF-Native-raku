@@ -3,7 +3,7 @@ use PDF::Native::Cos;
 use PDF::Native::Cos::Actions;
 use Test;
 
-plan 56;
+plan 75;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -34,62 +34,74 @@ given CosNode.parse("\n \%xxx\n[\%yyy\n]\%zzz\n ") {
 
 given CosNode.parse('(Hello,\40World\n)') {
     .&isa-ok: CosLiteralString;
-    is .Str, '(Hello, World\n)', 'parse literal';
+    is .Str.chomp, 'Hello, World', 'parse literal';
+    is .write, '(Hello, World\n)', 'parse literal';
 }
 
 given CosNode.parse('(\((\{}\)))') {
     .&isa-ok: CosLiteralString;
-    is .Str, '(\(\({}\)\))', 'parse parens';
+    is .Str, '(({}))', 'parse parens';
+    is .write, '(\(\({}\)\))', 'parse parens';
 }
 
 given CosNode.parse('(\7\07\007\0077)') {
     .&isa-ok: CosLiteralString;
-    is-deeply .Str, (flat '(', 7.chr xx 4, '7)').join, 'parse octal escapes';
+    is-deeply .Str, (7.chr xx 4).join ~ '7', 'parse octal escapes';
+    is-deeply .write, (flat '(', 7.chr xx 4, '7)').join, 'parse octal escapes';
 }
 
 for '(\n\r\t\f\b\\' ~ 10.chr ~ 'X)', '(\n\r\t\f\b\\' ~ 13.chr ~ 10.chr ~ 'X)' {
     given CosNode.parse($_) {
         .&isa-ok: CosLiteralString;
-        is-deeply .Str, "(\\n\\r\\t\\f\\bX)", 'parse: '~.raku;
+        is-deeply .Str, "\n\r\t\x[c]\x[8]X", 'parse: '~.raku;
+        is-deeply .write, "(\\n\\r\\t\\f\\bX)", 'parse: '~.raku;
     }
 }
 
 my $hex = '<4E6F762073686D6F7A206B6120706f702e>';
 given CosNode.parse($hex) {
     .&isa-ok: CosHexString;
-    is .Str.lc, $hex.lc, 'parse hex';
+    is .Str, 'Nov shmoz ka pop.', 'parse hex';
+    is .write.lc, $hex.lc, 'parse hex';
 }
 
 for ('<4E60>' ,'< 4 E 6 0 >', '<4E6>', '<4E6 >', '< 4E6>') {
-    is CosNode.parse($_).Str, '<4e60>', "parse: $_";
+    is CosNode.parse($_).Str, 'N`', "parse: $_";
+    is CosNode.parse($_).write, '<4e60>', "parse: $_";
 }
 
 for ('<>' ,'< >', '<  >') {
-    is CosNode.parse($_).Str, '<>', "parse: $_";
+    is CosNode.parse($_).Str, '', "parse: $_";
+    is CosNode.parse($_).write, '<>', "parse: $_";
 }
 
 given CosNode.parse('/Hello,#20World#21') {
     .&isa-ok: CosName;
-    is .Str, '/Hello,#20World!', 'parse name';
+    is .Str, 'Hello, World!', 'parse name';
+    is .write, '/Hello,#20World!', 'parse name';
 }
 
 given CosNode.parse('/') {
     .&isa-ok: CosName;
-    is .Str, '/', 'parse empty name';
+    is .Str, '', 'parse empty name';
+    is .write, '/', 'parse empty name';
 }
 given CosNode.parse('true') {
     .&isa-ok: CosBool;
     is .Str, 'true', 'parse bool';
+    is .write, 'true', 'parse bool';
 }
 
 given CosNode.parse('false') {
     .&isa-ok: CosBool;
     is .Str, 'false', 'parse bool';
+    is .write, 'false', 'parse bool';
 }
 
 given CosNode.parse('null') {
     .&isa-ok: CosNull;
     is .Str, 'null', 'parse null';
+    is .write, 'null', 'parse null';
 }
 
 given CosNode.parse('<< /a 42 >>') {

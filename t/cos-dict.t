@@ -43,7 +43,7 @@ END
 $dict = parse($str);
 
 is-deeply $dict.Str.lines, $str.lines;
-is-deeply $dict.Str(:compact), $str.trim.subst(/[\s|\n]+/, ' ', :g);
+is-deeply $dict.write(:compact), $str.trim.subst(/[\s|\n]+/, ' ', :g);
 
 my buf8 $buf .= allocate(20);
 is-deeply $dict.Str(:$buf).lines, $str.lines;

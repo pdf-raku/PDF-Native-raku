@@ -3,7 +3,7 @@ use PDF::Native::Cos;
 use PDF::Native::Cos::Actions;
 use Test;
 
-plan 16;
+plan 19;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -24,19 +24,22 @@ given PDF::Grammar::COS.parse('.45', :rule<object>, :$actions) {
 
 given PDF::Grammar::COS.parse('(Hello,\40World\n)', :rule<object>, :$actions) {
       my CosLiteralString:D $node = .ast;
-      is $node.Str, '(Hello, World\n)', 'parse literal';
+      is $node.Str.chomp, 'Hello, World', 'parse literal';
+      is $node.write, '(Hello, World\n)', 'parse literal';
 }
 
 my $hex = '<4E6F762073686D6F7A206B6120706f702e>';
 given PDF::Grammar::COS.parse($hex, :rule<object>, :$actions) {
       my CosHexString:D $node = .ast;
       is $node.value, 'Nov shmoz ka pop.';
-      is $node.Str, $hex.lc, 'parse hex';
+      is $node.Str, 'Nov shmoz ka pop.', 'parse hex';
+      is $node.write, $hex.lc, 'parse hex';
 }
 
 given PDF::Grammar::COS.parse('/Hello,#20World#21', :rule<object>, :$actions) {
       my CosName:D $node = .ast;
-      is $node.Str, '/Hello,#20World!', 'parse name';
+      is $node.Str, 'Hello, World!', 'parse name';
+      is $node.write, '/Hello,#20World!', 'parse name';
 }
 
 given PDF::Grammar::COS.parse('true', :rule<object>, :$actions) {
