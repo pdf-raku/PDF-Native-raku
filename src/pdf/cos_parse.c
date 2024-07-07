@@ -73,8 +73,11 @@ static int _scan_new_line(CosParserCtx* ctx, int* dos_mode) {
 /* - returns opening delimiter for strings, arrays and dictionaries */
 static CosTk* _scan_tk(CosParserCtx* ctx) {
     CosTk* tk;
+    char ch = ' ';
     char prev_ch = ' ';
     int wb = 0;
+    int number = 0;
+    int digits = 0;
 
     assert(ctx->n_tk < 3);
 
@@ -86,10 +89,11 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
     tk->len  = 0;
 
     for (; ctx->buf_pos < ctx->buf_len && !wb; ctx->buf_pos++) {
-        char ch = ctx->buf[ctx->buf_pos];
+        ch = ctx->buf[ctx->buf_pos];
         tk->len++;
         switch (ch) {
         case '+': case '-':
+            number = 1;
             switch (tk->type) {
             case COS_TK_START:
                 tk->type = COS_TK_INT;
@@ -108,6 +112,7 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
             }
             break;
         case '.':
+            number = 1;
             switch (tk->type) {
             case COS_TK_START:
             case COS_TK_INT:
@@ -126,6 +131,7 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
             }
             break;
         case '0'...'9':
+            digits++;
             switch (tk->type) {
             case COS_TK_START:
                 tk->type = COS_TK_INT;
@@ -199,8 +205,13 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
     else if (tk->type == COS_TK_START) {
         tk->type = COS_TK_DONE;
     }
-    ctx->buf_pos--;
 
+    if (number && !digits) {
+        /* got just '+', '-', '.', but no actual digits */
+        tk->type = COS_TK_WORD;
+    }
+
+    ctx->buf_pos--;
     return tk;
 }
 
@@ -234,15 +245,25 @@ static void _advance(CosParserCtx* ctx) {
 
 static PDF_TYPE_INT _read_int(CosParserCtx* ctx, CosTk* tk) {
     PDF_TYPE_INT val = 0;
-    size_t i;
+    size_t i = 0;
+    int sign = 1;
 
     assert(tk->type == COS_TK_INT);
+    switch (ctx->buf[tk->pos]) {
+    case '-':
+        sign = -1;
+        i++;
+        break;
+    case '+':
+        i++;
+        break;
+    }
 
-    for (i = 0; i < tk->len; i++) {
+    for (; i < tk->len; i++) {
         val *= 10;
         val += ctx->buf[tk->pos + i] - '0';
     }
-    return val;
+    return sign * val;
 }
 
 static int _hex_value(char ch) {
@@ -336,6 +357,17 @@ static PDF_TYPE_REAL _read_real(CosParserCtx* ctx, CosTk* tk) {
     char* end = buf + tk->len;
     char* dp  = _strnchr(buf, '.', tk->len);
     char* p;
+    int sign = 1;
+
+   switch (*buf) {
+    case '-':
+        sign = -1;
+        buf++;
+        break;
+    case '+':
+        buf++;
+        break;
+    }
 
     assert(tk->type == COS_TK_REAL);
     if (!dp) dp = end;
@@ -353,11 +385,16 @@ static PDF_TYPE_REAL _read_real(CosParserCtx* ctx, CosTk* tk) {
         frac += (*p - '0');
     }
 
-    return val  +  frac / magn;
+    val += frac / magn;
+    return sign < 0 ? -val : val; 
 }
 
 static int _at_token(CosParserCtx* ctx, CosTk* tk, char* word) {
     return tk->len == strlen(word) && strncmp(ctx->buf + tk->pos, word, tk->len) == 0;
+}
+
+static int _at_uint(CosParserCtx* ctx, CosTk* tk) {
+    return tk->type == COS_TK_INT && ctx->buf[tk->pos] != '-';
 }
 
 static int _get_token(CosParserCtx* ctx, char* word) {
@@ -540,7 +577,7 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
 
     switch (tk1->type) {
     case COS_TK_INT:
-        if (_look_ahead(ctx, 2)->type == COS_TK_INT && _at_token(ctx, _look_ahead(ctx, 3), "R")) {
+        if (_at_uint(ctx, tk1) && _at_uint(ctx, _look_ahead(ctx, 2)) && _at_token(ctx, _look_ahead(ctx, 3), "R")) {
             /* indirect object <int> <int> R */
             uint64_t obj_num = _read_int(ctx, _shift(ctx));
             uint32_t gen_num = _read_int(ctx, _shift(ctx));
@@ -657,7 +694,7 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_le
 
     _look_ahead(ctx, 3); /* load tokens: tk1, tk2, tk3 */
 
-    if (tk1.type == COS_TK_INT && tk2.type == COS_TK_INT && _at_token(ctx, &tk3, "obj") ) {
+    if (_at_uint(ctx, &tk1) && _at_uint(ctx, &tk2) && _at_token(ctx, &tk3, "obj") ) {
         /* valid indirect object header: <int> <int> obj */
         uint64_t obj_num = _read_int(ctx, &tk1);
         uint32_t gen_num = _read_int(ctx, &tk2);

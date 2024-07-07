@@ -3,7 +3,7 @@ use PDF::Native::Cos;
 use PDF::Native::Cos::Actions;
 use Test;
 
-plan 55;
+plan 56;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -42,9 +42,9 @@ given CosNode.parse('(\((\{}\)))') {
     is .Str, '(\(\({}\)\))', 'parse parens';
 }
 
-given CosNode.parse('(\7\07\007\7)') {
+given CosNode.parse('(\7\07\007\0077)') {
     .&isa-ok: CosLiteralString;
-    is-deeply .Str, (flat '(', 7.chr xx 4, ')').join, 'parse octal escapes';
+    is-deeply .Str, (flat '(', 7.chr xx 4, '7)').join, 'parse octal escapes';
 }
 
 for '(\n\r\t\f\b\\' ~ 10.chr ~ 'X)', '(\n\r\t\f\b\\' ~ 13.chr ~ 10.chr ~ 'X)' {
@@ -60,7 +60,7 @@ given CosNode.parse($hex) {
     is .Str.lc, $hex.lc, 'parse hex';
 }
 
-for ('<4E60>' ,'< 4 E 6 0 >', '<4E6>', '<4E6 >') {
+for ('<4E60>' ,'< 4 E 6 0 >', '<4E6>', '<4E6 >', '< 4E6>') {
     is CosNode.parse($_).Str, '<4e60>', "parse: $_";
 }
 
@@ -114,14 +114,14 @@ given CosNode.parse('[123 .45/foo<aa>true 12 3 R false null]') {
 }
 
 subtest 'invalid numbers', {
-    for <++0 0+0 0.. ..0 0a 0..0> {
+    for <++0 0+0 0.. ..0 0a 0..0 + - . .+1> {
         is-deeply CosNode.parse($_), CosNode, "invalid number: $_";
     }
 }
 
-given CosNode.parse('[1(2) /3  ]') {
+given CosNode.parse('[1(2) /3 -0 -1 -.1 ]') {
     .&isa-ok: CosArray;
-    is .Str, '[ 1 (2) /3 ]', 'parse array';
+    is .Str, '[ 1 (2) /3 0 -1 -0.1 ]', 'parse array';
 }
 
 given CosNode.parse('<</a 42/BB(Hi)>>') {
