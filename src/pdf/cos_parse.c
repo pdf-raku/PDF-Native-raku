@@ -12,10 +12,10 @@ typedef enum {
     COS_TK_START,
     COS_TK_DONE,
     COS_TK_DELIM,
-    COS_TK_INT, /* 3 */
+    COS_TK_INT,
     COS_TK_REAL,
     COS_TK_NAME,
-    COS_TK_WORD, /* 6 */
+    COS_TK_WORD, /* None of the above */
 } CosTkType;
 
 typedef struct {
@@ -131,7 +131,7 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
             }
             break;
         case '0'...'9':
-            digits++;
+            digits = 1;
             switch (tk->type) {
             case COS_TK_START:
                 tk->type = COS_TK_INT;
@@ -156,15 +156,19 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
             }
             break;
         case '<': case '>':
+            if (tk->type == COS_TK_START) {
+                tk->type = COS_TK_DELIM;
+            }
+            else if (!(tk->len == 2 && prev_ch == ch)) {
+                /* allow just '<<' and '>>' as 2 character delimiters */
+                wb = 1;
+            }
+            break;
         case '[': case ']':
         case '(': case ')':
         case '{': case '}':
             if (tk->type == COS_TK_START) {
                 tk->type = COS_TK_DELIM;
-            }
-            else if (tk->type == COS_TK_DELIM) {
-                /* allow just '<<' and '>>' as 2 character delimiters */
-                if (!((ch == '>' || ch == '<') && prev_ch == ch)) wb = 1;
             }
             else {
                 wb = 1;
@@ -263,7 +267,7 @@ static PDF_TYPE_INT _read_int(CosParserCtx* ctx, CosTk* tk) {
         val *= 10;
         val += ctx->buf[tk->pos + i] - '0';
     }
-    return sign * val;
+    return sign > 0 ? val : -val;
 }
 
 static int _hex_value(char ch) {
@@ -386,7 +390,7 @@ static PDF_TYPE_REAL _read_real(CosParserCtx* ctx, CosTk* tk) {
     }
 
     val += frac / magn;
-    return sign < 0 ? -val : val; 
+    return sign > 0 ? val : -val;
 }
 
 static int _at_token(CosParserCtx* ctx, CosTk* tk, char* word) {
@@ -468,28 +472,32 @@ static int _lit_str_nibble(char **pos, char *end, int *nesting) {
 static CosLiteralStr* _parse_lit_string(CosParserCtx* ctx) {
     CosLiteralStr* lit_string = NULL;
     char* lit_pos = ctx->buf + ctx->buf_pos - 1;
-    char* end = ctx->buf + ctx->buf_len;
-    size_t n_lit_bytes = 0;
+    char* lit_end = lit_pos;
+    char* buf_end = ctx->buf + ctx->buf_len;
+    size_t n_bytes = 0;
     int nesting = 1;
-    char* lit_end = NULL;
-    /* find the byte length */
 
-    while (_lit_str_nibble(&lit_pos, end, &nesting) >= 0) n_lit_bytes++;
+    while (_lit_str_nibble(&lit_end, buf_end, &nesting) >= 0) {
+        /* count output bytes and locate the end of the string */
+        n_bytes++;
+    };
 
     if (nesting == 0) {
-        /* found a properly terminated string */
-        size_t n = 0;
+        /* found a properly terminated string; process it */
+        PDF_TYPE_STRING bytes = malloc(n_bytes);
         int byte;
-        PDF_TYPE_STRING lit_bytes = malloc(n_lit_bytes);
-        lit_end = lit_pos; /* we've found the end of the string */
-        lit_pos = ctx->buf + ctx->buf_pos -1 ;
         nesting = 1;
-        while ((byte = _lit_str_nibble(&lit_pos, lit_end, &nesting)) >= 0) lit_bytes[n++] = byte;
-        lit_string = cos_literal_new(NULL, lit_bytes, n);
-        free(lit_bytes);
+        n_bytes = 0;
+
+        while ((byte = _lit_str_nibble(&lit_pos, lit_end, &nesting)) >= 0) {
+            bytes[n_bytes++] = byte;
+        }
+
+        lit_string = cos_literal_new(NULL, bytes, n_bytes);
+
+        free(bytes);
     }
 
-    if (!lit_end) lit_end = end; /* presume it's unterminated */
     ctx->buf_pos = lit_end - ctx->buf + 1;
 
     return lit_string;
