@@ -385,7 +385,7 @@ static int _octal_nibble(char **pos, char *end, int val, int n) {
     val += digit;
 
     if (*pos < end && n < 3 && **pos >= '0' && **pos <= '7') {
-        return _octal_nibble(pos, end, val, n - 1);
+        return _octal_nibble(pos, end, val, n + 1);
     }
     else {
         (*pos)--;
@@ -410,7 +410,7 @@ static int _lit_str_nibble(char **pos, char *end, int *nesting) {
         case '0' ... '7':
             return _octal_nibble(pos, end, 0, 1);
         case '\r':
-            if (*(*pos+1) == '\n') ++(*pos);
+            if (*pos < end && *(*pos+1) == '\n') ++(*pos);
             /* fallthrough */
         case '\n':
             return _lit_str_nibble(pos, end, nesting);
