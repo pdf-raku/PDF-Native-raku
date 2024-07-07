@@ -1,7 +1,7 @@
 use PDF::Native::Cos;
 use Test;
 
-plan 4;
+plan 5;
 
 my CosIndObj $ind-obj .= parse: "10 0 obj 42 endobj";
 ok $ind-obj.defined;
@@ -30,5 +30,8 @@ subtest 'invalid indirect object syntax', {
         is-deeply $ind-obj.parse($_), CosIndObj, "parse failure: " ~ .raku;
     }
 }
+
+my Str:D $str = "t/pdf/samples/ind-obj.bin".IO.slurp(:bin).decode: "latin-1";
+ok $ind-obj.parse($str).defined, 'binary parse';
 
 done-testing;

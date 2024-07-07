@@ -232,7 +232,7 @@ static CosTk* _look_ahead(CosParserCtx* ctx, int n) {
 static CosTk* _shift(CosParserCtx* ctx) {
     CosTk* tk;
 
-    if (ctx->n_tk == 0)  _look_ahead(ctx, 1);
+    if (ctx->n_tk == 0) _look_ahead(ctx, 1);
     tk = ctx->tk[0];
     ctx->tk[0] = ctx->tk[1];
     ctx->tk[1] = ctx->tk[2];
@@ -330,6 +330,7 @@ static CosName* _read_name(CosParserCtx* ctx, CosTk* tk) {
 
     codes = malloc(n_codes * sizeof(PDF_TYPE_CODE_POINT));
 
+    /* 3rd pass: produce codes */
     for (n_codes = 0, i = 0; i < n_bytes; n_codes++) {
         int char_len = utf8_char_len(bytes[i]);
         if (char_len <= 0) char_len = 1;
@@ -435,7 +436,7 @@ static int _octal_nibble(char **pos, char *end, int val, int n) {
 }
 
 static int _lit_str_nibble(char **pos, char *end, int *nesting) {
-    char ch = *(++(*pos));
+    unsigned char ch = *(++(*pos));
     switch (ch) {
     case '\\': {
         if (*pos >= end) return -1;
