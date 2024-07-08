@@ -396,7 +396,7 @@ static int _at_token(CosParserCtx* ctx, CosTk* tk, char* word) {
 }
 
 static int _at_uint(CosParserCtx* ctx, CosTk* tk) {
-    return tk->type == COS_TK_INT && ctx->buf[tk->pos] != '-';
+    return tk->type == COS_TK_INT && isdigit(ctx->buf[tk->pos]);
 }
 
 static int _get_token(CosParserCtx* ctx, char* word) {

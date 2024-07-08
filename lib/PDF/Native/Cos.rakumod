@@ -18,7 +18,7 @@ my $stream = q:to<--END-->;
     --END--
 
 my CosIndObj $ind-obj .= parse: "123 4 obj\n{$stream}endobj";
-say $ind-obj.Str;      # serialize
+say $ind-obj.write;    # serialize to PDF
 say $ind-obj.ast.raku; # mimic PDF::Grammar::COS.parse( $_ , :rule<ind-obj>);
 my CosInt $val .= parse: "42"; # simple object parse
 say $ind-obj.value.dict<Length>.cmp($val); # derefencing and comparision
@@ -27,9 +27,9 @@ say $ind-obj.value.dict<Length>.cmp($val); # derefencing and comparision
 
 =head2 Description
 
-This under development as a set of objects for the native construction and serialization of COS (PDF) objects.
+This is under development as a set of objects for the native construction and serialization of COS (PDF) objects.
 
-In particular, CosIndObj is intended as drop in replacement for L<PDF::IO::IndObj>.
+It utilized by L<PDF::IO::Reader> and L<PDF::IO::Writer> to provide faster reading and writing of PDF files.
 
 =end pod
 
@@ -457,7 +457,7 @@ class CosStream is repr('CStruct') is CosNode is export {
     method ast {
         my Pair $body = do with $!value {
             # stream attached
-            :encoded > .&to-blob($!u.value-len)
+            encoded => .&to-blob($!u.value-len)
         }
         else {
             # stream not attached

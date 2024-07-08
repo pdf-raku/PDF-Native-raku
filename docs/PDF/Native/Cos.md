@@ -19,7 +19,7 @@ my $stream = q:to<--END-->;
     --END--
 
 my CosIndObj $ind-obj .= parse: "123 4 obj\n{$stream}endobj";
-say $ind-obj.Str;      # serialize
+say $ind-obj.write;    # serialize to PDF
 say $ind-obj.ast.raku; # mimic PDF::Grammar::COS.parse( $_ , :rule<ind-obj>);
 my CosInt $val .= parse: "42"; # simple object parse
 say $ind-obj.value.dict<Length>.cmp($val); # derefencing and comparision
@@ -28,9 +28,9 @@ say $ind-obj.value.dict<Length>.cmp($val); # derefencing and comparision
 Description
 -----------
 
-This under development as a set of objects for the native construction and serialization of COS (PDF) objects.
+This is under development as a set of objects for the native construction and serialization of COS (PDF) objects.
 
-In particular, CosIndObj is intended as drop in replacement for [PDF::IO::IndObj](https://pdf-raku.github.io/PDF-raku).
+It utilized by [PDF::IO::Reader](https://pdf-raku.github.io/PDF-raku) and [PDF::IO::Writer](https://pdf-raku.github.io/PDF-raku) to provide faster reading and writing of PDF files.
 
 class PDF::Native::Cos::CosNode
 -------------------------------
