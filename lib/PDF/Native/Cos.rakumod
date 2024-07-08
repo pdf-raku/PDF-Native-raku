@@ -1,4 +1,4 @@
-# Data structures for PDF parsing and serialization
+# Data structures for native PDF parsing and serialization
 unit module PDF::Native::Cos;
 
 =begin pod
@@ -87,7 +87,6 @@ enum COS_CRYPT_MODE is export «
 
 my subset LatinStr of Str:D where !.contains(/<-[\x0..\xff \n]>/);
 our @ClassMap;
-constant lock = Lock.new;
 
 role CosType[$class, UInt:D $type] is export {
     @ClassMap[$type] = $class;
@@ -258,17 +257,20 @@ class CosIndObj is repr('CStruct') is CosNode is export {
         my blob8 $buf = $str.encode: "latin-1";
         self!cos_parse_ind_obj($buf, $buf.bytes);
     }
-    method write(::?CLASS:D: buf8 :$buf is copy = buf8.allocate(512)) handles<Str> {
-        my $n;
+    method write(::?CLASS:D: buf8 :$buf! is rw) {
         my $tries;
+        my $n;
         repeat {
             $n = self!cos_ind_obj_write($buf, $buf.bytes);
             last if ++$tries > 5;
             $buf = buf8.allocate(3 * $buf.bytes + 1)
                 unless $n;
         } until $n;
-        fail "Unable to write indirect object" unless $n;
+        fail "Unable to write indirect object $!obj-num $!gen-num R in {$buf.bytes} bytes" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
+    }
+    method Str(Blob :$buf is copy = buf8.allocate(512)) {
+        self.write: :$buf;
     }
     method ast { :ind-obj[ $!obj-num, $!gen-num, $.value.ast ] }
     multi method COERCE(@a where .elems >= 3) {
@@ -333,7 +335,7 @@ class CosName is repr('CStruct') is CosNode is export {
         $buf.subbuf(0,$n).decode;
     }
     method Str { (^$!value-len).map({$!value[$_].chr}).join }
-    method ast { name => self.Str }
+    method ast { :name(my $ = self.Str) }
     multi method COERCE(Str:D $str) {
         my CArray[uint32] $value .= new: $str.ords;
         self.new: :$value;
@@ -449,12 +451,13 @@ class CosStream is repr('CStruct') is CosNode is export {
         my $n = self!cos_stream_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
-    multi sub coerce-stream(Blob $_) { $_ }
+    multi sub coerce-stream(Blob:D $_) { $_ }
     multi sub coerce-stream(LatinStr:D $_) { .encode: "latin-1" }
+    multi sub coerce-stream(Any:U $_) { blob8 }
     method ast {
         my Pair $body = do with $!value {
             # stream attached
-            encoded => .&to-blob($!u.value-len)
+            :encoded > .&to-blob($!u.value-len)
         }
         else {
             # stream not attached
@@ -464,7 +467,7 @@ class CosStream is repr('CStruct') is CosNode is export {
     }
     multi method COERCE(%s) {
         my CosDict $dict .= COERCE(%s<dict> // {});
-        my $value := coerce-stream(%s<encoded> // '');
+        my $value := coerce-stream(%s<encoded>);
         self.new: :$dict, :$value;
     }
 }
@@ -554,7 +557,7 @@ class CosLiteralString is repr('CStruct') is _CosStringy is export {
     method new(blob8:D :$value!, UInt:D :$value-len = $value.elems) {
         self!cos_literal_new($value, $value-len);
     }
-    method ast { literal => self.Str }
+    method ast { :literal(my $ = self.Str) }
     method write(::?CLASS:D: buf8 :$buf = buf8.allocate(50)) {
         my $n = self!cos_literal_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
@@ -570,7 +573,7 @@ class CosHexString is repr('CStruct') is _CosStringy is export {
     method new(blob8:D :$value!, UInt:D :$value-len = $value.elems) {
         self!cos_hex_string_new($value, $value-len);
     }
-    method ast { hex-string => self.Str }
+    method ast { :hex-string(my $ = self.Str) }
     method write(::?CLASS:D: buf8 :$buf = buf8.allocate(50)) {
         my $n = self!cos_hex_string_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
