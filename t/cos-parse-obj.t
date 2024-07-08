@@ -3,7 +3,7 @@ use PDF::Native::Cos;
 use PDF::Native::Cos::Actions;
 use Test;
 
-plan 75;
+plan 78;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -81,10 +81,12 @@ given CosNode.parse('/Hello,#20World#21') {
     is .write, '/Hello,#20World!', 'parse name';
 }
 
-given CosNode.parse('/') {
-    .&isa-ok: CosName;
-    is .Str, '', 'parse empty name';
-    is .write, '/', 'parse empty name';
+for '', 'PTEX.Fullbanner' -> $s {
+    given CosNode.parse('/'~$s) {
+        .&isa-ok: CosName;
+        is .Str, $s, 'literal name parse ' ~ .raku;
+        is .write, '/' ~ $s;
+    }
 }
 given CosNode.parse('true') {
     .&isa-ok: CosBool;

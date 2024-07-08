@@ -36,7 +36,7 @@ static size_t _skip_ws(CosParserCtx* ctx) {
     int in_comment = 0;
 
     for (; ctx->buf_pos < ctx->buf_len; ctx->buf_pos++) {
-        char ch = ctx->buf[ctx->buf_pos];
+        unsigned char ch = ctx->buf[ctx->buf_pos];
         if (in_comment) {
             if (ch == '\n' || ch == '\r') in_comment = 0;
         }
@@ -73,11 +73,10 @@ static int _scan_new_line(CosParserCtx* ctx, int* dos_mode) {
 /* - returns opening delimiter for strings, arrays and dictionaries */
 static CosTk* _scan_tk(CosParserCtx* ctx) {
     CosTk* tk;
-    char ch = ' ';
-    char prev_ch = ' ';
+    unsigned char ch = ' ';
+    unsigned char prev_ch = ' ';
     int wb = 0;
-    int number = 0;
-    int digits = 0;
+    int got_digits = 0;
 
     assert(ctx->n_tk < 3);
 
@@ -93,7 +92,6 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
         tk->len++;
         switch (ch) {
         case '+': case '-':
-            number = 1;
             switch (tk->type) {
             case COS_TK_START:
                 tk->type = COS_TK_INT;
@@ -112,7 +110,6 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
             }
             break;
         case '.':
-            number = 1;
             switch (tk->type) {
             case COS_TK_START:
             case COS_TK_INT:
@@ -131,7 +128,7 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
             }
             break;
         case '0'...'9':
-            digits = 1;
+            got_digits = 1;
             switch (tk->type) {
             case COS_TK_START:
                 tk->type = COS_TK_INT;
@@ -210,7 +207,7 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
         tk->type = COS_TK_DONE;
     }
 
-    if (number && !digits) {
+    if ((tk->type == COS_TK_INT || tk->type == COS_TK_REAL) && !got_digits) {
         /* got just '+', '-', '.', but no actual digits */
         tk->type = COS_TK_WORD;
     }
