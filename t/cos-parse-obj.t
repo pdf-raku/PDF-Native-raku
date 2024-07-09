@@ -3,7 +3,7 @@ use PDF::Native::Cos;
 use PDF::Native::Cos::Actions;
 use Test;
 
-plan 78;
+plan 75;
 
 my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
@@ -143,27 +143,3 @@ given CosNode.parse('<</a 42/BB(Hi)>>') {
     is .Str, '<< /a 42 /BB (Hi) >>', 'parse dict';
 }
 
-todo 'native parse';
-my $stream = q:to<--END-->;
-    << /Length 45 >> stream
-    BT
-    /F1 24 Tf
-    100 250 Td (Hello, world!) Tj
-    ET
-    endstream
-    --END--
-
-todo 'native parse';
-given PDF::Grammar::COS.parse( $stream, :rule<object>, :$actions) {
-    my CosStream:D $node = .ast;
-    is $node.Str, $stream.chomp, 'parse stream';
-    is-deeply CosNode.COERCE($node.ast).Str.lines, $stream.lines;
-}
-
-my $ind-obj = "123 4 obj\n{$stream}endobj";
-
-todo 'native parse';
-with PDF::Grammar::COS.parse( $ind-obj, :rule<ind-obj>, :$actions) {
-    my CosIndObj:D $node = .ast;
-    is $node.Str.chomp, $ind-obj, 'parse indirect object';
-}

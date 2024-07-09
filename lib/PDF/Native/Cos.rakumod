@@ -29,7 +29,7 @@ say $ind-obj.value.dict<Length>.cmp($val); # derefencing and comparision
 
 This is under development as a set of objects for the native construction and serialization of COS (PDF) objects.
 
-It utilized by L<PDF::IO::Reader> and L<PDF::IO::Writer> to provide faster reading and writing of PDF files.
+It utilized by L<PDF::IO::Reader> and L<PDF::IO::Writer> to provide faster reading and writing of larger PDF files.
 
 =end pod
 
@@ -246,16 +246,16 @@ class CosIndObj is repr('CStruct') is CosNode is export {
     method !cos_ind_obj_new(uint64, uint32, CosNode --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_ind_obj_write(Blob, size_t --> size_t) is native(libpdf) {*}
     method !cos_ind_obj_crypt(CosCryptCtx:D) is native(libpdf) {*}
-    method !cos_parse_ind_obj(Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_parse_ind_obj(Blob, size_t, int32 --> ::?CLASS:D) is native(libpdf) {*}
     method crypt(CosCryptCtx:D :$crypt-ctx!) {
         self!cos_ind_obj_crypt($crypt-ctx);
     }
     method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0, CosNode:D :$value!) {
         self!cos_ind_obj_new($obj-num, $gen-num, $value);
     }
-    multi method parse(LatinStr:D $str) {
+    multi method parse(LatinStr:D $str, Bool :$scan = False) {
         my blob8 $buf = $str.encode: "latin-1";
-        self!cos_parse_ind_obj($buf, $buf.bytes);
+        self!cos_parse_ind_obj($buf, $buf.bytes, +$scan);
     }
     method write(::?CLASS:D: buf8 :$buf! is rw) {
         my $tries;
@@ -426,14 +426,9 @@ sub to-blob( CArray[uint8] $value, UInt:D $len ) {
 class CosStream is repr('CStruct') is CosNode is export {
     also does CosType[$?CLASS, COS_NODE_STREAM];
 
-    class SourceBuf is repr('CStruct') {
-        has uint32 $.pos;    # offset in indirect-object input buffer
-        has uint8  $.is-dos; # written in dos mode
-    }
-
     class ValueUnion is repr('CUnion') {
-        has size_t    $.value-len;  # value length, if data attached
-        HAS SourceBuf $.src-buf;    # source buffer details
+        has size_t  $.value-len;  # value length, if data attached
+        has size_t  $.value-pos;  # position in source buffer, otherwise
     }
 
     has CosDict          $.dict;
@@ -457,11 +452,11 @@ class CosStream is repr('CStruct') is CosNode is export {
     method ast {
         my Pair $body = do with $!value {
             # stream attached
-            encoded => .&to-blob($!u.value-len)
+            encoded => .&to-blob($!u.value-len).decode: "latin-1";
         }
         else {
             # stream not attached
-            start => $!u.src-buf.pos;
+            start => $!u.value-pos;
         };
         stream => %( $!dict.ast, $body );
     }

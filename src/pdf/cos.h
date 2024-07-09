@@ -117,11 +117,8 @@ typedef struct {
     CosDict*        dict;
     char*           value;
     union {
-        size_t      value_len;    /* value length */
-        struct {   /* source buffer info, when value is NULL (unfetched)  */
-            uint32_t    pos;    /* start position in buffer, otherwise */
-            uint8_t     is_dos; /* crlf mode detected */
-        } src_buf;
+        size_t      value_len; /* length of value when loaded */
+        size_t      value_pos; /* position in input buffer otherwise */
     };
 } CosStream;
 

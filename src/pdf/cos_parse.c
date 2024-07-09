@@ -1,3 +1,31 @@
+/*
+ * cos_parse.c:
+ *
+ * A small PDF object parser. It currently works within the scope of
+ * singular objects.
+ *
+ * The primary goal is efficent parsing of COS objects, once they have
+ * been identified and isolated by indexing or scanning a PDF file.
+ *
+ * There are two main functions:
+ *
+ * CosIndObj* cos_parse_ind_obj(CosNode*, char*, size_t, int)
+ *   - parse an indirect object, format: <uint> <uint> <object> <endobj>
+ *
+ * CosNode* cos_parse_obj(CosNode*, char *, size_t);
+ *   - parse an inner object, dictionary, arrays or other simple objects
+ *
+ * Note that a stream can only appear at the top-level of an indirect
+ * object and needs to be parsed via cos_parse_ind_obj().
+ *
+ * Todo:
+ * - Parsing of content streams.
+ * - A minimal parse is [<object>* <op>]* where <object> is a simple
+ *   object (no streams or indirect references) and <op> is a
+ *   terminating word.
+ *
+ */
+
 #include "pdf.h"
 #include "pdf/cos.h"
 #include "pdf/cos_parse.h"
@@ -692,7 +720,22 @@ static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n, char *stopper) {
     return objects;
 }
 
-DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_len) {
+static size_t _locate_endstream(CosParserCtx* ctx, size_t start, int dos_mode) {
+    size_t p;
+
+    for (p = ctx->buf_len - 10; p >= start; p--) {
+        if (strncmp("endstream", ctx->buf + p, 9) == 0) {
+            if (ctx->buf[p-1] == '\n' || ctx->buf[p-1] == '\r') {
+                if (ctx->buf[p-1] == '\n') p--;
+                if (dos_mode && ctx->buf[p-1] == '\r') p--;
+                return p;
+            }
+        }
+    }
+    return 0;
+}
+
+DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_len, CosParseMode mode) {
     CosTk tk1 = {COS_TK_START, 0, 0}, tk2 = {COS_TK_START, 0, 0}, tk3 = {COS_TK_START, 0, 0};
     CosParserCtx _ctx = { in_buf, in_len, 0, {&tk1, &tk2, &tk3}, 0};
     CosParserCtx* ctx = &_ctx;
@@ -713,9 +756,19 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_le
             CosDict* dict = (void*)object;
             int dos_mode;
             if ( _get_token(ctx, "stream") && _scan_new_line(ctx, &dos_mode)) {
-                CosStream* stream = cos_stream_new(NULL, dict, NULL, 0);
-                stream->src_buf.pos    = ctx->buf_pos;
-                stream->src_buf.is_dos = dos_mode;
+                size_t stream_start = ctx->buf_pos;
+                uint8_t *value = NULL;
+                size_t length = 0;
+                if (mode != COS_PARSE_NIBBLE) {
+                    /* Fetch stream data */
+                    size_t stream_end = _locate_endstream(ctx, stream_start, dos_mode);
+                    if (stream_end) {
+                        value = (uint8_t*) ctx->buf + stream_start;
+                        length = stream_end - stream_start;
+                    }
+                }
+                CosStream* stream = cos_stream_new(NULL, dict, value, length);
+                if (mode == COS_PARSE_NIBBLE) stream->value_pos = stream_start;
                 object = (void*) stream;
             }
         }
