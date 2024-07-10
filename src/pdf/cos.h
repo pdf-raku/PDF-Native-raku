@@ -25,6 +25,7 @@ typedef enum COS_NODE_TYPE {
 } CosNodeType;
 
 typedef enum {
+    COS_CMP_INVALID = -1,
     COS_CMP_EQUAL,
     COS_CMP_SIMILAR,
     COS_CMP_DIFFERENT,

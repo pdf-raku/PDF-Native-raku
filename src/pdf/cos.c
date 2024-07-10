@@ -23,8 +23,7 @@ DLLEXPORT void cos_node_done(CosNode* self) {
     }
     else if (self->ref_count == 0) {
         fprintf(stderr, __FILE__ ":%d node was not referenced: %p\n", __LINE__, (void*) self);
-    }
-    else if (--(self->ref_count) <= 0) {
+    }    else if (--(self->ref_count) <= 0) {
         switch (self->type) {
         case COS_NODE_BOOL:
         case COS_NODE_INT:
@@ -267,7 +266,11 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                     CosStream* a = (void*)self;
                     CosStream* b = (void*)obj;
                     int rv = COS_CMP_EQUAL;
-                    if (a->value_len != b->value_len || _cmp_chars(a->value, b->value, a->value_len)) {
+                    if (!a->value || !b->value) {
+                        /* streams not fully loaded */
+                        rv = COS_CMP_INVALID;
+                    }
+                    else if (a->value_len != b->value_len || _cmp_chars(a->value, b->value, a->value_len)) {
                         rv = COS_CMP_DIFFERENT;
                     }
                     else {
