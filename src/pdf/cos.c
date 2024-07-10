@@ -671,6 +671,15 @@ DLLEXPORT CosStream* cos_stream_new(CosDict* dict, unsigned char* value, size_t 
     return self;
 }
 
+DLLEXPORT int cos_stream_attach_data(CosStream* self, unsigned char* buf, size_t buf_len, size_t value_len) {
+    if (self->value) return -1;
+    if (self->value_pos + value_len > buf_len) return -1;
+    self->value = malloc(value_len);
+    memcpy(self->value, buf + self->value_pos, value_len);
+    self->value_len = value_len;
+    return 1;
+}
+
 DLLEXPORT size_t cos_stream_write(CosStream* self, char* out, size_t out_len) {
     size_t n = cos_dict_write(self->dict, out, out_len, 0);
     if (n == 0) return 0;

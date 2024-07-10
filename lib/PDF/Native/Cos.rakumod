@@ -253,8 +253,11 @@ class CosIndObj is repr('CStruct') is CosNode is export {
     method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0, CosNode:D :$value!) {
         cos_ind_obj_new($obj-num, $gen-num, $value);
     }
-    multi method parse(LatinStr:D $str, Bool :$scan = False) {
+    multi method parse(LatinStr:D $str, |c) {
         my blob8 $buf = $str.encode: "latin-1";
+        self.parse: $buf, |c;
+    }
+    multi method parse(Blob:D $buf, Bool :$scan = False) {
         self!cos_parse_ind_obj($buf, $buf.bytes, +$scan);
     }
     method write(::?CLASS:D: buf8 :$buf! is rw) {
@@ -436,6 +439,7 @@ class CosStream is repr('CStruct') is CosNode is export {
     HAS ValueUnion       $.u;
 
     our sub cos_stream_new(CosDict:D, Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_stream_attach_data(Blob, size_t, size_t --> int32) is native(libpdf) {*}
     method !cos_stream_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
     method new(CosDict:D :$dict!, Blob :$value, UInt:D :$value-len = $value ?? $value.bytes !! 0) {
@@ -445,6 +449,9 @@ class CosStream is repr('CStruct') is CosNode is export {
     method write(::?CLASS:D: buf8 :$buf = buf8.allocate(500)) handles<Str> {
         my $n = self!cos_stream_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
+    }
+    method attach-data(Blob:D $buf, UInt:D $len) {
+        self!cos_stream_attach_data($buf, $buf.bytes, $len);
     }
     multi sub coerce-stream(Blob:D $_) { $_ }
     multi sub coerce-stream(LatinStr:D $_) { .encode: "latin-1" }

@@ -220,7 +220,7 @@ DLLEXPORT CosNull* cos_null_new(void);
 DLLEXPORT size_t cos_null_write(CosNull* self, char*, size_t);
 
 DLLEXPORT CosStream* cos_stream_new(CosDict*, unsigned char*, size_t);
-
+DLLEXPORT int cos_stream_attach_data(CosStream*, unsigned char* , size_t, size_t);
 DLLEXPORT size_t cos_stream_write(CosStream*, char*, size_t);
 
 DLLEXPORT CosOp* cos_op_new(char*, CosNode**, size_t);
