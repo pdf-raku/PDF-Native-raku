@@ -233,57 +233,6 @@ class CosCryptCtx is repr('CStruct') is export {
     submethod DESTROY { self!cos_crypt_ctx_done() }
 }
 
-#| Indirect object
-class CosIndObj is repr('CStruct') is CosNode is export {
-    also does CosType[$?CLASS, COS_NODE_IND_OBJ];
-    has uint64  $.obj-num;
-    has uint32  $.gen-num;
-    has CosNode $.value;
-
-    method value { $!value.delegate }
-    #| Indirect objects the top of the tree and always fragments
-
-    our sub cos_ind_obj_new(uint64, uint32, CosNode --> ::?CLASS:D) is native(libpdf) {*}
-    method !cos_ind_obj_write(Blob, size_t --> size_t) is native(libpdf) {*}
-    method !cos_ind_obj_crypt(CosCryptCtx:D) is native(libpdf) {*}
-    method !cos_parse_ind_obj(Blob, size_t, int32 --> ::?CLASS:D) is native(libpdf) {*}
-    method crypt(CosCryptCtx:D :$crypt-ctx!) {
-        self!cos_ind_obj_crypt($crypt-ctx);
-    }
-    method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0, CosNode:D :$value!) {
-        cos_ind_obj_new($obj-num, $gen-num, $value);
-    }
-    multi method parse(LatinStr:D $str, |c) {
-        my blob8 $buf = $str.encode: "latin-1";
-        self.parse: $buf, |c;
-    }
-    multi method parse(Blob:D $buf, Bool :$scan = False) {
-        self!cos_parse_ind_obj($buf, $buf.bytes, +$scan);
-    }
-    method write(::?CLASS:D: buf8 :$buf! is rw) {
-        my $tries;
-        my $n;
-        repeat {
-            $n = self!cos_ind_obj_write($buf, $buf.bytes);
-            last if ++$tries > 5;
-            $buf = buf8.allocate(3 * $buf.bytes + 1)
-                unless $n;
-        } until $n;
-        fail "Unable to write indirect object $!obj-num $!gen-num R in {$buf.bytes} bytes" unless $n;
-        $buf.subbuf(0,$n).decode: "latin-1";
-    }
-    method Str(Blob :$buf is copy = buf8.allocate(512)) {
-        self.write: :$buf;
-    }
-    method ast { :ind-obj[ $!obj-num, $!gen-num, $.value.ast ] }
-    multi method COERCE(@a where .elems >= 3) {
-        my UInt:D $obj-num = @a[0];
-        my UInt:D $gen-num = @a[1];
-        my CosNode:D() $value = @a[2];
-        self.new: :$obj-num, :$gen-num, :$value;
-    }
-}
-
 #| Array object
 class CosArray is CosNode is repr('CStruct') is export {
     also does CosType[$?CLASS, COS_NODE_ARRAY];
@@ -436,7 +385,9 @@ class CosStream is repr('CStruct') is CosNode is export {
 
     has CosDict          $.dict;
     has CArray[uint8]    $.value;
-    HAS ValueUnion       $.u;
+    HAS ValueUnion       $!u;
+    method value-len { $!value.defined ?? $!u.value-len !! Int }
+    method value-pos { $!value.defined ?? Int !! $!u.value-pos }
 
     our sub cos_stream_new(CosDict:D, Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_stream_attach_data(Blob, size_t, size_t --> int32) is native(libpdf) {*}
@@ -446,7 +397,16 @@ class CosStream is repr('CStruct') is CosNode is export {
         cos_stream_new($dict, $value, $value-len);
     }
 
-    method write(::?CLASS:D: buf8 :$buf = buf8.allocate(500)) handles<Str> {
+    method presize-write-buf(buf8:D $buf is rw) {
+        # resize a writer buffer.
+        if $!value.defined && $buf.bytes < $!u.value-len {
+            # Buffer is definitely not big enough for stream data. Resize.
+            $buf = buf8.allocate($!u.value-len + 500);
+        }
+    }
+
+    method write(::?CLASS:D: buf8 :$buf is copy = buf8.allocate(500)) handles<Str> {
+        self.presize-write-buf($buf);
         my $n = self!cos_stream_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
@@ -471,6 +431,59 @@ class CosStream is repr('CStruct') is CosNode is export {
         my CosDict $dict .= COERCE(%s<dict> // {});
         my $value := coerce-stream(%s<encoded>);
         self.new: :$dict, :$value;
+    }
+}
+
+#| Indirect object
+class CosIndObj is repr('CStruct') is CosNode is export {
+    also does CosType[$?CLASS, COS_NODE_IND_OBJ];
+    has uint64  $.obj-num;
+    has uint32  $.gen-num;
+    has CosNode $.value;
+
+    method value { $!value.delegate }
+    #| Indirect objects the top of the tree and always fragments
+
+    our sub cos_ind_obj_new(uint64, uint32, CosNode --> ::?CLASS:D) is native(libpdf) {*}
+    method !cos_ind_obj_write(Blob, size_t --> size_t) is native(libpdf) {*}
+    method !cos_ind_obj_crypt(CosCryptCtx:D) is native(libpdf) {*}
+    method !cos_parse_ind_obj(Blob, size_t, int32 --> ::?CLASS:D) is native(libpdf) {*}
+    method crypt(CosCryptCtx:D :$crypt-ctx!) {
+        self!cos_ind_obj_crypt($crypt-ctx);
+    }
+    method new(UInt:D :$obj-num!, UInt:D :$gen-num = 0, CosNode:D :$value!) {
+        cos_ind_obj_new($obj-num, $gen-num, $value);
+    }
+    multi method parse(LatinStr:D $str, |c) {
+        my blob8 $buf = $str.encode: "latin-1";
+        self.parse: $buf, |c;
+    }
+    multi method parse(Blob:D $buf, Bool :$scan = False) {
+        self!cos_parse_ind_obj($buf, $buf.bytes, +$scan);
+    }
+    method write(::?CLASS:D: buf8 :$buf! is rw) {
+        my $tries;
+        my $n;
+        my $obj = self.value;
+        $obj.presize-write-buf($buf) if $obj.isa(CosStream);
+        repeat {
+            $n = self!cos_ind_obj_write($buf, $buf.bytes);
+            last if ++$tries > 3;
+            $buf = buf8.allocate(3 * $buf.bytes + 1)
+                unless $n;
+        } until $n;
+        fail "Unable to write indirect object $!obj-num $!gen-num R in {$buf.bytes} bytes" unless $n;
+        $buf.subbuf(0,$n).decode: "latin-1";
+    }
+    method Str(Blob :$buf is copy = buf8.allocate(512)) {
+        self.write: :$buf;
+    }
+    method ast { :ind-obj[ $!obj-num, $!gen-num, $.value.ast ] }
+    multi method COERCE(@a where .elems >= 3) {
+        my UInt:D $obj-num = @a[0];
+        my UInt:D $gen-num = @a[1];
+        my CosNode:D() $value = @a[2];
+        self.new: :$obj-num, :$gen-num, :$value;
     }
 }
 

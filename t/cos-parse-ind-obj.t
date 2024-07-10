@@ -40,12 +40,18 @@ subtest 'scan', {
 }
 
 subtest 'attach', {
-    my Blob $buf = $stream-obj.encode: "latin-1";
-    $ind-obj .= parse: $buf;
+    my Blob $in-buf = $stream-obj.encode: "latin-1";
+    $ind-obj .= parse: $in-buf;
     my CosStream:D $stream = $ind-obj.value;
     nok $stream.value.defined;
-    $stream.attach-data($buf, $stream.dict<Length>.Int);
-    is-deeply $ind-obj.Str.lines, $stream-obj.lines;
+    is $stream.value-pos, 34;
+    nok $stream.value-len.defined;
+    $stream.attach-data($in-buf, $stream.dict<Length>.Int);
+    nok $stream.value-pos.defined;
+    is $stream.value-len, $stream.dict<Length>.Int;
+    my buf8 $buf .= allocate(2);
+    is-deeply $ind-obj.write(:$buf).lines, $stream-obj.lines;
+    ok $buf.bytes >= $in-buf.bytes, 'write buffer resized';
 }
 
 subtest 'invalid indirect object syntax', {
@@ -64,6 +70,6 @@ $ind-obj .= parse: $str, :scan;
 ok $ind-obj.defined, 'binary stream parse';
 isa-ok $ind-obj.value, CosStream;
 ok $ind-obj.value.value.defined;
-is $ind-obj.value.dict<Length>, $ind-obj.value.u.value-len;
+is $ind-obj.value.dict<Length>, $ind-obj.value.value-len;
 
 done-testing;
