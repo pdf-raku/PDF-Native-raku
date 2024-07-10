@@ -16,6 +16,7 @@ for (
     (CosNode, %( X => [42] ), CosNode.parse('<</X [ 42 ] >>')),
     (CosNode, %( :dict{ :Length(42) }, :encoded("Hi There") ), "<< /Length 42 >> stream\nHi There\nendstream"),
     (CosRef, [42, 10], '42 10 R'),
+    (CosRef, [42, 10, 'junk'], '42 10 R'),
     (CosName, 'fred', '/fred'),
     (CosLiteralString, 'fred', '(fred)'),
     (CosHexString, 'fred', '<66726564>'),

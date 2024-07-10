@@ -201,7 +201,7 @@ class CosRef is repr('CStruct') is CosNode is export {
         $buf.subbuf(0,$n).decode: "latin-1";
     }
     method ast { :ind-ref[ $!obj-num, $!gen-num] }
-    multi method COERCE( @ [ UInt:D $obj-num, UInt:D $gen-num ] ) {
+    multi method COERCE( @ [ UInt:D $obj-num, UInt:D $gen-num, *@ ] ) {
         self.new: :$obj-num, :$gen-num;
     }
 }
