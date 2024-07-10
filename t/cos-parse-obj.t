@@ -1,11 +1,7 @@
-use PDF::Grammar::COS;
 use PDF::Native::Cos;
-use PDF::Native::Cos::Actions;
 use Test;
 
 plan 75;
-
-my PDF::Native::Cos::Actions:D $actions .= new: :lite;
 
 given CosNode.parse('123') {
     .&isa-ok: CosInt;

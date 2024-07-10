@@ -1,6 +1,4 @@
 use PDF::Native::Cos;
-use PDF::Grammar::COS;
-use PDF::Native::Cos::Actions;
 use NativeCall;
 use Test;
 
@@ -12,10 +10,8 @@ my List $lines = (
 'endobj'
 );
 
-my PDF::Native::Cos::Actions:D $actions .= new: :lite;
-
 sub ind-obj-parse(Str:D $str, :$rule) {
-    .ast given PDF::Grammar::COS.parse($str, :rule<ind-obj>, :$actions);
+    CosIndObj.parse: $str, :scan;
 }
 
 my CosIndObj $ind-obj = ind-obj-parse($lines.join: "\n");

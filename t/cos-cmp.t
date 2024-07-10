@@ -1,12 +1,12 @@
 use PDF::Native::Cos;
-use PDF::Grammar::COS;
-use PDF::Native::Cos::Actions;
 use Test;
 
-my PDF::Native::Cos::Actions:D $actions .= new: :lite;
+multi sub parse(Str:D $str, :$rule! where 'ind-obj') {
+    CosIndObj.parse($str, :scan);
+}
 
-sub parse(Str:D $str, :$rule = 'object') {
-    .ast given PDF::Grammar::COS.parse($str, :$rule, :$actions);
+multi sub parse(Str:D $str) {
+    CosNode.parse($str);
 }
 
 my CosInt:D $one = parse("1");
@@ -81,20 +81,23 @@ subtest 'indirect references', {
 }
 
 sub test-stream($entry, $data) {
-    qq:to<END>;
+    my CosIndObj $ind-obj = parse qq:to<END>, :rule<ind-obj>;
+    1 0 obj
     << /a $entry /Length {$data.chars} >>
     stream
     {$data}
     endstream
+    end obj
     END
+    $ind-obj.value;
 }
 
 subtest 'streams', {
-    is parse(test-stream(1, 'xxx')).cmp( parse(test-stream(1, 'xxx'))), +COS_CMP_EQUAL;
-    is parse(test-stream(1, 'xxx')).cmp( parse(test-stream(2, 'xxx'))), +COS_CMP_DIFFERENT;
-    is parse(test-stream(1, 'xxx')).cmp( parse(test-stream('1.0', 'xxx'))), +COS_CMP_SIMILAR;
-    is parse(test-stream(1, 'xxx')).cmp( parse(test-stream(1, 'xxy'))), +COS_CMP_DIFFERENT;
-    is parse(test-stream(1, 'xxx')).cmp( parse(test-stream(1, 'xxxx'))), +COS_CMP_DIFFERENT;
+    is test-stream(1, 'xxx').cmp( test-stream(1, 'xxx')), +COS_CMP_EQUAL;
+    is test-stream(1, 'xxx').cmp( test-stream(2, 'xxx')), +COS_CMP_DIFFERENT;
+    is test-stream(1, 'xxx').cmp( test-stream('1.0', 'xxx')), +COS_CMP_SIMILAR;
+    is test-stream(1, 'xxx').cmp( test-stream(1, 'xxy')), +COS_CMP_DIFFERENT;
+    is test-stream(1, 'xxx').cmp( test-stream(1, 'xxxx')), +COS_CMP_DIFFERENT;
 }
 
 subtest 'indirect objects', {

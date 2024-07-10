@@ -1,12 +1,8 @@
 use PDF::Native::Cos;
-use PDF::Grammar::COS;
-use PDF::Native::Cos::Actions;
 use Test;
 
-my PDF::Native::Cos::Actions:D $actions .= new: :lite;
-
-sub parse(Str:D $str, :$rule = 'object') {
-    .ast given PDF::Grammar::COS.parse($str, :$rule, :$actions);
+sub parse(Str:D $str) {
+    CosNode.parse: $str;
 }
 
 sub index(CosDict:D $dict) {

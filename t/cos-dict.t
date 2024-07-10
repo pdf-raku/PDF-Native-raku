@@ -1,16 +1,10 @@
 use PDF::Native::Cos;
-use PDF::Native::Defs :types;
-use PDF::Grammar::COS;
-use PDF::Native::Cos::Actions;
-use NativeCall;
 use Test;
 
 plan 15;
 
-my PDF::Native::Cos::Actions:D $actions .= new: :lite;
-
-sub parse(Str:D $str, :$rule = 'object') {
-    .ast given PDF::Grammar::COS.parse($str, :$rule, :$actions);
+sub parse(Str:D $str) {
+    CosNode.parse: $str;
 }
 
 my $str = '<< /foo 69 /bar 123 0 R /baz (42) /nullish null >>';
