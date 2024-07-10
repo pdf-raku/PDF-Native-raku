@@ -153,10 +153,10 @@ DLLEXPORT void cos_node_done(CosNode*);
 
 DLLEXPORT int cos_node_cmp(CosNode*, CosNode*);
 
-DLLEXPORT CosRef* cos_ref_new(CosRef*, uint64_t, uint32_t);
+DLLEXPORT CosRef* cos_ref_new(uint64_t, uint32_t);
 DLLEXPORT size_t cos_ref_write(CosRef*, char*, size_t);
 
-DLLEXPORT CosIndObj* cos_ind_obj_new(CosIndObj*, uint64_t, uint32_t, CosNode*);
+DLLEXPORT CosIndObj* cos_ind_obj_new(uint64_t, uint32_t, CosNode*);
 DLLEXPORT size_t cos_ind_obj_write(CosIndObj*, char*, size_t);
 
 typedef enum {
@@ -185,50 +185,50 @@ struct  _CosCryptNodeCtx {
 
 };
 
-DLLEXPORT CosCryptNodeCtx* cos_crypt_ctx_new(CosCryptNodeCtx*, CosCryptFunc, CosCryptMode, unsigned char*, int);
+DLLEXPORT CosCryptNodeCtx* cos_crypt_ctx_new(CosCryptFunc, CosCryptMode, unsigned char*, int);
 DLLEXPORT void cos_crypt_ctx_done(CosCryptNodeCtx*);
 
 DLLEXPORT void cos_ind_obj_crypt(CosIndObj*, CosCryptNodeCtx*);
 
-DLLEXPORT CosInt* cos_int_new(CosInt*, PDF_TYPE_INT);
+DLLEXPORT CosInt* cos_int_new(PDF_TYPE_INT);
 DLLEXPORT size_t cos_int_write(CosInt*, char*, size_t);
 
-DLLEXPORT CosBool* cos_bool_new(CosBool* self, PDF_TYPE_BOOL value);
+DLLEXPORT CosBool* cos_bool_new(PDF_TYPE_BOOL value);
 DLLEXPORT size_t cos_bool_write(CosBool* self, char* out, size_t out_len);
 
-DLLEXPORT CosReal* cos_real_new(CosReal* self, PDF_TYPE_REAL value);
+DLLEXPORT CosReal* cos_real_new(PDF_TYPE_REAL value);
 DLLEXPORT size_t cos_real_write(CosReal* self, char* out, size_t out_len);
 
-DLLEXPORT CosArray* cos_array_new(CosArray*, CosNode**, size_t);
+DLLEXPORT CosArray* cos_array_new(CosNode**, size_t);
 DLLEXPORT size_t cos_array_write(CosArray*, char*, size_t, int);
 
-DLLEXPORT CosDict* cos_dict_new(CosDict*, CosName**, CosNode**, size_t);
+DLLEXPORT CosDict* cos_dict_new(CosName**, CosNode**, size_t);
 DLLEXPORT size_t* cos_dict_build_index(CosDict*);
 DLLEXPORT CosNode* cos_dict_lookup(CosDict*, CosName*);
 DLLEXPORT size_t cos_dict_write(CosDict*, char*, size_t, int);
 
-DLLEXPORT CosName* cos_name_new(CosName*, PDF_TYPE_CODE_POINTS, uint16_t);
+DLLEXPORT CosName* cos_name_new(PDF_TYPE_CODE_POINTS, uint16_t);
 DLLEXPORT size_t cos_name_write(CosName*, char*, size_t);
 
-DLLEXPORT CosLiteralStr* cos_literal_new(CosLiteralStr*, PDF_TYPE_STRING, size_t);
+DLLEXPORT CosLiteralStr* cos_literal_new(PDF_TYPE_STRING, size_t);
 DLLEXPORT size_t cos_literal_write(CosLiteralStr*, char*, size_t);
 
-DLLEXPORT CosHexString* cos_hex_string_new(CosHexString*, PDF_TYPE_STRING, size_t);
+DLLEXPORT CosHexString* cos_hex_string_new(PDF_TYPE_STRING, size_t);
 DLLEXPORT size_t cos_hex_string_write(CosHexString*, char*, size_t);
 
-DLLEXPORT CosNull* cos_null_new(CosNull*);
+DLLEXPORT CosNull* cos_null_new(void);
 DLLEXPORT size_t cos_null_write(CosNull* self, char*, size_t);
 
-DLLEXPORT CosStream* cos_stream_new(CosStream*, CosDict*, unsigned char*, size_t);
+DLLEXPORT CosStream* cos_stream_new(CosDict*, unsigned char*, size_t);
 
 DLLEXPORT size_t cos_stream_write(CosStream*, char*, size_t);
 
-DLLEXPORT CosOp* cos_op_new(CosOp*, char*, CosNode**, size_t);
+DLLEXPORT CosOp* cos_op_new(char*, CosNode**, size_t);
 DLLEXPORT size_t cos_op_write(CosOp*, char*, size_t, int);
 
-DLLEXPORT CosContent* cos_content_new(CosContent*, CosOp**, size_t);
+DLLEXPORT CosContent* cos_content_new(CosOp**, size_t);
 DLLEXPORT size_t cos_content_write(CosContent*, char*, size_t);
 
-DLLEXPORT CosOpImageData* cos_op_image_data_new(CosOpImageData*, char*, size_t);
+DLLEXPORT CosOpImageData* cos_op_image_data_new(char*, size_t);
 
 #endif

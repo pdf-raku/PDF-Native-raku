@@ -363,7 +363,7 @@ static CosName* _read_name(CosParserCtx* ctx, CosTk* tk) {
         i += char_len;
     }
 
-    name = cos_name_new(NULL, codes, n_codes);
+    name = cos_name_new(codes, n_codes);
 
 bail:
     free(bytes);
@@ -519,7 +519,7 @@ static CosLiteralStr* _parse_lit_string(CosParserCtx* ctx) {
             bytes[n_bytes++] = byte;
         }
 
-        lit_string = cos_literal_new(NULL, bytes, n_bytes);
+        lit_string = cos_literal_new(bytes, n_bytes);
 
         free(bytes);
     }
@@ -556,7 +556,7 @@ static CosHexString* _parse_hex_string(CosParserCtx* ctx) {
             if (d1 < 0 || d2 < 0) goto bail;
             hex_bytes[n++] = d1 * 16  +  d2;
         }
-        hex_string = cos_hex_string_new(NULL, hex_bytes, n);
+        hex_string = cos_hex_string_new(hex_bytes, n);
     bail:
         free(hex_bytes);
         ctx->buf_pos = hex_end - ctx->buf + 1;
@@ -572,7 +572,7 @@ static CosArray* _parse_array(CosParserCtx* ctx) {
     CosArray* array = NULL;
     CosNode** objects = _parse_objects(ctx, &n, "]");
     if (n == 0 || objects[n-1] != NULL) {
-        array = cos_array_new(NULL, objects, n);
+        array = cos_array_new(objects, n);
     }
     _done_objects(objects, n);
     return array;
@@ -595,7 +595,7 @@ static CosDict* _parse_dict(CosParserCtx* ctx) {
         keys[i] = key;
         values[i] = objects[2*i + 1];
     }
-    dict = cos_dict_new(NULL, keys, values, elems);
+    dict = cos_dict_new(keys, values, elems);
 bail:
     _done_objects(objects, n);
     if (keys) free(keys);
@@ -615,12 +615,12 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
             /* indirect object <int> <int> R */
             uint64_t obj_num = _read_int(ctx, _shift(ctx));
             uint32_t gen_num = _read_int(ctx, _shift(ctx));
-            node = (CosNode*)cos_ref_new(NULL, obj_num, gen_num);
+            node = (CosNode*)cos_ref_new(obj_num, gen_num);
         }
         else {
             /* continue with simple integer */
             PDF_TYPE_INT val = _read_int(ctx, tk1);
-            node = (CosNode*)cos_int_new(NULL, val);
+            node = (CosNode*)cos_int_new(val);
         }
         break;
     case COS_TK_NAME:
@@ -628,21 +628,21 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
         break;
     case COS_TK_REAL:
         PDF_TYPE_REAL val = _read_real(ctx, tk1);
-        node = (CosNode*)cos_real_new(NULL, val);
+        node = (CosNode*)cos_real_new(val);
         break;
     case COS_TK_WORD:
         switch (tk1->len) {
         case 4:
             if (_at_token(ctx, tk1, "true")) {
-                node = (CosNode*)cos_bool_new(NULL, 1);
+                node = (CosNode*)cos_bool_new(1);
             }
             else if (_at_token(ctx, tk1, "null")) {
-                node = (CosNode*)cos_null_new(NULL);
+                node = (CosNode*)cos_null_new();
             }
             break;
         case 5:
             if (_at_token(ctx, tk1, "false")) {
-                node = (CosNode*)cos_bool_new(NULL, 0);
+                node = (CosNode*)cos_bool_new(0);
             }
             break;
         }
@@ -767,14 +767,14 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_le
                         length = stream_end - stream_start;
                     }
                 }
-                CosStream* stream = cos_stream_new(NULL, dict, value, length);
+                CosStream* stream = cos_stream_new(dict, value, length);
                 if (mode == COS_PARSE_NIBBLE) stream->value_pos = stream_start;
                 object = (void*) stream;
             }
         }
         if (object) {
             if (object->type == COS_NODE_STREAM || _get_token(ctx, "endobj")) {
-                ind_obj = cos_ind_obj_new(NULL, obj_num, gen_num, object);
+                ind_obj = cos_ind_obj_new(obj_num, gen_num, object);
             }
             else {
                 cos_node_done(object);
