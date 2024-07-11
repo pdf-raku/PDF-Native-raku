@@ -1,9 +1,9 @@
-use PDF::Native::Cos;
+use PDF::Native::COS;
 use Test;
 
 plan 11;
 
-my CosIndObj $ind-obj .= parse: "10 0 obj 42 endobj";
+my COSIndObj $ind-obj .= parse: "10 0 obj 42 endobj";
 ok $ind-obj.defined;
 
 is-deeply $ind-obj.Str.lines, ('10 0 obj', '42', 'endobj');
@@ -13,7 +13,7 @@ subtest 'indirect object parsing', {
         subtest "parse: " ~ .raku, {
             $ind-obj .= parse: $_;
             if ok($ind-obj.defined, 'parse') {
-                isa-ok $ind-obj.value, CosDict, 'value type';
+                isa-ok $ind-obj.value, COSDict, 'value type';
                 is $ind-obj.value<foo>[0].value, 42, 'dereferenced content';
                 is $ind-obj.Str.lines, ('10 0 obj', '<< /foo [ 42 ] >>', 'endobj'), '.Str';
             }
@@ -42,7 +42,7 @@ subtest 'scan', {
 subtest 'attach', {
     my Blob $in-buf = $stream-obj.encode: "latin-1";
     $ind-obj .= parse: $in-buf;
-    my CosStream:D $stream = $ind-obj.value;
+    my COSStream:D $stream = $ind-obj.value;
     nok $stream.value.defined;
     is $stream.value-pos, 34;
     nok $stream.value-len.defined;
@@ -57,7 +57,7 @@ subtest 'attach', {
 subtest 'invalid indirect object syntax', {
     for ('', ' ', 'x', '10 x', 'x 10', '10x', '10 0 obj 42', '10 0 obj 42 endobjx',
          '10 0 objx 42 endobj', '10 0 objx 42endobj', '10 0. obj 42 endobj', '-10 0 obj 42 endobj') {
-        is-deeply $ind-obj.parse($_), CosIndObj, "parse failure: " ~ .raku;
+        is-deeply $ind-obj.parse($_), COSIndObj, "parse failure: " ~ .raku;
     }
 }
 
@@ -68,7 +68,7 @@ ok $ind-obj.defined, 'binary dict parse';
 $str = "t/pdf/samples/ind-obj-stream.bin".IO.slurp(:bin).decode: "latin-1";
 $ind-obj .= parse: $str, :scan;
 ok $ind-obj.defined, 'binary stream parse';
-isa-ok $ind-obj.value, CosStream;
+isa-ok $ind-obj.value, COSStream;
 ok $ind-obj.value.value.defined;
 is $ind-obj.value.dict<Length>, $ind-obj.value.value-len;
 

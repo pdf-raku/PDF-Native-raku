@@ -1,9 +1,9 @@
-use PDF::Native::Cos;
+use PDF::Native::COS;
 use Test;
 
 plan 5;
 
-my CosRef $ref .= new: :obj-num(42);
+my COSRef $ref .= new: :obj-num(42);
 
 is $ref.type, +COS_NODE_REF;
 is $ref.ref-count, 1;

@@ -42,7 +42,7 @@ docs/%.md : lib/%.rakumod
 Pod-To-Markdown-installed :
 	@raku -M Pod::To::Markdown -c
 
-doc : $(DocLinker) Pod-To-Markdown-installed docs/index.md docs/PDF/Native.md docs/PDF/Native/Buf.md docs/PDF/Native/Filter/Predictors.md docs/PDF/Native/Reader.md docs/PDF/Native/Writer.md docs/PDF/Native/Cos.md
+doc : $(DocLinker) Pod-To-Markdown-installed docs/index.md docs/PDF/Native.md docs/PDF/Native/Buf.md docs/PDF/Native/Filter/Predictors.md docs/PDF/Native/Reader.md docs/PDF/Native/Writer.md docs/PDF/Native/COS.md
 
 docs/index.md : README.md
 	cp $< $@

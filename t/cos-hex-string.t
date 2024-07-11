@@ -1,9 +1,9 @@
-use PDF::Native::Cos;
+use PDF::Native::COS;
 use Test;
 
 plan 5;
 
-my CosHexString() $hex-string = 'Hello!';
+my COSHexString() $hex-string = 'Hello!';
 is $hex-string.ref-count, 1;
 
 is $hex-string.type, +COS_NODE_HEX_STR;

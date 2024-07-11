@@ -1,9 +1,9 @@
-use PDF::Native::Cos;
+use PDF::Native::COS;
 use Test;
 
 plan 7;
 
-my CosName() $name = 'Hello!';
+my COSName() $name = 'Hello!';
 is $name.ref-count, 1;
 
 is $name.type, +COS_NODE_NAME;

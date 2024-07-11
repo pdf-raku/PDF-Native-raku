@@ -1,11 +1,11 @@
-use PDF::Native::Cos;
+use PDF::Native::COS;
 use Test;
 
 sub parse(Str:D $str) {
-    CosNode.parse: $str;
+    COSNode.parse: $str;
 }
 
-sub index(CosDict:D $dict) {
+sub index(COSDict:D $dict) {
     $dict.build-index;
     $dict.index[^$dict.index-len];
 }

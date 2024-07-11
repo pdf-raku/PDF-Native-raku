@@ -1,7 +1,7 @@
 [[Raku PDF Project]](https://pdf-raku.github.io)
  / [[PDF-Native Module]](https://pdf-raku.github.io/PDF-Native-raku)
  / [PDF::Native](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native)
- :: [Cos](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/Cos)
+ :: [COS](https://pdf-raku.github.io/PDF-Native-raku/PDF/Native/COS)
 
 Synopsis
 --------
@@ -18,10 +18,10 @@ my $stream = q:to<--END-->;
     endstream
     --END--
 
-my CosIndObj $ind-obj .= parse: "123 4 obj\n{$stream}endobj";
+my COSIndObj $ind-obj .= parse: "123 4 obj\n{$stream}endobj";
 say $ind-obj.write;    # serialize to PDF
 say $ind-obj.ast.raku; # mimic PDF::Grammar::COS.parse( $_ , :rule<ind-obj>);
-my CosInt $val .= parse: "42"; # simple object parse
+my COSInt $val .= parse: "42"; # simple object parse
 say $ind-obj.value.dict<Length>.cmp($val); # derefencing and comparision
 ```
 
@@ -32,89 +32,89 @@ This is under development as a set of objects for the native construction and se
 
 It utilized by [PDF::IO::Reader](https://pdf-raku.github.io/PDF-raku) and [PDF::IO::Writer](https://pdf-raku.github.io/PDF-raku) to provide faster reading and writing of larger PDF files.
 
-class PDF::Native::Cos::CosNode
+class PDF::Native::COS::COSNode
 -------------------------------
 
-Generic Cos objects
+Generic COS objects
 
 ### multi method parse
 
 ```raku
 multi method parse(
     Str:D $str where { ... }
-) returns PDF::Native::Cos::CosNode
+) returns PDF::Native::COS::COSNode
 ```
 
 Parse a COS object
 
-class PDF::Native::Cos::CosRef
+class PDF::Native::COS::COSRef
 ------------------------------
 
 Indirect object reference
 
-class PDF::Native::Cos::CosCryptCtx
+class PDF::Native::COS::COSCryptCtx
 -----------------------------------
 
 An encryption context
 
-class PDF::Native::Cos::CosIndObj
----------------------------------
-
-Indirect object
-
-### method cos_ind_obj_new
-
-```raku
-method cos_ind_obj_new(
-    uint64 $,
-    uint32 $,
-    PDF::Native::Cos::CosNode $
-) returns PDF::Native::Cos::CosIndObj
-```
-
-Indirect objects the top of the tree and always fragments
-
-class PDF::Native::Cos::CosArray
+class PDF::Native::COS::COSArray
 --------------------------------
 
 Array object
 
-class PDF::Native::Cos::CosName
+class PDF::Native::COS::COSName
 -------------------------------
 
 Name object
 
-class PDF::Native::Cos::CosDict
+class PDF::Native::COS::COSDict
 -------------------------------
 
 Dictionary (hash) object
 
-class PDF::Native::Cos::CosStream
+class PDF::Native::COS::COSStream
 ---------------------------------
 
 Stream object
 
-class PDF::Native::Cos::CosBool
+class PDF::Native::COS::COSIndObj
+---------------------------------
+
+Indirect object
+
+### sub cos_ind_obj_new
+
+```raku
+sub cos_ind_obj_new(
+    uint64 $,
+    uint32 $,
+    PDF::Native::COS::COSNode $
+) returns PDF::Native::COS::COSIndObj
+```
+
+Indirect objects the top of the tree and always fragments
+
+class PDF::Native::COS::COSBool
 -------------------------------
 
 Boolean object
 
-class PDF::Native::Cos::CosInt
+class PDF::Native::COS::COSInt
 ------------------------------
 
 Integer object
 
-class PDF::Native::Cos::CosReal
+class PDF::Native::COS::COSReal
 -------------------------------
 
 Real object
 
-class PDF::Native::Cos::CosHexString
+class PDF::Native::COS::COSHexString
 ------------------------------------
 
 Hex string object
 
-class PDF::Native::Cos::CosNull
+class PDF::Native::COS::COSNull
 -------------------------------
 
 Null object
@@ -124,7 +124,7 @@ Null object
 ```raku
 method AT-POS(
     UInt:D(Any):D $idx
-) returns PDF::Native::Cos::CosNode
+) returns PDF::Native::COS::COSNode
 ```
 
 Indirect objects the top of the tree and always fragments
@@ -134,7 +134,7 @@ Indirect objects the top of the tree and always fragments
 ```raku
 method AT-POS(
     UInt:D(Any):D $idx
-) returns PDF::Native::Cos::CosNode
+) returns PDF::Native::COS::COSNode
 ```
 
 Indirect objects the top of the tree and always fragments

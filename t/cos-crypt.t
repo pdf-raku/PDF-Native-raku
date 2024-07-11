@@ -1,4 +1,4 @@
-use PDF::Native::Cos;
+use PDF::Native::COS;
 use NativeCall;
 use Test;
 
@@ -11,17 +11,17 @@ my List $lines = (
 );
 
 sub ind-obj-parse(Str:D $str, :$rule) {
-    CosIndObj.parse: $str, :scan;
+    COSIndObj.parse: $str, :scan;
 }
 
-my CosIndObj $ind-obj = ind-obj-parse($lines.join: "\n");
+my COSIndObj $ind-obj = ind-obj-parse($lines.join: "\n");
 is $ind-obj.Str.lines.join("\n"), $lines.join("\n");
-my CosReal $value6 = $ind-obj.value[5];
-my CosLiteralString $value7 = $ind-obj.value[6];
+my COSReal $value6 = $ind-obj.value[5];
+my COSLiteralString $value7 = $ind-obj.value[6];
 
 my Buf[uint8] $key .= new(193,67,83,175,223);
 
-sub crypt-func(CosCryptCtx $ctx, CArray[uint8] $buf, size_t $buf-len ) {
+sub crypt-func(COSCryptCtx $ctx, CArray[uint8] $buf, size_t $buf-len ) {
     is $ctx.obj-num, 42;
     is $ctx.gen-num, 3;
     is-deeply $ctx.key[^$ctx.key-len], $key.list;
@@ -29,7 +29,7 @@ sub crypt-func(CosCryptCtx $ctx, CArray[uint8] $buf, size_t $buf-len ) {
 }
 
 my $mode = COS_CRYPT_ONLY_STRINGS;
-my CosCryptCtx $crypt-ctx .= new: :$key, :&crypt-func, :$mode;
+my COSCryptCtx $crypt-ctx .= new: :$key, :&crypt-func, :$mode;
 
 $ind-obj.crypt(:$crypt-ctx);
 is $value6.Str, '1234.5';

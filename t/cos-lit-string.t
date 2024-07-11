@@ -1,9 +1,9 @@
-use PDF::Native::Cos;
+use PDF::Native::COS;
 use Test;
 
 plan 5;
 
-my CosLiteralString() $literal = 'Hello!';
+my COSLiteralString() $literal = 'Hello!';
 is $literal.ref-count, 1;
 
 is $literal.type, +COS_NODE_LIT_STR;

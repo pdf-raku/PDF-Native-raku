@@ -1,28 +1,28 @@
-use PDF::Native::Cos;
+use PDF::Native::COS;
 use Test;
 
 multi sub parse(Str:D $str, :$rule! where 'ind-obj') {
-    CosIndObj.parse($str, :scan);
+    COSIndObj.parse($str, :scan);
 }
 
 multi sub parse(Str:D $str) {
-    CosNode.parse($str);
+    COSNode.parse($str);
 }
 
-my CosInt:D $one = parse("1");
+my COSInt:D $one = parse("1");
 
 subtest 'basic', {
-    is CosNode.cmp(CosNode), +COS_CMP_EQUAL;
+    is COSNode.cmp(COSNode), +COS_CMP_EQUAL;
 
-    is CosNode.cmp($one), +COS_CMP_DIFFERENT_TYPE;
+    is COSNode.cmp($one), +COS_CMP_DIFFERENT_TYPE;
 
-    is $one.cmp(CosNode), +COS_CMP_DIFFERENT_TYPE;
+    is $one.cmp(COSNode), +COS_CMP_DIFFERENT_TYPE;
     is $one.cmp($one), +COS_CMP_EQUAL;
     is $one.cmp(parse("1")), +COS_CMP_EQUAL;
 }
 
 subtest 'numeric', {
-    my CosInt:D $two = parse("2");
+    my COSInt:D $two = parse("2");
 
     is $two.cmp(parse("2")), +COS_CMP_EQUAL;
     is $two.cmp(parse("2.0")), +COS_CMP_SIMILAR;
@@ -32,10 +32,10 @@ subtest 'numeric', {
 }
 
 subtest 'string', {
-    my CosLiteralString:D $lx = parse("(x)");
-    my CosLiteralString:D $ly = parse("(y)");
-    my CosHexString:D $hx .= new: :value('x'.encode: "latin-1");
-    my CosHexString:D $hy .= new: :value('y'.encode: "latin-1");
+    my COSLiteralString:D $lx = parse("(x)");
+    my COSLiteralString:D $ly = parse("(y)");
+    my COSHexString:D $hx .= new: :value('x'.encode: "latin-1");
+    my COSHexString:D $hy .= new: :value('y'.encode: "latin-1");
     is $lx.cmp( parse("(x)") ), +COS_CMP_EQUAL;
     is $lx.cmp($one), +COS_CMP_DIFFERENT_TYPE;
     is $lx.cmp($ly), +COS_CMP_DIFFERENT;
@@ -81,7 +81,7 @@ subtest 'indirect references', {
 }
 
 sub test-stream($entry, $data) {
-    my CosIndObj $ind-obj = parse qq:to<END>, :rule<ind-obj>;
+    my COSIndObj $ind-obj = parse qq:to<END>, :rule<ind-obj>;
     1 0 obj
     << /a $entry /Length {$data.chars} >>
     stream
