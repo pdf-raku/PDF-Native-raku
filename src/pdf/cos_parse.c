@@ -9,10 +9,10 @@
  *
  * There are two main functions:
  *
- * CosIndObj* cos_parse_ind_obj(CosNode*, char*, size_t, int)
+ * CosIndObj* cos_parse_ind_obj(char*, size_t, int)
  *   - parse an indirect object, format: <uint> <uint> <object> <endobj>
  *
- * CosNode* cos_parse_obj(CosNode*, char *, size_t);
+ * CosNode* cos_parse_obj(char *, size_t);
  *   - parse an inner object, dictionary, arrays or other simple objects
  *
  * Note that a stream can only appear at the top-level of an indirect
@@ -209,7 +209,7 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
                 /* misc character */
                 switch (tk->type) {
                 case COS_TK_NAME:
-                    if (ch < '!' ||ch > '~') tk->type = COS_TK_WORD;
+                    if (ch < '!' || ch > '~') tk->type = COS_TK_WORD;
                     break;
                 case COS_TK_INT:
                 case COS_TK_REAL:
@@ -254,7 +254,7 @@ static CosTk* _look_ahead(CosParserCtx* ctx, int n) {
     return ctx->tk[n - 1];
 }
 
-/* get current token and advance to next */
+/* get current token and advance one token */
 static CosTk* _shift(CosParserCtx* ctx) {
     CosTk* tk;
 
@@ -268,7 +268,7 @@ static CosTk* _shift(CosParserCtx* ctx) {
     return tk;
 }
 
-/* consume look-ahead buffer */
+/* consume entire look-ahead buffer */
 static void _advance(CosParserCtx* ctx) {
     ctx->n_tk = 0;
 }
@@ -279,6 +279,7 @@ static PDF_TYPE_INT _read_int(CosParserCtx* ctx, CosTk* tk) {
     int sign = 1;
 
     assert(tk->type == COS_TK_INT);
+
     switch (ctx->buf[tk->pos]) {
     case '-':
         sign = -1;
@@ -324,7 +325,7 @@ static CosName* _read_name(CosParserCtx* ctx, CosTk* tk) {
 
     /* 1st pass: collect bytes */
     for (n_bytes = 0; pos < end; pos++) {
-        char ch = *pos;
+        unsigned char ch = *pos;
 
         if (ch == '#') {
             if (pos+1 >= end) goto bail;
@@ -390,7 +391,9 @@ static PDF_TYPE_REAL _read_real(CosParserCtx* ctx, CosTk* tk) {
     char* p;
     int sign = 1;
 
-   switch (*buf) {
+    assert(tk->type == COS_TK_REAL);
+
+    switch (*buf) {
     case '-':
         sign = -1;
         buf++;
@@ -400,7 +403,6 @@ static PDF_TYPE_REAL _read_real(CosParserCtx* ctx, CosTk* tk) {
         break;
     }
 
-    assert(tk->type == COS_TK_REAL);
     if (!dp) dp = end;
 
     while (*end == '0' && end > dp) end--;
