@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 #define COS_CHECK(n) ((n)->type + 123)
 
@@ -562,7 +563,7 @@ DLLEXPORT CosRef* cos_ref_new(uint64_t obj_num, uint32_t gen_num) {
 }
 
 DLLEXPORT size_t cos_ref_write(CosRef* self, char* out, size_t out_len) {
-    return snprintf(out, out_len, "%ld %d R", self->obj_num, self->gen_num);
+    return snprintf(out, out_len, "%" PRId64 " %d R", self->obj_num, self->gen_num);
 }
 
 DLLEXPORT CosIndObj* cos_ind_obj_new(uint64_t obj_num, uint32_t gen_num, CosNode* value) {
@@ -580,7 +581,7 @@ DLLEXPORT CosIndObj* cos_ind_obj_new(uint64_t obj_num, uint32_t gen_num, CosNode
 DLLEXPORT size_t cos_ind_obj_write(CosIndObj* self, char* out, size_t out_len) {
     size_t n = 0;
     size_t m;
-    n = snprintf(out, out_len, "%ld %d obj\n", self->obj_num, self->gen_num);
+    n = snprintf(out, out_len, "%" PRId64 " %d obj\n", self->obj_num, self->gen_num);
     n += (m = _node_write(self->value, out+n, out_len-n, 0));
     if (m == 0 || n + 8 > out_len) return 0;
     n += _bufcat("\nendobj\n", out+n, out_len-n);
@@ -792,7 +793,7 @@ DLLEXPORT CosNull* cos_null_new(void) {
     return self;
 }
 
-DLLEXPORT size_t cos_null_write(CosNull* self, char* out, size_t out_len) {
+DLLEXPORT size_t cos_null_write(CosNull*, char* out, size_t out_len) {
     strncpy(out, "null", out_len);
     return strnlen(out, out_len);
 }

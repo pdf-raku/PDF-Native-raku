@@ -35,6 +35,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 typedef enum {
     COS_TK_START,
@@ -680,10 +681,10 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
         }
         break;
     case COS_TK_DONE:
-        fprintf(stderr, "ended at position %ld\n", ctx->buf_pos);
+        fprintf(stderr, "ended at position %" PRId64 "\n", ctx->buf_pos);
         break;
     default:
-        fprintf(stderr, "todo parse token type %d at position %ld\n", tk1->type, tk1->pos);
+        fprintf(stderr, "todo parse token type %d at position %" PRId64 "\n", tk1->type, tk1->pos);
         break;
     }
 
@@ -735,7 +736,7 @@ static size_t _locate_endstream(CosParserCtx* ctx, size_t start, int dos_mode) {
     return 0;
 }
 
-DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_len, CosParseMode mode) {
+DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode mode) {
     CosTk tk1 = {COS_TK_START, 0, 0}, tk2 = {COS_TK_START, 0, 0}, tk3 = {COS_TK_START, 0, 0};
     CosParserCtx _ctx = { in_buf, in_len, 0, {&tk1, &tk2, &tk3}, 0};
     CosParserCtx* ctx = &_ctx;
@@ -785,7 +786,7 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode* self, char* in_buf, size_t in_le
     return ind_obj;
 }
 
-DLLEXPORT CosNode* cos_parse_obj(CosNode* self, char *in_buf, size_t in_len) {
+DLLEXPORT CosNode* cos_parse_obj(char *in_buf, size_t in_len) {
     CosTk tk1 = {COS_TK_START, 0, 0}, tk2 = {COS_TK_START, 0, 0}, tk3 = {COS_TK_START, 0, 0};
     CosParserCtx ctx = { in_buf, in_len, 0, {&tk1, &tk2, &tk3}, 0};
     return _parse_object(&ctx);

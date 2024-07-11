@@ -113,12 +113,12 @@ class COSNode is repr('CStruct') is export {
     method !cos_node_reference() is native(libpdf) {*}
     method !cos_node_done() is native(libpdf) {*}
     method !cos_node_cmp(COSNode --> int32) is native(libpdf) {*}
-    method !cos_parse_obj(Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
+    our sub cos_parse_obj(Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
 
     #| Parse a COS object
     multi method parse(LatinStr:D $str --> COSNode) {
         my blob8 $buf = $str.encode: "latin-1";
-        with self!cos_parse_obj($buf, $buf.bytes) {
+        with cos_parse_obj($buf, $buf.bytes) {
             .delegate;
         }
         else {
@@ -447,7 +447,7 @@ class COSIndObj is repr('CStruct') is COSNode is export {
     our sub cos_ind_obj_new(uint64, uint32, COSNode --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_ind_obj_write(Blob, size_t --> size_t) is native(libpdf) {*}
     method !cos_ind_obj_crypt(COSCryptCtx:D) is native(libpdf) {*}
-    method !cos_parse_ind_obj(Blob, size_t, int32 --> ::?CLASS:D) is native(libpdf) {*}
+    our sub cos_parse_ind_obj(Blob, size_t, int32 --> ::?CLASS:D) is native(libpdf) {*}
     method crypt(COSCryptCtx:D :$crypt-ctx!) {
         self!cos_ind_obj_crypt($crypt-ctx);
     }
@@ -459,7 +459,7 @@ class COSIndObj is repr('CStruct') is COSNode is export {
         self.parse: $buf, |c;
     }
     multi method parse(Blob:D $buf, Bool :$scan = False) {
-        self!cos_parse_ind_obj($buf, $buf.bytes, +$scan);
+        cos_parse_ind_obj($buf, $buf.bytes, +$scan);
     }
     method write(::?CLASS:D: buf8 :$buf! is rw) {
         my $tries;

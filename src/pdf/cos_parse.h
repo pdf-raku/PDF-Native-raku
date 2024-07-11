@@ -7,7 +7,7 @@ typedef enum {
     COS_PARSE_REPAIR
 } CosParseMode;
 
-DLLEXPORT CosIndObj* cos_parse_ind_obj(CosNode*, char*, size_t, CosParseMode);
-DLLEXPORT CosNode* cos_parse_obj(CosNode*, char *, size_t);
+DLLEXPORT CosIndObj* cos_parse_ind_obj(char*, size_t, CosParseMode);
+DLLEXPORT CosNode* cos_parse_obj(char *, size_t);
 
 #endif

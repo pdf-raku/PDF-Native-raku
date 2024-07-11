@@ -55,7 +55,6 @@ realclean : clean
 depend: .depend
 
 .depend: $(SRCS)
-	rm -f ./.depend
 	%CC% -I .. %CCFLAGS% -MM $(SRCS) > ./.depend;
 
 include .depend
