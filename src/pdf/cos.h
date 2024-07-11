@@ -217,7 +217,7 @@ DLLEXPORT CosHexString* cos_hex_string_new(PDF_TYPE_STRING, size_t);
 DLLEXPORT size_t cos_hex_string_write(CosHexString*, char*, size_t);
 
 DLLEXPORT CosNull* cos_null_new(void);
-DLLEXPORT size_t cos_null_write(CosNull* self, char*, size_t);
+DLLEXPORT size_t cos_null_write(CosNull*, char*, size_t);
 
 DLLEXPORT CosStream* cos_stream_new(CosDict*, unsigned char*, size_t);
 DLLEXPORT int cos_stream_attach_data(CosStream*, unsigned char* , size_t, size_t);
