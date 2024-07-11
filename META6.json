@@ -6,9 +6,11 @@
   "build-depends": [
   ],
   "depends": [
-      "LibraryMake", "PDF::Grammar", "Method::Also"
+    "LibraryMake",
+    "PDF::Grammar",
+    "Method::Also"
   ],
-  "description": "Native drop-in routines for PDF",
+  "description": "Native drop-in native routines for PDF::IO",
   "license": "Artistic-2.0",
   "name": "PDF::Native",
   "perl": "6.c",
@@ -26,9 +28,10 @@
     "libraries/pdf"
   ],
   "source-url": "git://github.com/pdf-raku/PDF-Native-raku.git",
-  "tags": [ "pdf"
+  "tags": [
+    "pdf"
   ],
   "test-depends": [
   ],
-  "version": "0.0.5"
+  "version": "0.1.0"
 }

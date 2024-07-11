@@ -2,6 +2,10 @@ Revision history for PDF-Native
 
 {{$NEXT}}
 
+0.1.0  2024-07-12T07:56:01+12:00
+   - Introduce PDF::Native::COS as a set of objects with a parser and
+     serialization methods.
+
 0.0.5  2024-05-06T07:31:25+12:00
     - Fix printing of wide integers in pdf_write_int()
 

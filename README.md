@@ -9,7 +9,7 @@ This module provides a selection of native implementations of
 PDF parsing and functions.
 
 Just installing this module provides an increase in performance,
-which is most noticeable when read or writing larger PDF files.
+which is most noticeable when reading or writing larger PDF files.
 
 So far, the areas covered are:
 
