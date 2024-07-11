@@ -2,6 +2,9 @@ Revision history for PDF-Native
 
 {{$NEXT}}
 
+0.1.1  2024-07-12T08:26:39+12:00
+   - Remove disused PDF::Native::Parser"
+
 0.1.0  2024-07-12T07:56:01+12:00
    - Introduce PDF::Native::COS as a set of objects with a parser and
      serialization methods.
