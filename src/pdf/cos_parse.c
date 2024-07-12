@@ -118,7 +118,6 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
 
     for (; ctx->buf_pos < ctx->buf_len && !wb; ctx->buf_pos++) {
         ch = ctx->buf[ctx->buf_pos];
-        tk->len++;
         switch (ch) {
         case '+': case '-':
             switch (tk->type) {
@@ -185,7 +184,7 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
             if (tk->type == COS_TK_START) {
                 tk->type = COS_TK_DELIM;
             }
-            else if (!(tk->len == 2 && prev_ch == ch)) {
+            else if (!(tk->len == 1 && prev_ch == ch)) {
                 /* allow just '<<' and '>>' as 2 character delimiters */
                 wb = 1;
             }
@@ -226,19 +225,23 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
             }
             break;
         }
+        if (!wb) tk->len++;
         prev_ch = ch;
     }
 
-    if (wb) {
-        tk->len--;
-    }
-    else if (tk->type == COS_TK_START) {
+    switch (tk->type) {
+    case COS_TK_START:
+        /* must be at end of input */
         tk->type = COS_TK_DONE;
-    }
-
-    if ((tk->type == COS_TK_INT || tk->type == COS_TK_REAL) && !got_digits) {
-        /* got just '+', '-', '.', but no actual digits */
-        tk->type = COS_TK_WORD;
+        break;
+    case COS_TK_INT:
+    case COS_TK_REAL:
+        if (!got_digits) {
+            /* got just '+', '-', '.', but no actual digits */
+            tk->type = COS_TK_WORD;
+        }
+        break;
+    default:
     }
 
     ctx->buf_pos--;
@@ -357,7 +360,7 @@ static CosName* _read_name(CosParserCtx* ctx, CosTk* tk) {
 
     codes = malloc(n_codes * sizeof(PDF_TYPE_CODE_POINT));
 
-    /* 3rd pass: produce codes */
+    /* 3rd pass: assesemble codes */
     for (n_codes = 0, i = 0; i < n_bytes; n_codes++) {
         int char_len = utf8_char_len(bytes[i]);
         if (char_len <= 0) char_len = 1;
@@ -615,7 +618,7 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
     switch (tk1->type) {
     case COS_TK_INT:
         if (_at_uint(ctx, tk1) && _at_uint(ctx, _look_ahead(ctx, 2)) && _at_token(ctx, _look_ahead(ctx, 3), "R")) {
-            /* indirect object <int> <int> R */
+            /* indirect object <uint> <uint> R */
             uint64_t obj_num = _read_int(ctx, _shift(ctx));
             uint32_t gen_num = _read_int(ctx, _shift(ctx));
             node = (CosNode*)cos_ref_new(obj_num, gen_num);
@@ -696,24 +699,25 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
 }
 
 static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n, char *stopper) {
-    CosNode* object;
-    CosNode** objects;
-    size_t i = *n;
+    CosNode** objects = NULL;
     CosTk* tk = _look_ahead(ctx,1);
 
     if (_at_token(ctx, tk, stopper)) {
+        /* stopper reached */
         if (n) {
             objects = malloc(*n * sizeof(CosNode*));
             memset(objects, 0, *n * sizeof(CosNode*));
         }
     }
     else {
-        (*n)++;
-        object = _parse_object(ctx);
+        CosNode* object = _parse_object(ctx);
+        size_t i = (*n)++;
         if (object) {
+            /* success, continue parsing */
             objects = _parse_objects(ctx, n, stopper);
         }
         else {
+            /* failure, stop parsing */
             objects = malloc(*n * sizeof(CosNode*));
             memset(objects, 0, *n * sizeof(CosNode*));
         }
@@ -723,6 +727,10 @@ static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n, char *stopper) {
     return objects;
 }
 
+/* locate 'endstream' at the end of stream data, working from the end
+ * of the buffer backwards. Be careful to only consume \r, if the early 'stream'
+ * token was <cr><lf>, as the 'endstream' is proceeded by binary data.
+ */
 static size_t _locate_endstream(CosParserCtx* ctx, size_t start, int dos_mode) {
     size_t p;
 
@@ -747,7 +755,7 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
     _look_ahead(ctx, 3); /* load tokens: tk1, tk2, tk3 */
 
     if (_at_uint(ctx, &tk1) && _at_uint(ctx, &tk2) && _at_token(ctx, &tk3, "obj") ) {
-        /* valid indirect object header: <int> <int> obj */
+        /* indirect object header: <uint> <uint> obj */
         uint64_t obj_num = _read_int(ctx, &tk1);
         uint32_t gen_num = _read_int(ctx, &tk2);
         CosNode* object;

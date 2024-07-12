@@ -82,18 +82,6 @@ class PDF::Native::COS::COSIndObj
 
 Indirect object
 
-### sub cos_ind_obj_new
-
-```raku
-sub cos_ind_obj_new(
-    uint64 $,
-    uint32 $,
-    PDF::Native::COS::COSNode $
-) returns PDF::Native::COS::COSIndObj
-```
-
-Indirect objects the top of the tree and always fragments
-
 class PDF::Native::COS::COSBool
 -------------------------------
 
@@ -118,24 +106,4 @@ class PDF::Native::COS::COSNull
 -------------------------------
 
 Null object
-
-### method AT-POS
-
-```raku
-method AT-POS(
-    UInt:D(Any):D $idx
-) returns PDF::Native::COS::COSNode
-```
-
-Indirect objects the top of the tree and always fragments
-
-### method AT-POS
-
-```raku
-method AT-POS(
-    UInt:D(Any):D $idx
-) returns PDF::Native::COS::COSNode
-```
-
-Indirect objects the top of the tree and always fragments
 

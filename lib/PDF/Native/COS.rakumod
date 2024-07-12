@@ -440,14 +440,12 @@ class COSIndObj is repr('CStruct') is COSNode is export {
     has uint64  $.obj-num;
     has uint32  $.gen-num;
     has COSNode $.value;
-
     method value { $!value.delegate }
-    #| Indirect objects the top of the tree and always fragments
 
     our sub cos_ind_obj_new(uint64, uint32, COSNode --> ::?CLASS:D) is native(libpdf) {*}
+    our sub cos_parse_ind_obj(Blob, size_t, int32 --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_ind_obj_write(Blob, size_t --> size_t) is native(libpdf) {*}
     method !cos_ind_obj_crypt(COSCryptCtx:D) is native(libpdf) {*}
-    our sub cos_parse_ind_obj(Blob, size_t, int32 --> ::?CLASS:D) is native(libpdf) {*}
     method crypt(COSCryptCtx:D :$crypt-ctx!) {
         self!cos_ind_obj_crypt($crypt-ctx);
     }
@@ -618,18 +616,17 @@ class COSOp is repr('CStruct') is COSNode is export {
     has size_t $.elems;
     has CArray[COSNode] $.values;
     has Str $.opn;
-    #| Indirect objects the top of the tree and always fragments
-    method AT-POS(UInt:D() $idx --> COSNode) {
-        $idx < $!elems
-            ?? $!values[$idx].delegate
-            !! COSNode;
-    }
 
     our sub cos_op_new(Str, CArray[COSNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_op_write(Blob, size_t, int32 --> size_t) is native(libpdf) {*}
 
     method new(Str:D :$opn!, CArray[COSNode] :$values, UInt:D :$elems = $values ?? $values.elems !! 0) {
         cos_op_new($opn, $values, $elems);
+    }
+    method AT-POS(UInt:D() $idx --> COSNode) {
+        $idx < $!elems
+            ?? $!values[$idx].delegate
+            !! COSNode;
     }
     method write(::?CLASS:D: buf8 :$buf is copy = buf8.allocate(512), Int:D :$indent = 0) handles<Str> {
         my $n = self!cos_op_write($buf, $buf.bytes, $indent);
@@ -642,12 +639,6 @@ class COSContent is repr('CStruct') is COSNode is export {
     also does COSType[$?CLASS, COS_NODE_CONTENT];
     has size_t $.elems;
     has CArray[COSOp] $.values;
-    #| Indirect objects the top of the tree and always fragments
-    method AT-POS(UInt:D() $idx --> COSNode) {
-        $idx < $!elems
-            ?? $!values[$idx].delegate
-            !! COSNode;
-    }
 
     our sub cos_content_new(CArray[COSOp], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_content_write(Blob, size_t --> size_t) is native(libpdf) {*}
@@ -655,6 +646,13 @@ class COSContent is repr('CStruct') is COSNode is export {
     method new(CArray[COSOp] :$values!, UInt:D :$elems = $values.elems) {
         cos_content_new($values, $elems);
     }
+
+    method AT-POS(UInt:D() $idx --> COSNode) {
+        $idx < $!elems
+            ?? $!values[$idx].delegate
+            !! COSNode;
+    }
+
     method write(::?CLASS:D: buf8 :$buf is copy = buf8.allocate(512)) handles<Str> {
         my $n = self!cos_content_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
