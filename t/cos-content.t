@@ -2,7 +2,7 @@ use PDF::Native::COS;
 use NativeCall;
 use Test;
 
-plan 12;
+plan 13;
 
 my COSInt()  $value1  = 69;
 my COSName() $value2  = 'Hi There';
@@ -27,12 +27,13 @@ my COSOp $op2 .= new: :opn<ET>;
 my CArray[COSOp] $content-values .= new: $op1, $op, $op2;
 my COSContent $content .= new: :values($content-values);
 
-is-deeply $content.Str.lines, ('BT', '69 /Hi#20There true null 1234.5 Foo', 'ET');
+is-deeply $content.Str.lines, ('BT', '  69 /Hi#20There true null 1234.5 Foo', 'ET');
 
 $content .= parse: "BT /F1 24 Tf  100 250 Td (Hello, world!) Tj ET";
 ok $content.defined, "content parse";
 
-todo "indentation";
-is-deeply $content.write.lines, ('BT', ' /F1 24 Tf', '  100 250 Td', '  Td (Hello, world!)', 'ET');
+is-deeply $content.write.lines, ('BT', '  /F1 24 Tf', '  100 250 Td', '  (Hello, world!) Tj', 'ET');
+
+is-deeply $content.ast, 'content' => [ :BT[], :Tf[:name("F1"), 24], :Td[100, 250], :Tj[:literal("Hello, world!")], :ET[] ], 'ast';
 
 done-testing;

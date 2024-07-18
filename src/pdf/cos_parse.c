@@ -727,7 +727,7 @@ static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n, char *stopper) {
     return objects;
 }
 
-static int _looks_op_like(CosParserCtx* ctx, CosTk* tk) {
+static int _looks_like_an_op(CosParserCtx* ctx, CosTk* tk) {
 
     if (tk->type == COS_TK_WORD) {
         size_t i;
@@ -765,8 +765,8 @@ static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
 
     switch(tk->type) {
     case COS_TK_WORD:
-        _shift(ctx);
-        if (_looks_op_like(ctx, tk)) {
+        if (_looks_like_an_op(ctx, tk)) {
+            _shift(ctx);
             op = cos_op_new(ctx->buf + tk->pos, tk->len, NULL, *n);
         }
         break;
@@ -779,7 +779,6 @@ static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
         if (operand && _valid_operand_type(operand->type)) {
             /* success, continue parsing */
             op = _parse_content_op_parts(ctx, n);
-
         }
 
         if (op && operand) {
@@ -798,8 +797,9 @@ static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
 static CosOp* _parse_content_op(CosParserCtx* ctx) {
     size_t n = 0;
     CosOp* opn = _parse_content_op_parts(ctx, &n);
-    if (opn) cos_op_validate(opn);
-    /* todo consume 'ID' image data from content stream */
+    if (opn && opn->sub_type == COS_OP_ImageData) {
+        /* todo consume 'ID' image data from content stream */
+    }
     return opn;
 }
 

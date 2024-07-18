@@ -630,7 +630,10 @@ class COSOp is repr('CStruct') is COSNode is export {
         my $n = self!cos_op_write($buf, $buf.bytes, $indent);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
-    method ast { $!opn => [ (^$!elems).map: { $!values[$_].delegate.ast } ] }
+    method ast {
+        my $ast := $!opn => [ (^$!elems).map: { $!values[$_].delegate.ast } ];
+        $!sub-type ?? $ast !! ('??' => $ast);
+    }
 }
 
 class COSContent is repr('CStruct') is COSNode is export {
