@@ -1039,17 +1039,7 @@ DLLEXPORT size_t cos_content_write(CosContent* self, char* out, size_t out_len) 
     for (i=0; i < self->elems; i++) {
         if (n >= out_len) return 0;
         CosOp* op = self->values[i];
-        switch (op->sub_type) {
-        case COS_OP_Restore:
-        case COS_OP_EndText:
-        case COS_OP_EndExtended:
-        case COS_OP_EndMarkedContent:
-            if (indent > 1) indent -= 2;
-            break;
-        default:
-        }
-
-        n += (m = cos_op_write(op, out+n, out_len - n, indent));
+        int ch;
 
         switch (op->sub_type) {
         case COS_OP_Save:
@@ -1057,10 +1047,21 @@ DLLEXPORT size_t cos_content_write(CosContent* self, char* out, size_t out_len) 
         case COS_OP_BeginExtended:
         case COS_OP_BeginMarkedContent:
         case COS_OP_BeginMarkedContentDict:
-            indent += 2;
+            ch = 1;
+            break;
+        case COS_OP_Restore:
+        case COS_OP_EndText:
+        case COS_OP_EndExtended:
+        case COS_OP_EndMarkedContent:
+            ch = -1;
             break;
         default:
+            ch = 0;
         }
+
+        if (ch < 0 && indent > 1) indent -= 2;
+        n += (m = cos_op_write(op, out+n, out_len - n, indent));
+        if (ch > 0) indent += 2;
 
         if (m == 0 || n >= out_len) return 0;
         out[n++] = '\n';
