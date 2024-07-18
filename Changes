@@ -1,6 +1,8 @@
 Revision history for PDF-Native
 
 {{$NEXT}}
+
+0.1.2  2024-07-19T09:33:05+12:00
    - Add COSContent for content stream parsing and serialization
 
 0.1.1  2024-07-12T08:26:39+12:00
