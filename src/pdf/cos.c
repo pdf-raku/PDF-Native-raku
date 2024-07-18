@@ -800,7 +800,7 @@ DLLEXPORT size_t cos_null_write(CosNull*, char* out, size_t out_len) {
     return strnlen(out, out_len);
 }
 
-static void _op_validate(CosOp* self) {
+static void _op_validate(CosOp*) {
     /* todo validate operands */
 }
 
@@ -962,17 +962,15 @@ static CosOpCode _find_op_code(char *opn) {
     return oc;
 }
 
-static void _validate_op(CosOp* self) {
-    /* todo */
-}
-
 DLLEXPORT CosOp* cos_op_new(char* opn, int opn_len, CosNode** values, size_t elems) {
     size_t i;
     CosOp* self = malloc(sizeof(CosOp));
     self->type = COS_NODE_OP;
     self->check = COS_CHECK(self);
     self->ref_count = 1;
-    self->opn = strndup(opn, opn_len);
+    self->opn = malloc(opn_len + 1);
+    strncpy(self->opn, opn, opn_len);
+    self->opn[opn_len] = 0;
     self->sub_type = _find_op_code(self->opn);
     self->elems = elems;
     self->values = malloc(sizeof(CosNode*) * elems);
