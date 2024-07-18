@@ -116,7 +116,8 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
     tk->pos  = ctx->buf_pos;
     tk->len  = 0;
 
-    for (; ctx->buf_pos < ctx->buf_len && !wb; ctx->buf_pos++) {
+    for (; ctx->buf_pos <= ctx->buf_len && !wb; ctx->buf_pos++) {
+        if (ctx->buf_pos >= ctx->buf_len) { wb = 1; continue; }
         ch = ctx->buf[ctx->buf_pos];
         switch (ch) {
         case '+': case '-':
@@ -223,7 +224,6 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
                     break;
                 }
             }
-            break;
         }
         if (!wb) tk->len++;
         prev_ch = ch;
@@ -700,7 +700,7 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
 
 static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n, char *stopper) {
     CosNode** objects = NULL;
-    CosTk* tk = _look_ahead(ctx,1);
+    CosTk* tk = _look_ahead(ctx, 1);
 
     if (_at_token(ctx, tk, stopper)) {
         /* stopper reached */
@@ -725,6 +725,107 @@ static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n, char *stopper) {
     }
 
     return objects;
+}
+
+static int _looks_op_like(CosParserCtx* ctx, CosTk* tk) {
+
+    if (tk->type == COS_TK_WORD) {
+        size_t i;
+
+        for (i = 0; i < tk->len; i++) {
+            unsigned char ch = ctx->buf[tk->pos + i];
+            if (ch <= '!' || ch > '~') return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int _valid_operand_type(CosNodeType type) {
+    switch (type) {
+    case  COS_NODE_ARRAY:
+    case  COS_NODE_BOOL:
+    case  COS_NODE_DICT:
+    case  COS_NODE_INT:
+    case  COS_NODE_HEX_STR:
+    case  COS_NODE_LIT_STR:
+    case  COS_NODE_NAME:
+    case  COS_NODE_NULL:
+    case  COS_NODE_REAL:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/* parse one operation, including operands, from a content stream */
+static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
+    CosOp* op = NULL;
+    CosTk* tk = _look_ahead(ctx, 1);
+
+    switch(tk->type) {
+    case COS_TK_WORD:
+        _shift(ctx);
+        if (_looks_op_like(ctx, tk)) {
+            op = cos_op_new(ctx->buf + tk->pos, tk->len, NULL, *n);
+        }
+        break;
+    case COS_TK_DONE:
+        break;
+    default:
+        CosNode* operand = _parse_object(ctx);
+        size_t i = (*n)++;
+
+        if (operand && _valid_operand_type(operand->type)) {
+            /* success, continue parsing */
+            op = _parse_content_op_parts(ctx, n);
+
+        }
+
+        if (op && operand) {
+            op->values[i] = operand;
+        }
+        else {
+            cos_node_done(operand);
+            cos_node_done((CosNode*)op);
+            op = NULL;
+        }
+    }
+
+    return op;
+}
+
+static CosOp* _parse_content_op(CosParserCtx* ctx) {
+    size_t n = 0;
+    CosOp* opn = _parse_content_op_parts(ctx, &n);
+    if (opn) cos_op_validate(opn);
+    /* todo consume 'ID' image data from content stream */
+    return opn;
+}
+
+/* parse content as a series of operations */
+static CosContent* _parse_content(CosParserCtx* ctx, size_t* n) {
+    CosContent* content = NULL;
+    CosTk* tk = _look_ahead(ctx, 1);
+    if (tk->type == COS_TK_DONE) {
+        content = cos_content_new(NULL, *n);
+    }
+    else {
+        CosOp* opn = _parse_content_op(ctx);
+        if (opn) {
+            size_t i = (*n)++;
+            /* success, continue parsing */
+            content = _parse_content(ctx, n);
+            if (content) {
+                content->values[i] = opn;
+            }
+            else {
+                cos_node_done((CosNode*)opn);
+            }
+        }
+    }
+
+    return content;
 }
 
 /* locate 'endstream' at the end of stream data, working from the end
@@ -800,4 +901,11 @@ DLLEXPORT CosNode* cos_parse_obj(char *in_buf, size_t in_len) {
     CosTk tk1 = {COS_TK_START, 0, 0}, tk2 = {COS_TK_START, 0, 0}, tk3 = {COS_TK_START, 0, 0};
     CosParserCtx ctx = { in_buf, in_len, 0, {&tk1, &tk2, &tk3}, 0};
     return _parse_object(&ctx);
+}
+
+DLLEXPORT CosContent* cos_parse_content(char *in_buf, size_t in_len) {
+    CosTk tk1 = {COS_TK_START, 0, 0}, tk2 = {COS_TK_START, 0, 0}, tk3 = {COS_TK_START, 0, 0};
+    CosParserCtx ctx = { in_buf, in_len, 0, {&tk1, &tk2, &tk3}, 0};
+    size_t n = 0;
+    return _parse_content(&ctx, &n);
 }

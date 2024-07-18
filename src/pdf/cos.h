@@ -32,6 +32,37 @@ typedef enum {
     COS_CMP_DIFFERENT_TYPE
 } CosCmpResult;
 
+typedef enum {
+    COS_OP_Extended, /* Possibly valid in BX .. EX block */
+    COS_OP_BeginImage, COS_OP_ImageData, COS_OP_EndImage,
+    COS_OP_BeginMarkedContent, COS_OP_BeginMarkedContentDict,
+    COS_OP_EndMarkedContent, COS_OP_BeginText, COS_OP_EndText,
+    COS_OP_BeginExtended, COS_OP_EndExtended,
+    COS_OP_CloseEOFillStroke, COS_OP_CloseFillStroke,
+    COS_OP_EOFillStroke, COS_OP_FillStroke, COS_OP_CurveTo,
+    COS_OP_ConcatMatrix, COS_OP_SetFillColorSpace,
+    COS_OP_SetStrokeColorSpace, COS_OP_SetDashPattern,
+    COS_OP_SetCharWidth, COS_OP_SetCharWidthBBox, COS_OP_XObject,
+    COS_OP_MarkPointDict, COS_OP_EOFill, COS_OP_Fill,
+    COS_OP_FillObsolete, COS_OP_SetStrokeGray, COS_OP_SetFillGray,
+    COS_OP_SetGraphicsState, COS_OP_ClosePath, COS_OP_SetFlatness,
+    COS_OP_SetLineJoin, COS_OP_SetLineCap, COS_OP_SetFillCMYK,
+    COS_OP_SetStrokeCMYK, COS_OP_LineTo, COS_OP_MoveTo,
+    COS_OP_SetMiterLimit, COS_OP_MarkPoint, COS_OP_EndPath,
+    COS_OP_Save, COS_OP_Restore, COS_OP_Rectangle, COS_OP_SetFillRGB,
+    COS_OP_SetStrokeRGB, COS_OP_SetRenderingIntent,
+    COS_OP_CloseStroke, COS_OP_Stroke, COS_OP_SetStrokeColor,
+    COS_OP_SetFillColor, COS_OP_SetFillColorN, COS_OP_SetStrokeColorN,
+    COS_OP_ShFill, COS_OP_TextNextLine, COS_OP_SetCharSpacing,
+    COS_OP_TextMove, COS_OP_TextMoveSet, COS_OP_SetFont,
+    COS_OP_ShowText, COS_OP_ShowSpaceText, COS_OP_SetTextLeading,
+    COS_OP_SetTextMatrix, COS_OP_SetTextRender, COS_OP_SetTextRise,
+    COS_OP_SetWordSpacing, COS_OP_SetHorizScaling,
+    COS_OP_CurveToInitial, COS_OP_EOClip, COS_OP_Clip,
+    COS_OP_SetLineWidth, COS_OP_CurveToFinal, COS_OP_MoveSetShowText,
+    COS_OP_MoveShowText
+} CosOpCode;
+
 typedef struct CosBlankNode {
     uint8_t         type;
     uint8_t         check;
@@ -130,6 +161,7 @@ typedef struct {
     size_t          elems;
     CosNode**       values;
     char*           opn;
+    CosOpCode       sub_type;
 } CosOp;
 
 typedef struct {
@@ -223,7 +255,8 @@ DLLEXPORT CosStream* cos_stream_new(CosDict*, unsigned char*, size_t);
 DLLEXPORT int cos_stream_attach_data(CosStream*, unsigned char* , size_t, size_t);
 DLLEXPORT size_t cos_stream_write(CosStream*, char*, size_t);
 
-DLLEXPORT CosOp* cos_op_new(char*, CosNode**, size_t);
+DLLEXPORT CosOp* cos_op_new(char*, int, CosNode**, size_t);
+DLLEXPORT void cos_op_validate(CosOp*);
 DLLEXPORT size_t cos_op_write(CosOp*, char*, size_t, int);
 
 DLLEXPORT CosContent* cos_content_new(CosOp**, size_t);

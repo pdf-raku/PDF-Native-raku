@@ -799,20 +799,29 @@ DLLEXPORT size_t cos_null_write(CosNull*, char* out, size_t out_len) {
     return strnlen(out, out_len);
 }
 
-DLLEXPORT CosOp* cos_op_new(char* opn, CosNode** values, size_t elems) {
+DLLEXPORT CosOp* cos_op_new(char* opn, int opn_len, CosNode** values, size_t elems) {
     size_t i;
     CosOp* self = malloc(sizeof(CosOp));
     self->type = COS_NODE_OP;
     self->check = COS_CHECK(self);
     self->ref_count = 1;
-    self->opn = strdup(opn);
+    self->opn = strndup(opn, opn_len);
     self->elems = elems;
     self->values = malloc(sizeof(CosNode*) * elems);
-    for (i=0; i < elems; i++) {
-        self->values[i] = values[i];
-        cos_node_reference(values[i]);
+    if (values) {
+        for (i=0; i < elems; i++) {
+            self->values[i] = values[i];
+            cos_node_reference(values[i]);
+        }
+    }
+    else {
+        memset(self->values, 0, elems * sizeof(CosNode*));
     }
     return self;
+}
+
+DLLEXPORT void cos_op_validate(CosOp* self) {
+    /* todo validate and classify the operation */
 }
 
 DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent) {
@@ -846,10 +855,16 @@ DLLEXPORT CosContent* cos_content_new(CosOp** values, size_t elems) {
     self->ref_count = 1;
     self->elems = elems;
     self->values = malloc(sizeof(CosOp*) * elems);
-    for (i=0; i < elems; i++) {
-        self->values[i] = values[i];
-        cos_node_reference((CosNode*)values[i]);
+    if (values) {
+        for (i=0; i < elems; i++) {
+            self->values[i] = values[i];
+            cos_node_reference((CosNode*)values[i]);
+        }
     }
+    else {
+        memset(self->values, 0, elems * sizeof(CosNode*));
+    }
+
     return self;
 }
 

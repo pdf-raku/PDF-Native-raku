@@ -96,12 +96,8 @@ role COSType[$class, UInt:D $type] is export {
         self.done();
     }
 
-    method delegate {
-        fail "expected node of type $type, got {self.type}"
-            unless self.type == $type;
+    method delegate { ... }
 
-        self;
-    }
 }
 
 #| Generic COS objects
@@ -118,12 +114,7 @@ class COSNode is repr('CStruct') is export {
     #| Parse a COS object
     multi method parse(LatinStr:D $str --> COSNode) {
         my blob8 $buf = $str.encode: "latin-1";
-        with cos_parse_obj($buf, $buf.bytes) {
-            .delegate;
-        }
-        else {
-            $_;
-        }
+        cos_parse_obj($buf, $buf.bytes).delegate;
     }
 
     method reference {
@@ -136,9 +127,15 @@ class COSNode is repr('CStruct') is export {
     }
 
     method delegate {
-        my $class := @ClassMap[$!type];
-        nativecast($class, self).reference;
+        with self {
+            my $class := @ClassMap[$!type];
+            nativecast($class, $_).reference;
+        }
+        else {
+            self;
+        }
     }
+
     method cast(Pointer:D $p) {
         my $type := nativecast(COSNode, $p).type;
         my $class := @ClassMap[$type];
@@ -616,12 +613,13 @@ class COSOp is repr('CStruct') is COSNode is export {
     has size_t $.elems;
     has CArray[COSNode] $.values;
     has Str $.opn;
+    has int32 $.sub-type;
 
-    our sub cos_op_new(Str, CArray[COSNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
+    our sub cos_op_new(Str, int32, CArray[COSNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_op_write(Blob, size_t, int32 --> size_t) is native(libpdf) {*}
 
     method new(Str:D :$opn!, CArray[COSNode] :$values, UInt:D :$elems = $values ?? $values.elems !! 0) {
-        cos_op_new($opn, $values, $elems);
+        cos_op_new($opn, $opn.codes, $values, $elems);
     }
     method AT-POS(UInt:D() $idx --> COSNode) {
         $idx < $!elems
@@ -641,12 +639,17 @@ class COSContent is repr('CStruct') is COSNode is export {
     has CArray[COSOp] $.values;
 
     our sub cos_content_new(CArray[COSOp], size_t --> ::?CLASS:D) is native(libpdf) {*}
+    our sub cos_parse_content(Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_content_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
     method new(CArray[COSOp] :$values!, UInt:D :$elems = $values.elems) {
         cos_content_new($values, $elems);
     }
 
+    multi method parse(LatinStr:D $str --> COSNode) {
+        my blob8 $buf = $str.encode: "latin-1";
+        cos_parse_content($buf, $buf.bytes);
+    }
     method AT-POS(UInt:D() $idx --> COSNode) {
         $idx < $!elems
             ?? $!values[$idx].delegate
