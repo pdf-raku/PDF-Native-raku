@@ -1,6 +1,7 @@
 Revision history for PDF-Native
 
 {{$NEXT}}
+   - Add COSContent for content stream parsing and serialization
 
 0.1.1  2024-07-12T08:26:39+12:00
    - Remove disused PDF::Native::Parser"
