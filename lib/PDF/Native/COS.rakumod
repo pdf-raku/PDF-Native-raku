@@ -667,3 +667,22 @@ class COSContent is repr('CStruct') is COSNode is export {
         :content[ (^$!elems).map: { $!values[$_].delegate.ast } ]
     }
 }
+
+#| Integer object
+class COSOpImageData is repr('CStruct') is COSNode is export {
+    also does COSType[$?CLASS, COS_NODE_OP_IMAGE_DATA];
+    has CArray[uint8] $.value;
+    has size_t $.value-len;
+
+    method !cos_op_image_data_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(|) {
+        fail
+    }
+    method write(::?CLASS:D: buf8 :$buf = buf8.allocate($!value-len+1)) handles<Str> {
+        my $n = self!cos_op_image_data_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
+    method ast { encoded => self.write }
+}
+

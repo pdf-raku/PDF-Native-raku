@@ -61,6 +61,8 @@ typedef struct {
     uint8_t n_tk;
 } CosParserCtx;
 
+static CosNode** _parse_objects(CosParserCtx*, size_t*, char*);
+
 static size_t _skip_ws(CosParserCtx* ctx) {
     int in_comment = 0;
 
@@ -272,7 +274,7 @@ static CosTk* _shift(CosParserCtx* ctx) {
 }
 
 /* consume entire look-ahead buffer */
-static void _advance(CosParserCtx* ctx) {
+static void _anchor(CosParserCtx* ctx) {
     ctx->n_tk = 0;
 }
 
@@ -571,8 +573,6 @@ static CosHexString* _parse_hex_string(CosParserCtx* ctx) {
     return hex_string;
 }
 
-static CosNode** _parse_objects(CosParserCtx*, size_t*, char*);
-
 static CosArray* _parse_array(CosParserCtx* ctx) {
     size_t n = 0;
     CosArray* array = NULL;
@@ -584,15 +584,14 @@ static CosArray* _parse_array(CosParserCtx* ctx) {
     return array;
 }
 
-static CosDict* _parse_dict(CosParserCtx* ctx) {
-    size_t n = 0, i;
-    CosDict* dict = NULL;
-    CosNode** objects = _parse_objects(ctx, &n, ">>");
+static CosDict* _pairs_to_dict(CosNode** objects, size_t n) {
     size_t elems = n / 2;
+    CosDict* dict = NULL;
     CosName** keys = NULL;
     CosNode** values = NULL;
+    size_t i;
 
-    if (n % 2 || (objects && objects[n-1] == NULL)) goto bail;
+    if (n % 2 || (n && objects && objects[n-1] == NULL)) goto bail;
     keys  = malloc(elems * sizeof(CosName*));
     values = malloc(elems * sizeof(CosNode*));
     for (i = 0; i < elems; i ++) {
@@ -603,11 +602,16 @@ static CosDict* _parse_dict(CosParserCtx* ctx) {
     }
     dict = cos_dict_new(keys, values, elems);
 bail:
-    _done_objects(objects, n);
+    if (!dict) _done_objects(objects, n);
     if (keys) free(keys);
     if (values) free(values);
-
     return dict;
+}
+
+static CosDict* _parse_dict(CosParserCtx* ctx) {
+    size_t n = 0;
+    CosNode** objects = _parse_objects(ctx, &n, ">>");
+    return _pairs_to_dict(objects, n);
 }
 
 static CosNode* _parse_object(CosParserCtx* ctx) {
@@ -794,13 +798,113 @@ static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
     return op;
 }
 
+
 static CosOp* _parse_content_op(CosParserCtx* ctx) {
     size_t n = 0;
-    CosOp* opn = _parse_content_op_parts(ctx, &n);
-    if (opn && opn->sub_type == COS_OP_ImageData) {
-        /* todo consume 'ID' image data from content stream */
+    return _parse_content_op_parts(ctx, &n);
+}
+
+/* ID should follow a BI (begin image) operation, it:
+   - has /name <value> pairs as arguments
+   - may have a /L or /Length entry for image data length
+   - is followed by an image-data stream,
+   - terminated by 'EI' (end image operator)
+*/
+static CosOp* _parse_image_data_op(CosParserCtx* ctx, CosOp* bi_op) {
+    CosOp* id_op = _parse_content_op(ctx);
+    char* start_image = ctx->buf + ctx->buf_pos;
+    int ok = isspace(*(start_image++));
+    CosDict* dict = NULL;
+    size_t image_len = 0;
+
+    if (!id_op || strcmp(id_op->opn, "ID")) {
+        cos_node_done((CosNode*)id_op);
+        return NULL;
     }
-    return opn;
+
+    if (ok) {
+        /* pairwise arguments of the form: /name <value> .. */
+        /* roll into a dict and attach to BI operation */
+        dict = _pairs_to_dict(id_op->values, id_op->elems);
+        if (dict) {
+            if (id_op->values) free(id_op->values);
+            id_op->values = NULL;
+            id_op->elems = 0;
+
+            if (bi_op->values) free(bi_op->values);
+            bi_op->elems = 1;
+            bi_op->values = malloc(sizeof(CosNode*));
+            bi_op->values[0] = (CosNode*) dict;
+        }
+        else {
+            ok = 0;
+        }
+    }
+
+    if (ok) {
+        /* PDF 2.0 Mandates a /L or /Length entry to determine image length */
+        static PDF_TYPE_CODE_POINT Length[6] = {'L', 'e', 'n', 'g', 't', 'h'};
+        CosName* len_entry = cos_name_new(Length, 6);
+        CosInt* dict_len = (CosInt*) cos_dict_lookup(dict, len_entry);
+        if (!dict_len) {
+            /* /Length not present, try /L */
+            len_entry->value_len = 1;
+            dict_len = (CosInt*) cos_dict_lookup(dict, len_entry);
+        }
+        cos_node_done((CosNode*)len_entry);
+
+        if (dict_len) {
+            /* content length supplied in the dictionary */
+            if (dict_len->type == COS_NODE_INT && dict_len->value >= 0) {
+                image_len = dict_len->value;
+                ctx->buf_pos += image_len;
+            }
+            else ok = 0;
+        }
+        else {
+            /* we need to (gulp) scan for the end of image data */
+            /* look for terminating <ws>EI</b> */
+            char* p;
+            char* end_image = NULL;
+            char* end = ctx->buf + ctx->buf_len - 2;
+
+            for (p = start_image; p < end && !end_image; p++) {
+                if (isspace(*p) && p[1] == 'E' && p[2] == 'I') {
+                    /* Confirm we can actually parse 'EI' as a word */
+                    ctx->buf_pos = p - ctx->buf;
+                    _anchor(ctx);
+                    if (_at_token(ctx, _look_ahead(ctx, 1), "EI")) {
+                        end_image = p;
+                    }
+                }
+            }
+
+            if (end_image) {
+                image_len = end_image - start_image;
+            }
+            else {
+                ok = 0;
+            }
+        }
+    }
+
+    if (ok) {
+        /* realise the image and attach as an ID operand */
+        if (id_op->values) free(id_op->values);
+        id_op->elems = 1;
+        id_op->values = malloc(sizeof(CosNode*));
+        id_op->values[0] = (CosNode*) cos_op_image_data_new(start_image, image_len);
+        /* reset parse position to the end of the image */
+        ctx->buf_pos = (start_image - ctx->buf) + image_len;
+        _anchor(ctx);
+
+    }
+    else {
+        cos_node_done((CosNode*)id_op);
+        id_op = NULL;
+    }
+
+    return id_op;
 }
 
 /* parse content as a series of operations */
@@ -813,14 +917,24 @@ static CosContent* _parse_content(CosParserCtx* ctx, size_t* n) {
     else {
         CosOp* opn = _parse_content_op(ctx);
         if (opn) {
+            int is_bi = opn->sub_type == COS_OP_BeginImage;
             size_t i = (*n)++;
-            /* success, continue parsing */
-            content = _parse_content(ctx, n);
+            CosOp* id_op = NULL;
+
+            if (is_bi) {
+                (*n)++;
+                id_op = _parse_image_data_op(ctx, opn);
+            } 
+
+            if (!is_bi || id_op) content = _parse_content(ctx, n);
+
             if (content) {
                 content->values[i] = opn;
+                if (is_bi) content->values[i+1] = id_op;
             }
             else {
                 cos_node_done((CosNode*)opn);
+                cos_node_done((CosNode*)id_op);
             }
         }
     }
@@ -861,7 +975,7 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
         uint32_t gen_num = _read_int(ctx, &tk2);
         CosNode* object;
 
-        _advance(ctx); /* done parsing header */
+        _anchor(ctx); /* done parsing header */
         object = _parse_object(ctx);
 
         if (object && object->type == COS_NODE_DICT) {

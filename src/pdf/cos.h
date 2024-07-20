@@ -263,5 +263,6 @@ DLLEXPORT CosContent* cos_content_new(CosOp**, size_t);
 DLLEXPORT size_t cos_content_write(CosContent*, char*, size_t);
 
 DLLEXPORT CosOpImageData* cos_op_image_data_new(char*, size_t);
+DLLEXPORT size_t cos_op_image_data_write(CosOpImageData*, char*, size_t);
 
 #endif
