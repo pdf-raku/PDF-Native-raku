@@ -52,7 +52,7 @@ enum COS_NODE_TYPE is export «
     COS_NODE_STREAM
     COS_NODE_CONTENT
     COS_NODE_OP
-    COS_NODE_OP_IMAGE_DATA
+    COS_NODE_INLINE_IMAGE
 »;
 
 constant %TypeMap = %(
@@ -669,20 +669,23 @@ class COSContent is repr('CStruct') is COSNode is export {
 }
 
 #| Integer object
-class COSOpImageData is repr('CStruct') is COSNode is export {
-    also does COSType[$?CLASS, COS_NODE_OP_IMAGE_DATA];
+class COSInlineImage is repr('CStruct') is COSNode is export {
+    also does COSType[$?CLASS, COS_NODE_INLINE_IMAGE];
+    has COSDict $.dict;
     has CArray[uint8] $.value;
     has size_t $.value-len;
 
-    method !cos_op_image_data_write(Blob, size_t --> size_t) is native(libpdf) {*}
+    method !cos_inline_image_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
     method new(|) {
         fail
     }
     method write(::?CLASS:D: buf8 :$buf = buf8.allocate($!value-len+1)) handles<Str> {
-        my $n = self!cos_op_image_data_write($buf, $buf.bytes);
+        my $n = self!cos_inline_image_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode;
     }
-    method ast { encoded => self.write }
+    method ast {
+        :ID[ $!dict.ast, encoded => $!value.&to-blob($!value-len).decode: 'latin-1' ];
+    }
 }
 

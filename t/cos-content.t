@@ -37,7 +37,7 @@ is-deeply $content.write.lines, ('BT', '  /F1 24 Tf', '  100 250 Td', '  (Hello,
 is-deeply $content.ast, 'content' => [ :BT[], :Tf[:name("F1"), 24], :Td[100, 250], :Tj[:literal("Hello, world!")], :ET[] ], 'ast';
 
 $content .= parse: "BI ID abc EI";
-is-deeply $content.ast, 'content' => [:BI[:dict{}], :ID([:encoded<abc>]), :EI[]];
+is-deeply $content.ast, 'content' => [:BI[], :ID([:dict{}, :encoded<abc>]), :EI[]];
 
 todo "inline image write";
 is-deeply $content.write.lines, ('BI', 'ID', 'abc', 'EI');

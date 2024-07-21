@@ -72,14 +72,12 @@ DLLEXPORT void cos_node_done(CosNode* self) {
             cos_node_done(((CosIndObj*)self)->value);
             break;
         case COS_NODE_STREAM:
+        case COS_NODE_INLINE_IMAGE:
             {
-                CosStream* stream = (CosStream*)self;
+                struct CosStreamish* stream = (void*)self;
                 cos_node_done((CosNode*)stream->dict);
                 if (stream->value) free(stream->value);
             }
-            break;
-        case COS_NODE_OP_IMG_DATA:
-            free(((CosOpImageData*)self)->value);
             break;
         default:
             fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
@@ -264,9 +262,10 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                     return rv;
                 }
             case COS_NODE_STREAM:
+            case COS_NODE_INLINE_IMAGE:
                 {
-                    CosStream* a = (void*)self;
-                    CosStream* b = (void*)obj;
+                    struct CosStreamish* a = (void*)self;
+                    struct CosStreamish* b = (void*)obj;
                     int rv = COS_CMP_EQUAL;
                     if (!a->value || !b->value) {
                         /* streams not fully loaded */
@@ -331,8 +330,8 @@ static int _node_write(CosNode* self, char* out, int out_len, int indent) {
     case COS_NODE_OP:
         n = cos_op_write((CosOp*)self, out, out_len, indent);
         break;
-    case COS_NODE_OP_IMG_DATA:
-        n = cos_op_image_data_write((CosOpImageData*)self, out, out_len);
+    case COS_NODE_INLINE_IMAGE:
+        n = cos_inline_image_write((CosInlineImage*)self, out, out_len);
         break;
     case COS_NODE_CONTENT:
         n = cos_content_write((CosContent*)self, out, out_len);
@@ -1005,7 +1004,7 @@ DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent
         n += (m = _node_write(self->values[i], out+n, out_len - n, -1));
         if (m == 0 ) return 0;
         if (n >= out_len) return 0;
-        out[n++] = (self->values[i] && self->values[i]->type == COS_NODE_OP_IMG_DATA ? '\n' : ' ');
+        out[n++] = (self->values[i] && self->values[i]->type == COS_NODE_INLINE_IMAGE ? '\n' : ' ');
     }
 
     if (strlen(self->opn) > out_len-n) return 0;
@@ -1075,19 +1074,13 @@ DLLEXPORT size_t cos_content_write(CosContent* self, char* out, size_t out_len) 
     return n;
 }
 
-DLLEXPORT CosOpImageData* cos_op_image_data_new(char* value, size_t value_len) {
-    CosOpImageData* self = malloc(sizeof(CosOp));
-    self->type = COS_NODE_OP_IMG_DATA;
-    self->check = COS_CHECK(self);
-    self->ref_count = 1;
-    self->value = malloc(value_len);
-    memcpy(self->value, value, value_len);
-    self->value_len = value_len;
-
+DLLEXPORT CosInlineImage* cos_inline_image_new(CosDict* dict, unsigned char* value, size_t value_len) {
+    CosInlineImage* self = (void*) cos_stream_new(dict, value, value_len);
+    self->type = COS_NODE_INLINE_IMAGE;
     return self;
 }
 
-DLLEXPORT size_t cos_op_image_data_write(CosOpImageData* self, char* out, size_t out_len) {
+DLLEXPORT size_t cos_inline_image_write(CosInlineImage* self, char* out, size_t out_len) {
     if (out_len >= self->value_len) {
         memcpy(out, self->value, self->value_len);
         return self->value_len;

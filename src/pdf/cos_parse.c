@@ -591,7 +591,8 @@ static CosDict* _pairs_to_dict(CosNode** objects, size_t n) {
     CosNode** values = NULL;
     size_t i;
 
-    if (n % 2 || (n && objects && objects[n-1] == NULL)) goto bail;
+    if (n % 2) goto bail;
+    if (n && (!objects || objects[n-1] == NULL)) goto bail;
     keys  = malloc(elems * sizeof(CosName*));
     values = malloc(elems * sizeof(CosNode*));
     for (i = 0; i < elems; i ++) {
@@ -810,38 +811,24 @@ static CosOp* _parse_content_op(CosParserCtx* ctx) {
    - is followed by an image-data stream,
    - terminated by 'EI' (end image operator)
 */
-static CosOp* _parse_image_data_op(CosParserCtx* ctx, CosOp* bi_op) {
-    CosOp* id_op = _parse_content_op(ctx);
-    char* start_image = ctx->buf + ctx->buf_pos;
+static CosInlineImage* _parse_inline_image(CosParserCtx* ctx) {
+    size_t n = 0;
+    CosNode** objects = _parse_objects(ctx, &n, "ID");
+    unsigned char* start_image = (unsigned char*) ctx->buf + ctx->buf_pos;
     int ok = isspace(*(start_image++));
     CosDict* dict = NULL;
+    CosInlineImage* inline_image = NULL;
     size_t image_len = 0;
 
-    if (!id_op || strcmp(id_op->opn, "ID")) {
-        cos_node_done((CosNode*)id_op);
-        return NULL;
-    }
+    if (!objects) return NULL;
 
     if (ok) {
         /* pairwise arguments of the form: /name <value> .. */
-        /* roll into a dict and attach to BI operation */
-        dict = _pairs_to_dict(id_op->values, id_op->elems);
-        if (dict) {
-            if (id_op->values) free(id_op->values);
-            id_op->values = NULL;
-            id_op->elems = 0;
-
-            if (bi_op->values) free(bi_op->values);
-            bi_op->elems = 1;
-            bi_op->values = malloc(sizeof(CosNode*));
-            bi_op->values[0] = (CosNode*) dict;
-        }
-        else {
-            ok = 0;
-        }
+        /* replace BI  */
+        dict = _pairs_to_dict(objects, n);
     }
 
-    if (ok) {
+    if (ok && dict) {
         /* PDF 2.0 Mandates a /L or /Length entry to determine image length */
         static PDF_TYPE_CODE_POINT Length[6] = {'L', 'e', 'n', 'g', 't', 'h'};
         CosName* len_entry = cos_name_new(Length, 6);
@@ -864,14 +851,14 @@ static CosOp* _parse_image_data_op(CosParserCtx* ctx, CosOp* bi_op) {
         else {
             /* we need to (gulp) scan for the end of image data */
             /* look for terminating <ws>EI</b> */
-            char* p;
-            char* end_image = NULL;
-            char* end = ctx->buf + ctx->buf_len - 2;
+            unsigned char* p;
+            unsigned char* end_image = NULL;
+            unsigned char* end = (unsigned char*) ctx->buf + ctx->buf_len - 2;
 
             for (p = start_image; p < end && !end_image; p++) {
                 if (isspace(*p) && p[1] == 'E' && p[2] == 'I') {
                     /* Confirm we can actually parse 'EI' as a word */
-                    ctx->buf_pos = p - ctx->buf;
+                    ctx->buf_pos = p - (unsigned char*) ctx->buf;
                     _anchor(ctx);
                     if (_at_token(ctx, _look_ahead(ctx, 1), "EI")) {
                         end_image = p;
@@ -889,22 +876,15 @@ static CosOp* _parse_image_data_op(CosParserCtx* ctx, CosOp* bi_op) {
     }
 
     if (ok) {
-        /* realise the image and attach as an ID operand */
-        if (id_op->values) free(id_op->values);
-        id_op->elems = 1;
-        id_op->values = malloc(sizeof(CosNode*));
-        id_op->values[0] = (CosNode*) cos_op_image_data_new(start_image, image_len);
-        /* reset parse position to the end of the image */
-        ctx->buf_pos = (start_image - ctx->buf) + image_len;
+        inline_image = cos_inline_image_new(dict, start_image, image_len);
+
+        /* restart parse just before "EI" */
+        ctx->buf_pos = (start_image - (unsigned char*)ctx->buf) + image_len;
         _anchor(ctx);
 
     }
-    else {
-        cos_node_done((CosNode*)id_op);
-        id_op = NULL;
-    }
 
-    return id_op;
+    return inline_image;
 }
 
 /* parse content as a series of operations */
@@ -917,24 +897,26 @@ static CosContent* _parse_content(CosParserCtx* ctx, size_t* n) {
     else {
         CosOp* opn = _parse_content_op(ctx);
         if (opn) {
-            int is_bi = opn->sub_type == COS_OP_BeginImage;
+            int is_inline = opn->sub_type == COS_OP_BeginImage;
             size_t i = (*n)++;
-            CosOp* id_op = NULL;
+            CosInlineImage* inline_image = NULL;
 
-            if (is_bi) {
+            if (is_inline) {
                 (*n)++;
-                id_op = _parse_image_data_op(ctx, opn);
+                inline_image = _parse_inline_image(ctx);
             } 
 
-            if (!is_bi || id_op) content = _parse_content(ctx, n);
+            if (!is_inline || inline_image) content = _parse_content(ctx, n);
 
             if (content) {
                 content->values[i] = opn;
-                if (is_bi) content->values[i+1] = id_op;
+                if (inline_image) {
+                    content->values[i+1] = (CosOp*) inline_image;
+                }
             }
             else {
                 cos_node_done((CosNode*)opn);
-                cos_node_done((CosNode*)id_op);
+                cos_node_done((CosNode*)inline_image);
             }
         }
     }
