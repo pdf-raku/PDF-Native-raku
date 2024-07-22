@@ -799,7 +799,6 @@ static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
     return op;
 }
 
-
 static CosOp* _parse_content_op(CosParserCtx* ctx) {
     size_t n = 0;
     return _parse_content_op_parts(ctx, &n);

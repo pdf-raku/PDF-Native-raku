@@ -434,11 +434,11 @@ DLLEXPORT CosNode* cos_dict_lookup(CosDict* self, CosName* key) {
         if (cmp == 0) {
             return self->values[ index[mid] ];
         }
-        else if (low == high) {
+        else if (low >= high-1) {
             break;
         }
         else if (cmp < 0) {
-            high = mid -1;
+            high = mid;
         }
         else {
             low = mid;
@@ -1001,7 +1001,7 @@ DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent
     }
 
     for (i=0; i < self->elems; i++) {
-        n += (m = _node_write(self->values[i], out+n, out_len - n, -1));
+        n += (m = _node_write(self->values[i], out+n, out_len - n, 0));
         if (m == 0 ) return 0;
         if (n >= out_len) return 0;
         out[n++] = (self->values[i] && self->values[i]->type == COS_NODE_INLINE_IMAGE ? '\n' : ' ');
@@ -1064,7 +1064,7 @@ DLLEXPORT size_t cos_content_write(CosContent* self, char* out, size_t out_len) 
         }
 
         if (ch < 0 && indent > 1) indent -= 2;
-        n += (m = cos_op_write(op, out+n, out_len - n, indent));
+        n += (m = _node_write((CosNode*)op, out+n, out_len - n, indent));
         if (ch > 0) indent += 2;
 
         if (m == 0 || n >= out_len) return 0;
@@ -1077,13 +1077,28 @@ DLLEXPORT size_t cos_content_write(CosContent* self, char* out, size_t out_len) 
 DLLEXPORT CosInlineImage* cos_inline_image_new(CosDict* dict, unsigned char* value, size_t value_len) {
     CosInlineImage* self = (void*) cos_stream_new(dict, value, value_len);
     self->type = COS_NODE_INLINE_IMAGE;
+    self->check = COS_CHECK(self);
     return self;
 }
 
 DLLEXPORT size_t cos_inline_image_write(CosInlineImage* self, char* out, size_t out_len) {
-    if (out_len >= self->value_len) {
-        memcpy(out, self->value, self->value_len);
-        return self->value_len;
+    size_t n = 0, m, i;
+    CosDict* dict = self->dict;
+
+    for (i = 0; i < dict->elems; i++) {
+        n += (m = _node_write((CosNode*)dict->keys[i], out+n, out_len - n, -1));
+        if (m == 0 || n >= out_len) return 0;
+        out[n++] = ' ';
+
+        n += (m = _node_write(dict->values[i], out+n, out_len - n, 0));
+        if (m == 0 || n >= out_len) return 0;
+        out[n++] = ' ';
     }
-    return 0;
+
+    n += _bufcat("ID\n", out+n, out_len-n);
+
+    if (n + self->value_len > out_len) return 0;
+    memcpy(out+n, self->value, self->value_len);
+
+    return n + self->value_len;
 }
