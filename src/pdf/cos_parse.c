@@ -311,65 +311,67 @@ static int _hex_value(char ch) {
     }
 }
 
-static CosName* _read_name(CosParserCtx* ctx, CosTk* tk) {
-    uint8_t* bytes = malloc(tk->len + 5);
-    size_t n_bytes;
-    PDF_TYPE_CODE_POINTS codes = NULL;
-    size_t n_codes;
-    size_t i = 0;
-    char* pos = ctx->buf + tk->pos + 1; /* consume '/' */
-    char* end = pos + tk->len - 1;
+static CosName* _parse_name(CosParserCtx* ctx) {
+    CosTk* tk = _look_ahead(ctx, 1);
     CosName* name = NULL;
 
-    assert(tk->type == COS_TK_NAME);
+    if (tk->type == COS_TK_NAME) {
+        uint8_t* bytes = malloc(tk->len + 5);
+        char* pos = ctx->buf + tk->pos + 1; /* consume '/' */
+        char* end = pos + tk->len - 1;
+        size_t n_bytes;
+        PDF_TYPE_CODE_POINTS codes = NULL;
+        size_t n_codes;
+        size_t i = 0;
 
-    /* 1st pass: collect bytes */
-    for (n_bytes = 0; pos < end; pos++) {
-        unsigned char ch = *pos;
+        /* 1st pass: collect bytes */
+        for (n_bytes = 0; pos < end; pos++) {
+            unsigned char ch = *pos;
 
-        if (ch == '#') {
-            if (pos+1 >= end) goto bail;
-            if (*(pos+1) == '#') {
-                bytes[n_bytes++] = *(++pos);
-            }
-            else if (pos + 1 > end) {
-                goto bail;
+            if (ch == '#') {
+                if (pos+1 >= end) goto bail;
+                if (*(pos+1) == '#') {
+                    bytes[n_bytes++] = *(++pos);
+                }
+                else if (pos + 1 > end) {
+                    goto bail;
+                }
+                else {
+                    int d1 = _hex_value(*(++pos));
+                    int d2 = _hex_value(*(++pos));
+                    if (d1 < 0 || d2 < 0) goto bail;
+
+                    bytes[n_bytes++] = d1 * 16  +  d2;
+                }
             }
             else {
-                int d1 = _hex_value(*(++pos));
-                int d2 = _hex_value(*(++pos));
-                if (d1 < 0 || d2 < 0) goto bail;
-
-                bytes[n_bytes++] = d1 * 16  +  d2;
+                bytes[n_bytes++] = ch;
             }
         }
-        else {
-            bytes[n_bytes++] = ch;
+
+        /* 2nd pass: count codes */
+        for (n_codes = 0, i = 0; i < n_bytes; n_codes++) {
+            int char_len = utf8_char_len(bytes[i]);
+            if (char_len <= 0) char_len = 1;
+            i += char_len;
         }
+
+        codes = malloc(n_codes * sizeof(PDF_TYPE_CODE_POINT));
+
+        /* 3rd pass: assesemble codes */
+        for (n_codes = 0, i = 0; i < n_bytes; n_codes++) {
+            int char_len = utf8_char_len(bytes[i]);
+            if (char_len <= 0) char_len = 1;
+            codes[n_codes] = utf8_to_code(bytes + i);
+            i += char_len;
+        }
+
+        name = cos_name_new(codes, n_codes);
+    bail:
+        free(bytes);
+        if (codes) free(codes);
     }
 
-    /* 2nd pass: count codes */
-    for (n_codes = 0, i = 0; i < n_bytes; n_codes++) {
-        int char_len = utf8_char_len(bytes[i]);
-        if (char_len <= 0) char_len = 1;
-        i += char_len;
-    }
-
-    codes = malloc(n_codes * sizeof(PDF_TYPE_CODE_POINT));
-
-    /* 3rd pass: assesemble codes */
-    for (n_codes = 0, i = 0; i < n_bytes; n_codes++) {
-        int char_len = utf8_char_len(bytes[i]);
-        if (char_len <= 0) char_len = 1;
-        codes[n_codes] = utf8_to_code(bytes + i);
-        i += char_len;
-    }
-
-    name = cos_name_new(codes, n_codes);
-
-bail:
-    free(bytes);
-    if (codes) free(codes);
     return name;
 }
 
@@ -630,7 +632,7 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
         }
         break;
     case COS_TK_NAME:
-        node = (CosNode*) _read_name(ctx, tk1);
+        node = (CosNode*) _parse_name(ctx);
         break;
     case COS_TK_REAL:
         PDF_TYPE_REAL val = _read_real(ctx, tk1);
@@ -736,41 +738,44 @@ static int _looks_like_an_op(CosParserCtx* ctx, CosTk* tk) {
             unsigned char ch = ctx->buf[tk->pos + i];
             if (ch <= '!' || ch > '~') return 0;
         }
+        return 1;
     }
 
-    return 1;
+    return 0;
 }
 
 static int _typecheck_operand(CosNode* node) {
-    CosNodeType type = node->type;
-    switch (type) {
-    case  COS_NODE_BOOL:
-    case  COS_NODE_HEX_STR:
-    case  COS_NODE_INT:
-    case  COS_NODE_LIT_STR:
-    case  COS_NODE_NAME:
-    case  COS_NODE_NULL:
-    case  COS_NODE_REAL:
-        return 1;
+    if (node) {
+        CosNodeType type = node->type;
+        switch (type) {
+        case  COS_NODE_BOOL:
+        case  COS_NODE_HEX_STR:
+        case  COS_NODE_INT:
+        case  COS_NODE_LIT_STR:
+        case  COS_NODE_NAME:
+        case  COS_NODE_NULL:
+        case  COS_NODE_REAL:
+            return 1;
 
-    case  COS_NODE_ARRAY:
-    case  COS_NODE_DICT: {
-        struct CosArrayishNode* a = (void*) node;
-        size_t i;
-        for (i = 0; i < a->elems; i++) {
-            if (! _typecheck_operand( a->values[i]) ) return 0;
+        case  COS_NODE_ARRAY:
+        case  COS_NODE_DICT: {
+            struct CosArrayishNode* a = (void*) node;
+            size_t i;
+            for (i = 0; i < a->elems; i++) {
+                if (! _typecheck_operand( a->values[i]) ) return 0;
+            }
+            return 1;
         }
-        return 1;
-    }
 
-    case COS_NODE_ANY:
-    case COS_NODE_CONTENT:
-    case COS_NODE_IND_OBJ:
-    case COS_NODE_INLINE_IMAGE:
-    case COS_NODE_OP:
-    case COS_NODE_REF:
-    case COS_NODE_STREAM:
-        break;
+        case COS_NODE_ANY:
+        case COS_NODE_CONTENT:
+        case COS_NODE_IND_OBJ:
+        case COS_NODE_INLINE_IMAGE:
+        case COS_NODE_OP:
+        case COS_NODE_REF:
+        case COS_NODE_STREAM:
+            break;
+        }
     }
     return 0;
 }
@@ -834,8 +839,6 @@ static CosInlineImage* _parse_inline_image(CosParserCtx* ctx) {
     if (!objects) return NULL;
 
     if (ok) {
-        /* pairwise arguments of the form: /name <value> .. */
-        /* replace BI  */
         dict = _pairs_to_dict(objects, n);
         if (! _typecheck_operand((CosNode*)dict)) {
             cos_node_done((CosNode*)dict);
