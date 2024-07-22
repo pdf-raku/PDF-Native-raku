@@ -195,13 +195,13 @@ typedef void (*CosCryptFunc) (CosCryptNodeCtx*, PDF_TYPE_STRING, size_t);
 
 struct  _CosCryptNodeCtx {
 
-    unsigned char *key;
+    unsigned char* key;
     int key_len;
 
     CosCryptMode mode;
     CosCryptFunc crypt_cb;
 
-    unsigned char *buf;
+    unsigned char* buf;
     size_t   buf_len;
 
     uint64_t obj_num;

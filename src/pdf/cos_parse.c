@@ -7,22 +7,17 @@
  * The primary goal is efficent parsing of COS objects, once they have
  * been identified and isolated by indexing or scanning a PDF file.
  *
- * There are two main functions:
+ * There are three main functions:
  *
  * CosIndObj* cos_parse_ind_obj(char*, size_t, int)
  *   - parse an indirect object, format: <uint> <uint> <object> <endobj>
  *
- * CosNode* cos_parse_obj(char *, size_t);
+ * CosNode* cos_parse_obj(char*, size_t);
  *   - parse an inner object, dictionary, arrays or other simple objects
  *
- * Note that a stream can only appear at the top-level of an indirect
- * object and needs to be parsed via cos_parse_ind_obj().
- *
- * Todo:
- * - Parsing of content streams.
- * - A minimal parse is [<object>* <op>]* where <object> is a simple
- *   object (no streams or indirect references) and <op> is a
- *   terminating word.
+ * CosContent* cos_parse_content(char, size_t)
+ *   - parse an content stream, as a series of CosOp* objects, sprinkled
+ *     with occasional chunkier CosInlineImage* objects
  *
  */
 
@@ -274,7 +269,7 @@ static CosTk* _shift(CosParserCtx* ctx) {
 }
 
 /* consume entire look-ahead buffer */
-static void _anchor(CosParserCtx* ctx) {
+static void _flush_tk(CosParserCtx* ctx) {
     ctx->n_tk = 0;
 }
 
@@ -746,21 +741,38 @@ static int _looks_like_an_op(CosParserCtx* ctx, CosTk* tk) {
     return 1;
 }
 
-static int _valid_operand_type(CosNodeType type) {
+static int _typecheck_operand(CosNode* node) {
+    CosNodeType type = node->type;
     switch (type) {
-    case  COS_NODE_ARRAY:
     case  COS_NODE_BOOL:
-    case  COS_NODE_DICT:
-    case  COS_NODE_INT:
     case  COS_NODE_HEX_STR:
+    case  COS_NODE_INT:
     case  COS_NODE_LIT_STR:
     case  COS_NODE_NAME:
     case  COS_NODE_NULL:
     case  COS_NODE_REAL:
         return 1;
-    default:
-        return 0;
+
+    case  COS_NODE_ARRAY:
+    case  COS_NODE_DICT: {
+        struct CosArrayishNode* a = (void*) node;
+        size_t i;
+        for (i = 0; i < a->elems; i++) {
+            if (! _typecheck_operand( a->values[i]) ) return 0;
+        }
+        return 1;
     }
+
+    case COS_NODE_ANY:
+    case COS_NODE_CONTENT:
+    case COS_NODE_IND_OBJ:
+    case COS_NODE_INLINE_IMAGE:
+    case COS_NODE_OP:
+    case COS_NODE_REF:
+    case COS_NODE_STREAM:
+        break;
+    }
+    return 0;
 }
 
 /* parse one operation, including operands, from a content stream */
@@ -781,12 +793,12 @@ static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
         CosNode* operand = _parse_object(ctx);
         size_t i = (*n)++;
 
-        if (operand && _valid_operand_type(operand->type)) {
+        if (operand && _typecheck_operand(operand)) {
             /* success, continue parsing */
             op = _parse_content_op_parts(ctx, n);
         }
 
-        if (op && operand) {
+        if (op) {
             op->values[i] = operand;
         }
         else {
@@ -825,6 +837,11 @@ static CosInlineImage* _parse_inline_image(CosParserCtx* ctx) {
         /* pairwise arguments of the form: /name <value> .. */
         /* replace BI  */
         dict = _pairs_to_dict(objects, n);
+        if (! _typecheck_operand((CosNode*)dict)) {
+            cos_node_done((CosNode*)dict);
+            return NULL;
+        }
+
     }
 
     if (ok && dict) {
@@ -841,7 +858,9 @@ static CosInlineImage* _parse_inline_image(CosParserCtx* ctx) {
 
         if (dict_len) {
             /* content length supplied in the dictionary */
-            if (dict_len->type == COS_NODE_INT && dict_len->value >= 0) {
+            if (dict_len->type == COS_NODE_INT && dict_len->value >= 0
+                && ctx->buf_pos + dict_len->value < ctx->buf_len - 3 /* can fit <value> + " EI" */
+                ) {
                 image_len = dict_len->value;
                 ctx->buf_pos += image_len;
             }
@@ -858,7 +877,7 @@ static CosInlineImage* _parse_inline_image(CosParserCtx* ctx) {
                 if (isspace(*p) && p[1] == 'E' && p[2] == 'I') {
                     /* Confirm we can actually parse 'EI' as a word */
                     ctx->buf_pos = p - (unsigned char*) ctx->buf;
-                    _anchor(ctx);
+                    _flush_tk(ctx);
                     if (_at_token(ctx, _look_ahead(ctx, 1), "EI")) {
                         end_image = p;
                     }
@@ -878,8 +897,8 @@ static CosInlineImage* _parse_inline_image(CosParserCtx* ctx) {
         inline_image = cos_inline_image_new(dict, start_image, image_len);
 
         /* restart parse just before "EI" */
-        ctx->buf_pos = (start_image - (unsigned char*)ctx->buf) + image_len;
-        _anchor(ctx);
+        ctx->buf_pos = start_image + image_len - (unsigned char*)ctx->buf;
+        _flush_tk(ctx);
 
     }
 
@@ -923,19 +942,21 @@ static CosContent* _parse_content(CosParserCtx* ctx, size_t* n) {
     return content;
 }
 
-/* locate 'endstream' at the end of stream data, working from the end
- * of the buffer backwards. Be careful to only consume \r, if the early 'stream'
- * token was <cr><lf>, as the 'endstream' is proceeded by binary data.
+/* locate 'endstream' at the end of stream data, working from the end of
+ * the buffer backwards. Be careful to only consume \r, if the earlier 'stream'
+ * token was also \r\n, as the 'endstream' is proceeded by binary data.
  */
 static size_t _locate_endstream(CosParserCtx* ctx, size_t start, int dos_mode) {
     size_t p;
 
-    for (p = ctx->buf_len - 10; p >= start; p--) {
+    for (p = ctx->buf_len - 10; p > start; p--) {
         if (strncmp("endstream", ctx->buf + p, 9) == 0) {
             if (ctx->buf[p-1] == '\n' || ctx->buf[p-1] == '\r') {
-                if (ctx->buf[p-1] == '\n') p--;
-                if (dos_mode && ctx->buf[p-1] == '\r') p--;
-                return p;
+                if (dos_mode && ctx->buf[p-1] == '\n'
+                    && p+1 > start && ctx->buf[p-2] == '\r') {
+                    --p;
+                }
+                return --p;
             }
         }
     }
@@ -956,7 +977,7 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
         uint32_t gen_num = _read_int(ctx, &tk2);
         CosNode* object;
 
-        _anchor(ctx); /* done parsing header */
+        _flush_tk(ctx); /* done parsing header */
         object = _parse_object(ctx);
 
         if (object && object->type == COS_NODE_DICT) {
@@ -992,13 +1013,13 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
     return ind_obj;
 }
 
-DLLEXPORT CosNode* cos_parse_obj(char *in_buf, size_t in_len) {
+DLLEXPORT CosNode* cos_parse_obj(char* in_buf, size_t in_len) {
     CosTk tk1 = {COS_TK_START, 0, 0}, tk2 = {COS_TK_START, 0, 0}, tk3 = {COS_TK_START, 0, 0};
     CosParserCtx ctx = { in_buf, in_len, 0, {&tk1, &tk2, &tk3}, 0};
     return _parse_object(&ctx);
 }
 
-DLLEXPORT CosContent* cos_parse_content(char *in_buf, size_t in_len) {
+DLLEXPORT CosContent* cos_parse_content(char* in_buf, size_t in_len) {
     CosTk tk1 = {COS_TK_START, 0, 0}, tk2 = {COS_TK_START, 0, 0}, tk3 = {COS_TK_START, 0, 0};
     CosParserCtx ctx = { in_buf, in_len, 0, {&tk1, &tk2, &tk3}, 0};
     size_t n = 0;

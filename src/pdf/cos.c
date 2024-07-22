@@ -808,7 +808,7 @@ static void _op_validate(CosOp*) {
     /* todo validate operands */
 }
 
-static CosOpCode _find_op_code(char *opn) {
+static CosOpCode _lookup_op_code(char *opn) {
     CosOpCode oc = COS_OP_Extended;
 
     if (strlen(opn) < 4) {
@@ -975,7 +975,7 @@ DLLEXPORT CosOp* cos_op_new(char* opn, int opn_len, CosNode** values, size_t ele
     self->opn = malloc(opn_len + 1);
     strncpy(self->opn, opn, opn_len);
     self->opn[opn_len] = 0;
-    self->sub_type = _find_op_code(self->opn);
+    self->sub_type = _lookup_op_code(self->opn);
     self->elems = elems;
     self->values = malloc(sizeof(CosNode*) * elems);
     if (values) {
@@ -1065,7 +1065,7 @@ DLLEXPORT size_t cos_content_write(CosContent* self, char* out, size_t out_len) 
 
         if (ch < 0 && indent > 1) indent -= 2;
         n += (m = _node_write((CosNode*)op, out+n, out_len - n, indent));
-        if (ch > 0) indent += 2;
+        if (ch > 0 && indent >= 0) indent += 2;
 
         if (m == 0 || n >= out_len) return 0;
         out[n++] = '\n';
@@ -1090,7 +1090,7 @@ DLLEXPORT size_t cos_inline_image_write(CosInlineImage* self, char* out, size_t 
         if (m == 0 || n >= out_len) return 0;
         out[n++] = ' ';
 
-        n += (m = _node_write(dict->values[i], out+n, out_len - n, 0));
+        n += (m = _node_write(dict->values[i], out+n, out_len - n, -1));
         if (m == 0 || n >= out_len) return 0;
         out[n++] = ' ';
     }
