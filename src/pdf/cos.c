@@ -546,7 +546,7 @@ DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int in
         }
     }
 
-    if (n+1 >= out_len) goto bail;
+    if (n+2 > out_len) goto bail;
     n += _bufcat(">>", out+n, out_len-n);
 
     free(pos);
@@ -1095,9 +1095,8 @@ DLLEXPORT size_t cos_inline_image_write(CosInlineImage* self, char* out, size_t 
         out[n++] = ' ';
     }
 
-    n += _bufcat("ID\n", out+n, out_len-n);
-
-    if (n + self->value_len > out_len) return 0;
+    if (n + 3 + self->value_len > out_len) return 0;
+    n += _bufcat("ID\n", out+n, 3);
     memcpy(out+n, self->value, self->value_len);
 
     return n + self->value_len;
