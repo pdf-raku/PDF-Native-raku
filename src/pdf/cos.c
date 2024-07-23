@@ -1030,9 +1030,9 @@ DLLEXPORT int cos_op_is_valid(CosOp* self) {
 
     case COS_OP_BeginMarkedContentDict:
     case COS_OP_MarkPointDict:
-        return self->elems == 1
-            && (self->values[0]->type == COS_NODE_NAME
-                || self->values[0]->type == COS_NODE_DICT);
+        return self->elems == 2
+            && self->values[0]->type == COS_NODE_NAME
+            && self->values[1]->type == COS_NODE_DICT;
 
     case COS_OP_SetDashPattern:
         return self->elems == 2
