@@ -79,7 +79,7 @@ DLLEXPORT void cos_node_done(CosNode* self) {
                 if (stream->value) free(stream->value);
             }
             break;
-        default:
+        default :
             fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
         }
         free((void*)self);
@@ -280,7 +280,7 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                     }
                     return rv;
                 }
-            default:
+            default :
                 fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
                 return COS_CMP_EQUAL;
         }
@@ -336,7 +336,7 @@ static int _node_write(CosNode* self, char* out, int out_len, int indent) {
     case COS_NODE_CONTENT:
         n = cos_content_write((CosContent*)self, out, out_len);
         break;
-    default:
+    default :
         fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
     }
 
@@ -429,7 +429,7 @@ DLLEXPORT CosNode* cos_dict_lookup(CosDict* self, CosName* key) {
     for (low = 0, high = self->index_len;;) {
         size_t mid = low + (high - low) / 2;
         CosName* this_key = self->keys[ index[mid] ];
-        int cmp = _cmp_names(key, this_key); 
+        int cmp = _cmp_names(key, this_key);
 
         if (cmp == 0) {
             return self->values[ index[mid] ];
@@ -622,7 +622,7 @@ static void _crypt_node(CosNode* self, CosCryptNodeCtx* crypt_ctx) {
                 }
             }
             break;
-        default:
+        default :
             break;
     }
 }
@@ -804,166 +804,163 @@ DLLEXPORT size_t cos_null_write(CosNull*, char* out, size_t out_len) {
     return strnlen(out, out_len);
 }
 
-static void _op_validate(CosOp*) {
-    /* todo validate operands */
+static int _is_numeric(CosNode* self) {
+    return self && (self->type == COS_NODE_REAL || self->type == COS_NODE_INT);
+}
+
+static int _is_stringy(CosNode* self) {
+    return self && (self->type == COS_NODE_HEX_STR || self->type == COS_NODE_LIT_STR);
+}
+
+static CosOpCode _op(char *p, CosOpCode oc) {
+    return *p ? COS_OP_Other : oc;
 }
 
 static CosOpCode _lookup_op_code(char *opn) {
-    CosOpCode oc = COS_OP_Extended;
-
     if (strlen(opn) < 4) {
         int dict = 0;
-        int known = 1;
         char op[4] = {0, 0, 0, 0};
         char* p = op;
         strcpy(op, opn);
+
         switch (*(p++)) {
-        case '"':     oc = COS_OP_MoveSetShowText; break;
-        case '\'':    oc = COS_OP_MoveShowText; break;
+        case '"':     return _op(p, COS_OP_MoveSetShowText);
+        case '\'':    return _op(p, COS_OP_MoveShowText);
         case 'B': switch (*(p++)) {
-            case 0:   oc = COS_OP_FillStroke; break;
-            case '*': oc = COS_OP_EOFillStroke; break;
+            case 0:   return COS_OP_FillStroke;
+            case '*': return _op(p, COS_OP_EOFillStroke);
             case 'D': dict = 1; /* fallthrough */
-            case 'M': if (*(p++) == 'C') {
-                    oc = dict ? COS_OP_BeginMarkedContentDict : COS_OP_BeginMarkedContent;
-                }
-                else known = 0;
-                break;
-            case 'I':   oc = COS_OP_BeginImage; break;
-            case 'T':   oc = COS_OP_BeginText; break;
-            case 'X':   oc = COS_OP_BeginExtended; break;
-            default: known = 0;
-            } break;
-        case 'C': if (*(p++) == 'S') oc = COS_OP_SetStrokeColorSpace;
-            else known = 0;
-            break;
+            case 'M': return (*(p++) == 'C') 
+                    ? _op(p, dict ? COS_OP_BeginMarkedContentDict : COS_OP_BeginMarkedContent)
+                    : COS_OP_Other;
+            case 'I': return _op(p, COS_OP_BeginImage);
+            case 'T': return _op(p, COS_OP_BeginText);
+            case 'X': return _op(p, COS_OP_BeginExtended);
+            default : return COS_OP_Other;
+            }
+        case 'C': return (*(p++) == 'S')
+                ? _op(p, COS_OP_SetStrokeColorSpace)
+                : COS_OP_Other;
         case 'D': switch (*(p++)) {
-            case 'P':  oc = COS_OP_MarkPointDict; break;
-            case 'o': oc = COS_OP_XObject; break;
-            default: known = 0;
-            } break;
+            case 'P': return _op(p, COS_OP_MarkPointDict);
+            case 'o': return _op(p, COS_OP_XObject);
+            default : return COS_OP_Other;
+            }
         case 'E': switch (*(p++)) {
-            case 'I':   oc = COS_OP_EndImage; break;
-            case 'M':  if (*(p++) == 'C') {
-                    oc = COS_OP_EndMarkedContent;
-                }
-                else known = 0;
-                break;
-            case 'T': oc = COS_OP_EndText; break;
-            case 'X': oc = COS_OP_EndExtended; break;
-            default: known = 0;
-            } break;
-        case 'F': oc = COS_OP_FillObsolete; break;
-        case 'G': oc = COS_OP_SetStrokeGray; break;
-        case 'I': if (*(p++) == 'D') {
-                oc = COS_OP_ImageData;
+            case 'I': return _op(p, COS_OP_EndImage);
+            case 'M': return (*(p++) == 'C')
+                    ? _op(p, COS_OP_EndMarkedContent)
+                    : COS_OP_Other;
+            case 'T': return _op(p, COS_OP_EndText);
+            case 'X': return _op(p, COS_OP_EndExtended);
+            default : return COS_OP_Other;
             }
-            else known = 0;
-            break;
-        case 'J': oc = COS_OP_SetLineCap; break;
-        case 'K': oc = COS_OP_SetStrokeCMYK; break;
+        case 'F': return _op(p, COS_OP_FillObsolete);
+        case 'G': return _op(p, COS_OP_SetStrokeGray);
+        case 'I': return (*(p++) == 'D')
+                ? _op(p, COS_OP_ImageData)
+                : COS_OP_Other;
+        case 'J': return _op(p, COS_OP_SetLineCap);
+        case 'K': return _op(p, COS_OP_SetStrokeCMYK);
         case 'M': switch (*(p++)) {
-            case 0: oc = COS_OP_SetMiterLimit; break;
-            case 'P': oc = COS_OP_MarkPoint; break;
-            default: known = 0;
-            } break;
-        case 'Q': oc = COS_OP_Restore; break;
-        case 'R': if (*(p++) == 'G') {
-                oc = COS_OP_SetStrokeRGB;
+            case 0: return COS_OP_SetMiterLimit;
+            case 'P': return _op(p, COS_OP_MarkPoint);
+            default : return COS_OP_Other;
             }
-            else known = 0;
-            break;
+        case 'Q': return _op(p, COS_OP_Restore);
+        case 'R': return (*(p++) == 'G')
+                ? _op(p, COS_OP_SetStrokeRGB)
+                : COS_OP_Other;
         case 'S': switch (*(p++)) {
-            case 0 :  oc = COS_OP_Stroke; break;
+            case 0 :  return COS_OP_Stroke;
             case 'C': switch (*(p++)) {
-                case 0 : oc = COS_OP_SetStrokeColor; break;
-                case 'N' : oc = COS_OP_SetStrokeColorN; break;
-                } break;
-            default: known = 0;
-            }
-            break;
-        case 'T': switch (*(p++)) {
-            case '*' : oc = COS_OP_TextNextLine; break;
-            case 'D' : oc = COS_OP_TextMoveSet; break;
-            case 'J' : oc = COS_OP_ShowSpaceText; break;
-            case 'L' : oc = COS_OP_SetTextLeading; break;
-            case 'c' : oc = COS_OP_SetCharSpacing; break;
-            case 'd' : oc = COS_OP_TextMove; break;
-            case 'f' : oc = COS_OP_SetFont; break;
-            case 'j' : oc = COS_OP_ShowText; break;
-            case 'm' : oc = COS_OP_SetTextMatrix; break;
-            case 'r' : oc = COS_OP_SetTextRender; break;
-            case 's' : oc = COS_OP_SetTextRise; break;
-            case 'w' : oc = COS_OP_SetWordSpacing; break;
-            case 'z' : oc = COS_OP_SetHorizScaling; break;
-            default: known = 0;
-            } break;
-        case 'W' : switch (*(p++)) {
-            case 0: oc = COS_OP_Clip; break;
-            case '*': oc = COS_OP_EOClip; break;
-            default: known = 0;
-            } break;
-        case 'b': switch (*(p++)) {
-            case 0: oc = COS_OP_CloseFillStroke; break;
-            case '*': oc = COS_OP_CloseEOFillStroke; break;
-            default: known = 0;
-            } break;
-        case 'c': switch (*(p++)) {
-            case 0: oc = COS_OP_CurveTo; break;
-            case 'm': oc = COS_OP_ConcatMatrix; break;
-            case 's': oc = COS_OP_SetFillColorSpace; break;
-            default: known = 0;
-            } break;
-        case 'd': switch (*(p++)) {
-            case 0: oc = COS_OP_SetDashPattern; break;
-            case '0': oc = COS_OP_SetCharWidth; break;
-            case '1': oc = COS_OP_SetCharWidthBBox; break;
-            default: known = 0;
-            } break;
-        case 'f':  switch (*(p++)) {
-            case 0: oc = COS_OP_Fill; break;
-            case '*': oc = COS_OP_EOFill; break;
-            default: known = 0;
-            } break;
-        case 'g':  switch (*(p++)) {
-            case 0: oc = COS_OP_SetFillGray; break;
-            case 's': oc = COS_OP_SetGraphicsState; break;
-            default: known = 0;
-            }
-            break;
-        case 'h': oc = COS_OP_ClosePath; break;
-        case 'i': oc = COS_OP_SetFlatness; break;
-        case 'j': oc = COS_OP_SetLineJoin; break;
-        case 'k': oc = COS_OP_SetFillCMYK; break;
-        case 'l': oc = COS_OP_LineTo; break;
-        case 'm': oc = COS_OP_MoveTo; break;
-        case 'n': oc = COS_OP_EndPath; break;
-        case 'q': oc = COS_OP_Save; break;
-        case 'r':  switch (*(p++)) {
-            case 'e': oc = COS_OP_Rectangle; break;
-            case 'g': oc = COS_OP_SetFillRGB; break;
-            case 'i': oc = COS_OP_SetRenderingIntent; break;
-            default: known = 0;
-            } break;
-        case 's':  switch (*(p++)) {
-            case 0: oc = COS_OP_CloseStroke; break;
-            case 'c': if (*(p++) == 'n') {
-                    oc = COS_OP_SetFillColor;
+                case 0 : return COS_OP_SetStrokeColor;
+                case 'N' : return _op(p, COS_OP_SetStrokeColorN);
+                default : return COS_OP_Other;
                 }
-                else known = 0;
-                break;
-            case 'h': oc = COS_OP_ShFill; break;
-            default: known = 0;
-            } break;
-        case 'v': oc = COS_OP_CurveToInitial; break;
-        case 'w': oc = COS_OP_SetLineWidth; break;
-        case 'y': oc = COS_OP_CurveToFinal; break;
-        default: known = 0;
+            default : return COS_OP_Other;
+            }
+        case 'T':
+            if (*(p+2)) return COS_OP_Other;
+            switch (*(p++)) {
+            case '*' : return COS_OP_TextNextLine;
+            case 'D' : return COS_OP_TextMoveSet;
+            case 'J' : return COS_OP_ShowSpaceText;
+            case 'L' : return COS_OP_SetTextLeading;
+            case 'c' : return COS_OP_SetCharSpacing;
+            case 'd' : return COS_OP_TextMove;
+            case 'f' : return COS_OP_SetFont;
+            case 'j' : return COS_OP_ShowText;
+            case 'm' : return COS_OP_SetTextMatrix;
+            case 'r' : return COS_OP_SetTextRender;
+            case 's' : return COS_OP_SetTextRise;
+            case 'w' : return COS_OP_SetWordSpacing;
+            case 'z' : return COS_OP_SetHorizScaling;
+            default : return COS_OP_Other;
+            }
+        case 'W' : switch (*(p++)) {
+            case 0: return COS_OP_Clip;
+            case '*': return _op(p, COS_OP_EOClip);;
+            default : return COS_OP_Other;
+            }
+        case 'b': switch (*(p++)) {
+            case 0: return COS_OP_CloseFillStroke;
+            case '*': return _op(p, COS_OP_CloseEOFillStroke);;
+            default : return COS_OP_Other;
+            }
+        case 'c': switch (*(p++)) {
+            case 0: return COS_OP_CurveTo;
+            case 'm': return _op(p, COS_OP_ConcatMatrix);
+            case 's': return _op(p, COS_OP_SetFillColorSpace);
+            default : return COS_OP_Other;
+            }
+        case 'd': switch (*(p++)) {
+            case 0: return COS_OP_SetDashPattern;
+            case '0': return _op(p, COS_OP_SetCharWidth);
+            case '1': return _op(p, COS_OP_SetCharWidthBBox);
+            default : return COS_OP_Other;
+            }
+        case 'f':  switch (*(p++)) {
+            case 0: return COS_OP_Fill;
+            case '*': return _op(p, COS_OP_EOFill);
+            default : return COS_OP_Other;
+            }
+        case 'g':  switch (*(p++)) {
+            case 0: return COS_OP_SetFillGray;
+            case 's': return _op(p, COS_OP_SetGraphicsState);
+            default : return COS_OP_Other;
+            }
+           
+        case 'h': return _op(p, COS_OP_ClosePath);
+        case 'i': return _op(p, COS_OP_SetFlatness);
+        case 'j': return _op(p, COS_OP_SetLineJoin);
+        case 'k': return _op(p, COS_OP_SetFillCMYK);
+        case 'l': return _op(p, COS_OP_LineTo);
+        case 'm': return _op(p, COS_OP_MoveTo);
+        case 'n': return _op(p, COS_OP_EndPath);
+        case 'q': return _op(p, COS_OP_Save);
+        case 'r':  switch (*(p++)) {
+            case 'e': return _op(p, COS_OP_Rectangle);
+            case 'g': return _op(p, COS_OP_SetFillRGB);
+            case 'i': return _op(p, COS_OP_SetRenderingIntent);
+            default : return COS_OP_Other;
+            }
+        case 's':  switch (*(p++)) {
+            case 0: return COS_OP_CloseStroke;
+            case 'c': return (*(p++) == 'n')
+                    ? _op(p, COS_OP_SetFillColor)
+                    : COS_OP_Other;
+            case 'h': return _op(p, COS_OP_ShFill);
+            default : return COS_OP_Other;
+            }
+        case 'v': return _op(p, COS_OP_CurveToInitial);
+        case 'w': return _op(p, COS_OP_SetLineWidth);
+        case 'y': return _op(p, COS_OP_CurveToFinal);
+        default : return COS_OP_Other;
         }
-        if (!known || *p) oc = COS_OP_Extended;
     }
 
-    return oc;
+    return COS_OP_Other;
 }
 
 DLLEXPORT CosOp* cos_op_new(char* opn, int opn_len, CosNode** values, size_t elems) {
@@ -987,7 +984,129 @@ DLLEXPORT CosOp* cos_op_new(char* opn, int opn_len, CosNode** values, size_t ele
     else {
         memset(self->values, 0, elems * sizeof(CosNode*));
     }
+
     return self;
+}
+
+DLLEXPORT int cos_op_is_valid(CosOp* self) {
+    CosOpCode code = self->sub_type;
+    switch (code) {
+    case COS_OP_Other: case COS_OP_ImageData:
+        return 1;
+
+    case COS_OP_BeginImage: case COS_OP_EndImage:
+    case COS_OP_BeginText:  case COS_OP_EndText:
+    case COS_OP_EndMarkedContent:
+    case COS_OP_BeginExtended: case COS_OP_EndExtended:
+    case COS_OP_CloseEOFillStroke: case COS_OP_CloseFillStroke:
+    case COS_OP_EOFillStroke: case COS_OP_FillStroke:
+    case COS_OP_EOFill: case COS_OP_Fill: case COS_OP_FillObsolete:
+    case COS_OP_ClosePath: case COS_OP_EndPath:
+    case COS_OP_Save: case COS_OP_Restore:
+    case COS_OP_CloseStroke: case COS_OP_Stroke:
+    case COS_OP_TextNextLine: case COS_OP_EOClip: case COS_OP_Clip:
+        return self->elems == 0;
+
+    case COS_OP_SetFillColorSpace: case COS_OP_SetStrokeColorSpace:
+    case COS_OP_XObject: case COS_OP_SetGraphicsState:
+    case COS_OP_MarkPoint: case COS_OP_SetRenderingIntent:
+    case COS_OP_ShFill: 
+    case COS_OP_BeginMarkedContent:
+        return self->elems == 1 && self->values[0]->type == COS_NODE_NAME;
+
+    case COS_OP_ShowText:
+    case COS_OP_MoveShowText:
+        return self->elems == 1 && _is_stringy(self->values[0]);
+
+    case COS_OP_ShowSpaceText:
+        return self->elems == 1
+            && self->values[0]->type == COS_NODE_ARRAY;
+        /* todo: check array elems */
+
+    case COS_OP_SetFont:
+        return self->elems == 2
+            && self->values[0]->type == COS_NODE_NAME
+            && _is_numeric(self->values[1]);
+
+    case COS_OP_BeginMarkedContentDict:
+    case COS_OP_MarkPointDict:
+        return self->elems == 1
+            && (self->values[0]->type == COS_NODE_NAME
+                || self->values[0]->type == COS_NODE_DICT);
+
+    case COS_OP_SetDashPattern:
+        return self->elems == 2
+            && self->values[0]->type == COS_NODE_ARRAY
+            && _is_numeric(self->values[1]);
+        /* todo: check array elems */
+
+    case COS_OP_SetFlatness:
+    case COS_OP_SetStrokeGray: case COS_OP_SetFillGray:
+    case COS_OP_SetMiterLimit:
+    case COS_OP_SetCharSpacing:
+    case COS_OP_SetTextLeading:
+    case COS_OP_SetTextRise:
+    case COS_OP_SetWordSpacing: case COS_OP_SetHorizScaling:
+    case COS_OP_SetLineWidth:
+        return self->elems == 1 && _is_numeric(self->values[0]);
+
+    case COS_OP_SetLineJoin: case COS_OP_SetLineCap:
+    case COS_OP_SetTextRender:
+        return self->elems == 1
+            && self->values[0]->type == COS_NODE_INT
+            && ((CosInt*)self->values[0])->value >= 0;
+
+    case COS_OP_MoveTo: case COS_OP_LineTo:
+    case COS_OP_TextMove: case COS_OP_TextMoveSet:
+    case COS_OP_SetCharWidth: 
+        return self->elems == 2
+            && _is_numeric(self->values[0])
+            && _is_numeric(self->values[1]);
+
+    case COS_OP_MoveSetShowText:
+        return self->elems == 3
+            && _is_numeric(self->values[0])
+            && _is_numeric(self->values[1])
+            && _is_stringy(self->values[2]);
+
+    case COS_OP_SetFillRGB:
+    case COS_OP_SetStrokeRGB:
+        return self->elems == 3
+            && _is_numeric(self->values[0])
+            && _is_numeric(self->values[1])
+            && _is_numeric(self->values[2]);
+
+    case COS_OP_SetFillCMYK:
+    case COS_OP_SetStrokeCMYK:
+    case COS_OP_Rectangle:
+    case COS_OP_CurveToInitial:
+    case COS_OP_CurveToFinal:
+        return self->elems == 4
+            && _is_numeric(self->values[0])
+            && _is_numeric(self->values[1])
+            && _is_numeric(self->values[2])
+            && _is_numeric(self->values[3]);
+
+    case COS_OP_CurveTo:
+    case COS_OP_ConcatMatrix:
+    case COS_OP_SetCharWidthBBox:
+    case COS_OP_SetTextMatrix:
+        return self->elems == 6
+            && _is_numeric(self->values[0])
+            && _is_numeric(self->values[1])
+            && _is_numeric(self->values[2])
+            && _is_numeric(self->values[3])
+            && _is_numeric(self->values[4])
+            && _is_numeric(self->values[5]);
+
+    case COS_OP_SetStrokeColor:
+    case COS_OP_SetFillColor:
+    case COS_OP_SetFillColorN:
+    case COS_OP_SetStrokeColorN:
+        /* these are context sensitive */
+        return self->elems >= 1;
+    }
+    return 0;
 }
 
 DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent) {
@@ -1059,7 +1178,7 @@ DLLEXPORT size_t cos_content_write(CosContent* self, char* out, size_t out_len) 
         case COS_OP_EndMarkedContent:
             ch = -1;
             break;
-        default:
+        default :
             ch = 0;
         }
 

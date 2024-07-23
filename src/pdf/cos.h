@@ -33,7 +33,7 @@ typedef enum {
 } CosCmpResult;
 
 typedef enum {
-    COS_OP_Extended, /* Possibly valid in BX .. EX block */
+    COS_OP_Other, /* Possibly valid in BX .. EX block */
     COS_OP_BeginImage, COS_OP_ImageData, COS_OP_EndImage,
     COS_OP_BeginMarkedContent, COS_OP_BeginMarkedContentDict,
     COS_OP_EndMarkedContent, COS_OP_BeginText, COS_OP_EndText,
@@ -248,7 +248,7 @@ DLLEXPORT int cos_stream_attach_data(CosStream*, unsigned char* , size_t, size_t
 DLLEXPORT size_t cos_stream_write(CosStream*, char*, size_t);
 
 DLLEXPORT CosOp* cos_op_new(char*, int, CosNode**, size_t);
-DLLEXPORT void cos_op_validate(CosOp*);
+DLLEXPORT int cos_op_is_valid(CosOp*);
 DLLEXPORT size_t cos_op_write(CosOp*, char*, size_t, int);
 
 DLLEXPORT CosContent* cos_content_new(CosOp**, size_t);

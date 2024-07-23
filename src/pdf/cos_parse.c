@@ -818,7 +818,9 @@ static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
 
 static CosOp* _parse_content_op(CosParserCtx* ctx) {
     size_t n = 0;
-    return _parse_content_op_parts(ctx, &n);
+    CosOp* op = _parse_content_op_parts(ctx, &n);
+    if (op && ! cos_op_is_valid(op)) op->sub_type = COS_OP_Other;
+    return op;
 }
 
 /* ID should follow a BI (begin image) operation, it:
