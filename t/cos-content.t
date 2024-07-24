@@ -27,9 +27,9 @@ is-deeply $content.ast, 'content' => [:BI[], :ID[:dict{:L(6)}, :encoded("abc EI"
 
 is-deeply $content.write.lines, ('BI', '/L 6 ID', 'abc EI', 'EI');
 
-$content .= parse: "XX /Y 6 ZZ";
-is-deeply $content.ast, 'content' => ['??' => :XX[], '??' => :ZZ[:name<Y>, 6]];
+$content .= parse: "XX /Y 6 ZZ 42 Td";
+is-deeply $content.ast, 'content' => ['??' => :XX[], '??' => :ZZ[:name<Y>, 6], '??' => :Td[42]];
 
-is-deeply $content.write.lines, ('XX', '/Y 6 ZZ');
+is-deeply $content.write.lines, ('XX', '/Y 6 ZZ', '42 Td');
 
 done-testing;

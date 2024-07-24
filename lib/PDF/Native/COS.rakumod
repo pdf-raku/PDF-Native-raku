@@ -92,9 +92,6 @@ role COSType[$class, UInt:D $type] is export {
     @ClassMap[$type] = $class;
 
     # Only needed on tree/fragment root nodes.
-    submethod DESTROY {
-        self.done();
-    }
 
     method delegate { ... }
 
@@ -122,7 +119,7 @@ class COSNode is repr('CStruct') is export {
         self;
     }
 
-    method done {
+    submethod DESTROY {
         self!cos_node_done();
     }
 
@@ -132,14 +129,8 @@ class COSNode is repr('CStruct') is export {
             nativecast($class, $_).reference;
         }
         else {
-            self;
+            $_;
         }
-    }
-
-    method cast(Pointer:D $p) {
-        my $type := nativecast(COSNode, $p).type;
-        my $class := @ClassMap[$type];
-        nativecast($class, $p).reference;
     }
 
     method cmp(COSNode $obj) {
@@ -258,7 +249,7 @@ class COSArray is COSNode is repr('CStruct') is export {
         fail "Unable to write array" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
     }
-    method ast { :array[ (^$!elems).map: { $!values[$_].delegate.ast } ] }
+    method ast { :array[ (^$!elems).map: { self.AT-POS($_).ast } ] }
     multi method COERCE(@array) {
         my CArray[COSNode] $values .= new: @array.map: { COSNode.COERCE: $_ };
         self.new: :$values;
@@ -329,7 +320,7 @@ class COSDict is COSNode is repr('CStruct') is export {
         self!cos_dict_build_index() unless $!index;
     }
 
-    method ast { dict => %( (^$!elems).map: { $!keys[$_].ast.value => $!values[$_].delegate.ast }) }
+    method ast { dict => %( (^$!elems).map: { $!keys[$_].ast.value => self.AT-POS($_).ast }) }
 
     method write(::?CLASS:D: buf8
                  :$buf is copy = buf8.allocate(200),
@@ -633,7 +624,7 @@ class COSOp is repr('CStruct') is COSNode is export {
     }
     method is-valid { self!cos_op_is_valid().so }
     method ast {
-        my $ast := $!opn => [ (^$!elems).map: { $!values[$_].delegate.ast } ];
+        my $ast := $!opn => [ (^$!elems).map: { self.AT-POS($_).ast } ];
         self.is-valid ?? $ast !! ('??' => $ast);
     }
 }
@@ -666,7 +657,7 @@ class COSContent is repr('CStruct') is COSNode is export {
         $buf.subbuf(0,$n).decode: "latin-1";
     }
     method ast {
-        :content[ (^$!elems).map: { $!values[$_].delegate.ast } ]
+        :content[ (^$!elems).map: { self.AT-POS($_).ast } ]
     }
 }
 
