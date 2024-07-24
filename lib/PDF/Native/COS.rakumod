@@ -97,11 +97,25 @@ role COSType[$class, UInt:D $type] is export {
 
 }
 
-#| Generic COS objects
-class COSNode is repr('CStruct') is export {
+my class _Node is repr('CStruct') {
     has uint8 $.type;
     has uint8 $!private;
     has uint16 $.ref-count;
+
+    method delegate {
+        with self {
+            my $class := @ClassMap[$!type];
+            nativecast($class, $_).reference;
+        }
+        else {
+            $_;
+        }
+    }
+
+}
+
+#| Generic COS objects
+class COSNode is repr('CStruct') is _Node is export {
 
     method !cos_node_reference() is native(libpdf) {*}
     method !cos_node_done() is native(libpdf) {*}
@@ -121,16 +135,6 @@ class COSNode is repr('CStruct') is export {
 
     submethod DESTROY {
         self!cos_node_done();
-    }
-
-    method delegate {
-        with self {
-            my $class := @ClassMap[$!type];
-            nativecast($class, $_).reference;
-        }
-        else {
-            $_;
-        }
     }
 
     method cmp(COSNode $obj) {
@@ -225,7 +229,7 @@ class COSCryptCtx is repr('CStruct') is export {
 class COSArray is COSNode is repr('CStruct') is export {
     also does COSType[$?CLASS, COS_NODE_ARRAY];
     has size_t $.elems;
-    has CArray[COSNode] $.values;
+    has CArray[_Node] $.values;
     method AT-POS(UInt:D() $idx --> COSNode) {
         $idx < $!elems
             ?? $!values[$idx].delegate
@@ -287,8 +291,8 @@ class COSDict is COSNode is repr('CStruct') is export {
     also does COSType[$?CLASS, COS_NODE_DICT];
 
     has size_t $.elems;
-    has CArray[COSNode] $.values;
-    has CArray[COSName] $!keys;
+    has CArray[_Node] $.values;
+    has CArray[_Node] $!keys;
     has CArray[size_t] $.index;
     has size_t $.index-len;
 
@@ -320,7 +324,7 @@ class COSDict is COSNode is repr('CStruct') is export {
         self!cos_dict_build_index() unless $!index;
     }
 
-    method ast { dict => %( (^$!elems).map: { $!keys[$_].ast.value => self.AT-POS($_).ast }) }
+    method ast { dict => %( (^$!elems).map: { $!keys[$_].delegate.ast.value => self.AT-POS($_).ast }) }
 
     method write(::?CLASS:D: buf8
                  :$buf is copy = buf8.allocate(200),
@@ -602,7 +606,7 @@ class COSNull is repr('CStruct') is COSNode is export {
 class COSOp is repr('CStruct') is COSNode is export {
     also does COSType[$?CLASS, COS_NODE_OP];
     has size_t $.elems;
-    has CArray[COSNode] $.values;
+    has CArray[_Node] $.values;
     has Str $.opn;
     has int32 $.sub-type;
 
@@ -613,7 +617,7 @@ class COSOp is repr('CStruct') is COSNode is export {
     method new(Str:D :$opn!, CArray[COSNode] :$values, UInt:D :$elems = $values ?? $values.elems !! 0) {
         cos_op_new($opn, $opn.codes, $values, $elems);
     }
-    method AT-POS(UInt:D() $idx --> COSNode) {
+    method AT-POS(UInt:D() $idx --> _Node) {
         $idx < $!elems
             ?? $!values[$idx].delegate
             !! COSNode;
@@ -632,13 +636,13 @@ class COSOp is repr('CStruct') is COSNode is export {
 class COSContent is repr('CStruct') is COSNode is export {
     also does COSType[$?CLASS, COS_NODE_CONTENT];
     has size_t $.elems;
-    has CArray[COSOp] $.values;
+    has CArray[_Node] $.values;
 
-    our sub cos_content_new(CArray[COSOp], size_t --> ::?CLASS:D) is native(libpdf) {*}
+    our sub cos_content_new(CArray[COSNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
     our sub cos_parse_content(Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_content_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
-    method new(CArray[COSOp] :$values!, UInt:D :$elems = $values.elems) {
+    method new(CArray[COSNode] :$values!, UInt:D :$elems = $values.elems) {
         cos_content_new($values, $elems);
     }
 

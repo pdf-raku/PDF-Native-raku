@@ -988,8 +988,8 @@ static int _is_stringy(CosNode* self) {
 }
 
 DLLEXPORT int cos_op_is_valid(CosOp* self) {
-    CosOpCode code = self->sub_type;
-    switch (code) {
+    if (!self || self->type != COS_NODE_OP) return 0;
+    switch ((CosOpCode) self->sub_type) {
     case COS_OP_Other: case COS_OP_ImageData:
         return 0;
 
@@ -1031,7 +1031,8 @@ DLLEXPORT int cos_op_is_valid(CosOp* self) {
     case COS_OP_MarkPointDict:
         return self->elems == 2
             && self->values[0]->type == COS_NODE_NAME
-            && self->values[1]->type == COS_NODE_DICT;
+            && (self->values[1]->type == COS_NODE_DICT
+                || self->values[1]->type == COS_NODE_NAME);
 
     case COS_OP_SetDashPattern:
         return self->elems == 2
