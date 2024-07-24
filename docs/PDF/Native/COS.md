@@ -107,3 +107,18 @@ class PDF::Native::COS::COSNull
 
 Null object
 
+class PDF::Native::COS::COSOp
+-----------------------------
+
+Graphics Operator
+
+class PDF::Native::COS::COSContent
+----------------------------------
+
+Graphics content stream
+
+class PDF::Native::COS::COSInlineImage
+--------------------------------------
+
+Inline Image
+

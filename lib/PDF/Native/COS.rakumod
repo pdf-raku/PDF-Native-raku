@@ -111,7 +111,6 @@ my class _Node is repr('CStruct') {
             $_;
         }
     }
-
 }
 
 #| Generic COS objects
@@ -603,6 +602,7 @@ class COSNull is repr('CStruct') is COSNode is export {
     }
 }
 
+#| Graphics Operator
 class COSOp is repr('CStruct') is COSNode is export {
     also does COSType[$?CLASS, COS_NODE_OP];
     has size_t $.elems;
@@ -633,6 +633,7 @@ class COSOp is repr('CStruct') is COSNode is export {
     }
 }
 
+#| Graphics content stream
 class COSContent is repr('CStruct') is COSNode is export {
     also does COSType[$?CLASS, COS_NODE_CONTENT];
     has size_t $.elems;
@@ -665,7 +666,7 @@ class COSContent is repr('CStruct') is COSNode is export {
     }
 }
 
-#| Integer object
+#| Inline Image
 class COSInlineImage is repr('CStruct') is COSNode is export {
     also does COSType[$?CLASS, COS_NODE_INLINE_IMAGE];
     has COSDict $.dict;
