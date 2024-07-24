@@ -617,6 +617,7 @@ class COSOp is repr('CStruct') is COSNode is export {
 
     our sub cos_op_new(Str, int32, CArray[COSNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_op_write(Blob, size_t, int32 --> size_t) is native(libpdf) {*}
+    method !cos_op_is_valid(--> int32) is native(libpdf) {*}
 
     method new(Str:D :$opn!, CArray[COSNode] :$values, UInt:D :$elems = $values ?? $values.elems !! 0) {
         cos_op_new($opn, $opn.codes, $values, $elems);
@@ -630,9 +631,10 @@ class COSOp is repr('CStruct') is COSNode is export {
         my $n = self!cos_op_write($buf, $buf.bytes, $indent);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
+    method is-valid { self!cos_op_is_valid().so }
     method ast {
         my $ast := $!opn => [ (^$!elems).map: { $!values[$_].delegate.ast } ];
-        $!sub-type ?? $ast !! ('??' => $ast);
+        self.is-valid ?? $ast !! ('??' => $ast);
     }
 }
 

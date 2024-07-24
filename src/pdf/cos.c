@@ -804,14 +804,6 @@ DLLEXPORT size_t cos_null_write(CosNull*, char* out, size_t out_len) {
     return strnlen(out, out_len);
 }
 
-static int _is_numeric(CosNode* self) {
-    return self && (self->type == COS_NODE_REAL || self->type == COS_NODE_INT);
-}
-
-static int _is_stringy(CosNode* self) {
-    return self && (self->type == COS_NODE_HEX_STR || self->type == COS_NODE_LIT_STR);
-}
-
 static CosOpCode _op(char *p, CosOpCode oc) {
     return *p ? COS_OP_Other : oc;
 }
@@ -830,7 +822,7 @@ static CosOpCode _lookup_op_code(char *opn) {
             case 0:   return COS_OP_FillStroke;
             case '*': return _op(p, COS_OP_EOFillStroke);
             case 'D': dict = 1; /* fallthrough */
-            case 'M': return (*(p++) == 'C') 
+            case 'M': return (*(p++) == 'C')
                     ? _op(p, dict ? COS_OP_BeginMarkedContentDict : COS_OP_BeginMarkedContent)
                     : COS_OP_Other;
             case 'I': return _op(p, COS_OP_BeginImage);
@@ -930,7 +922,6 @@ static CosOpCode _lookup_op_code(char *opn) {
             case 's': return _op(p, COS_OP_SetGraphicsState);
             default : return COS_OP_Other;
             }
-           
         case 'h': return _op(p, COS_OP_ClosePath);
         case 'i': return _op(p, COS_OP_SetFlatness);
         case 'j': return _op(p, COS_OP_SetLineJoin);
@@ -988,11 +979,19 @@ DLLEXPORT CosOp* cos_op_new(char* opn, int opn_len, CosNode** values, size_t ele
     return self;
 }
 
+static int _is_numeric(CosNode* self) {
+    return self && (self->type == COS_NODE_REAL || self->type == COS_NODE_INT);
+}
+
+static int _is_stringy(CosNode* self) {
+    return self && (self->type == COS_NODE_HEX_STR || self->type == COS_NODE_LIT_STR);
+}
+
 DLLEXPORT int cos_op_is_valid(CosOp* self) {
     CosOpCode code = self->sub_type;
     switch (code) {
     case COS_OP_Other: case COS_OP_ImageData:
-        return 1;
+        return 0;
 
     case COS_OP_BeginImage: case COS_OP_EndImage:
     case COS_OP_BeginText:  case COS_OP_EndText:
