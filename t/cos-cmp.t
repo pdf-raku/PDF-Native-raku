@@ -87,7 +87,7 @@ sub test-stream($entry, $data) {
     stream
     {$data}
     endstream
-    end obj
+    endobj
     END
     $ind-obj.value;
 }

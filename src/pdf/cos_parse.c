@@ -822,8 +822,8 @@ static CosOp* _parse_content_op(CosParserCtx* ctx) {
 }
 
 /* ID should follow a BI (begin image) operation, it:
-   - has /name <value> pairs as arguments
-   - may have a /L or /Length entry for image data length
+   - has preceding /name <value> pairs as arguments
+   - may have a /L n or /Length n argument for image data length
    - is followed by an image-data stream,
    - terminated by 'EI' (end image operator)
 */
@@ -971,10 +971,11 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
         uint32_t gen_num = _read_int(ctx, &tk2);
         CosNode* object;
 
-        _flush_tk(ctx); /* done parsing header */
+        _flush_tk(ctx); /* done parsing indirect object header; now parse the object */
         object = _parse_object(ctx);
 
         if (object && object->type == COS_NODE_DICT) {
+            /* upgrade dict to a stream, if followed by 'stream' keyword */
             CosDict* dict = (void*)object;
             int dos_mode;
             if ( _get_token(ctx, "stream") && _scan_new_line(ctx, &dos_mode)) {
@@ -982,11 +983,15 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
                 uint8_t *value = NULL;
                 size_t length = 0;
                 if (mode != COS_PARSE_NIBBLE) {
-                    /* Fetch stream data */
+                    /* Eager parsing of stream data */
                     size_t stream_end = _locate_endstream(ctx, stream_start, dos_mode);
                     if (stream_end) {
                         value = (uint8_t*) ctx->buf + stream_start;
                         length = stream_end - stream_start;
+                        ctx->buf_pos += length;
+                        /* resume parse after 'endstream' */
+                        _flush_tk(ctx);
+                        _get_token(ctx, "endstream");
                     }
                 }
                 CosStream* stream = cos_stream_new(dict, value, length);
@@ -995,7 +1000,7 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
             }
         }
         if (object) {
-            if (object->type == COS_NODE_STREAM || _get_token(ctx, "endobj")) {
+            if ((object->type == COS_NODE_STREAM && mode == COS_PARSE_NIBBLE) || _get_token(ctx, "endobj")) {
                 ind_obj = cos_ind_obj_new(obj_num, gen_num, object);
             }
             else {
