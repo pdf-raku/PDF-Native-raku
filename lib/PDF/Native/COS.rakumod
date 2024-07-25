@@ -557,6 +557,7 @@ class _COSStringy is COSNode {
     }
 }
 
+#| Literal string object
 class COSLiteralString is repr('CStruct') is _COSStringy is export {
     also does COSType[$?CLASS, COS_NODE_LIT_STR];
     our sub cos_literal_new(blob8, size_t --> ::?CLASS:D) is native(libpdf) {*}
@@ -642,8 +643,7 @@ class COSOp is repr('CStruct') is COSNode is export {
     }
 }
 
-
-#| Inline Image
+#| Inline graphics image
 class COSInlineImage is repr('CStruct') is COSNode is export {
     also does COSType[$?CLASS, COS_NODE_INLINE_IMAGE];
     has _Node $!dict;

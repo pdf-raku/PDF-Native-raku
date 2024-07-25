@@ -2,6 +2,10 @@ Revision history for PDF-Native
 
 {{$NEXT}}
 
+0.1.5  2024-07-26T06:37:12+12:00
+   - Implement COSOp and COSInlineImage coercements
+   - Fix dict reference counting in streams and inline images
+
 0.1.4  2024-07-25T07:32:40+12:00
    - Fix validation of BDC & DP operators. Second argument
      can be a dictionary or a name.
