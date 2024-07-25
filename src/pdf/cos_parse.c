@@ -909,35 +909,26 @@ static CosInlineImage* _parse_inline_image(CosParserCtx* ctx) {
 }
 
 /* parse content as a series of operations */
-static CosContent* _parse_content(CosParserCtx* ctx, size_t* n) {
+static CosContent* _parse_content(CosParserCtx* ctx, size_t* n, int expect_inline) {
     CosContent* content = NULL;
     CosTk* tk = _look_ahead(ctx, 1);
     if (tk->type == COS_TK_DONE) {
-        content = cos_content_new(NULL, *n);
+        if (!expect_inline) {
+            content = cos_content_new(NULL, *n);
+        }
     }
     else {
-        CosOp* opn = _parse_content_op(ctx);
+        CosOp* opn = expect_inline ? (CosOp*) _parse_inline_image(ctx) : _parse_content_op(ctx);
         if (opn) {
-            int is_inline = opn->sub_type == COS_OP_BeginImage;
+            expect_inline = !expect_inline && opn->sub_type == COS_OP_BeginImage;
             size_t i = (*n)++;
-            CosInlineImage* inline_image = NULL;
-
-            if (is_inline) {
-                (*n)++;
-                inline_image = _parse_inline_image(ctx);
-            } 
-
-            if (!is_inline || inline_image) content = _parse_content(ctx, n);
+            content = _parse_content(ctx, n, expect_inline);
 
             if (content) {
                 content->values[i] = opn;
-                if (inline_image) {
-                    content->values[i+1] = (CosOp*) inline_image;
-                }
             }
             else {
                 cos_node_done((CosNode*)opn);
-                cos_node_done((CosNode*)inline_image);
             }
         }
     }
@@ -1026,5 +1017,5 @@ DLLEXPORT CosContent* cos_parse_content(char* in_buf, size_t in_len) {
     CosTk tk1 = {COS_TK_START, 0, 0}, tk2 = {COS_TK_START, 0, 0}, tk3 = {COS_TK_START, 0, 0};
     CosParserCtx ctx = { in_buf, in_len, 0, {&tk1, &tk2, &tk3}, 0};
     size_t n = 0;
-    return _parse_content(&ctx, &n);
+    return _parse_content(&ctx, &n, 0);
 }
