@@ -365,6 +365,11 @@ sub to-blob( CArray[uint8] $value, UInt:D $len ) {
     $buf;
 }
 
+multi sub coerce-encoded(Blob:D $_) { $_ }
+multi sub coerce-encoded(LatinStr:D $_) { .encode: "latin-1" }
+multi sub coerce-encoded(Any:U $_) { blob8 }
+multi sub coerce-encoded(Pair:D $_ where .key ~~ 'encoded') { coerce-encoded .value }
+
 #| Stream object
 class COSStream is repr('CStruct') is COSNode is export {
     also does COSType[$?CLASS, COS_NODE_STREAM];
@@ -374,9 +379,11 @@ class COSStream is repr('CStruct') is COSNode is export {
         has size_t  $.value-pos;  # position in source buffer, otherwise
     }
 
-    has COSDict          $.dict;
+    has _Node $!dict;
     has CArray[uint8]    $.value;
     HAS ValueUnion       $!u;
+
+    method dict returns COSDict {  $!dict.delegate }
     method value-len { $!value.defined ?? $!u.value-len !! Int }
     method value-pos { $!value.defined ?? Int !! $!u.value-pos }
 
@@ -404,9 +411,6 @@ class COSStream is repr('CStruct') is COSNode is export {
     method attach-data(Blob:D $buf, UInt:D $len) {
         self!cos_stream_attach_data($buf, $buf.bytes, $len);
     }
-    multi sub coerce-stream(Blob:D $_) { $_ }
-    multi sub coerce-stream(LatinStr:D $_) { .encode: "latin-1" }
-    multi sub coerce-stream(Any:U $_) { blob8 }
     method ast {
         my Pair $body = do with $!value {
             # stream attached
@@ -420,7 +424,7 @@ class COSStream is repr('CStruct') is COSNode is export {
     }
     multi method COERCE(%s) {
         my COSDict $dict .= COERCE(%s<dict> // {});
-        my $value := coerce-stream(%s<encoded>);
+        my $value := coerce-encoded(%s<encoded>);
         self.new: :$dict, :$value;
     }
 }
@@ -430,8 +434,8 @@ class COSIndObj is repr('CStruct') is COSNode is export {
     also does COSType[$?CLASS, COS_NODE_IND_OBJ];
     has uint64  $.obj-num;
     has uint32  $.gen-num;
-    has COSNode $.value;
-    method value { $!value.delegate }
+    has _Node $.value;
+    method value returns COSNode { $!value.delegate }
 
     our sub cos_ind_obj_new(uint64, uint32, COSNode --> ::?CLASS:D) is native(libpdf) {*}
     our sub cos_parse_ind_obj(Blob, size_t, int32 --> ::?CLASS:D) is native(libpdf) {*}
@@ -627,9 +631,44 @@ class COSOp is repr('CStruct') is COSNode is export {
         $buf.subbuf(0,$n).decode: "latin-1";
     }
     method is-valid { self!cos_op_is_valid().so }
+    multi method COERCE(Pair:D $op) {
+        my CArray[COSNode] $values .= new: $op.value.map: { COSNode.COERCE: $_ };
+        my $opn = $op.key;
+        COSOp.new: :$opn, :$values;
+    }
     method ast {
         my $ast := $!opn => [ (^$!elems).map: { self.AT-POS($_).ast } ];
         self.is-valid ?? $ast !! ('??' => $ast);
+    }
+}
+
+
+#| Inline Image
+class COSInlineImage is repr('CStruct') is COSNode is export {
+    also does COSType[$?CLASS, COS_NODE_INLINE_IMAGE];
+    has _Node $!dict;
+    has CArray[uint8] $.value;
+    has size_t $.value-len;
+
+    method dict returns COSDict {  $!dict.delegate }
+
+    sub cos_inline_image_new(COSDict, Blob, size_t --> COSInlineImage) is native(libpdf) {*}
+    method !cos_inline_image_write(Blob, size_t --> size_t) is native(libpdf) {*}
+
+    method new(COSDict :$dict!, Blob :$value!) {
+        cos_inline_image_new($dict, $value, $value.bytes);
+    }
+    method write(::?CLASS:D: buf8 :$buf = buf8.allocate($!value-len+1)) handles<Str> {
+        my $n = self!cos_inline_image_write($buf, $buf.bytes);
+        $buf.subbuf(0,$n).decode;
+    }
+    method ast {
+        :ID[ $.dict.ast, encoded => $!value.&to-blob($!value-len).decode: 'latin-1' ];
+    }
+    multi method COERCE(@a where .elems == 2) {
+        my COSDict() $dict = @a[0];
+        my Blob[uint8] $value := coerce-encoded(@a[1]);
+        self.new: :$dict, :$value;
     }
 }
 
@@ -661,29 +700,13 @@ class COSContent is repr('CStruct') is COSNode is export {
         my $n = self!cos_content_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
+    multi method COERCE(@content) {
+        my subset IDAst of Pair:D where .key ~~ 'ID';
+        my COSNode @values =  @content.map: { ($_ ~~ IDAst) ?? COSInlineImage.COERCE(.value) !! COSOp.COERCE: $_ };
+        my CArray[COSNode] $values .= new: @values;
+        self.new: :$values;
+    }
     method ast {
         :content[ (^$!elems).map: { self.AT-POS($_).ast } ]
     }
 }
-
-#| Inline Image
-class COSInlineImage is repr('CStruct') is COSNode is export {
-    also does COSType[$?CLASS, COS_NODE_INLINE_IMAGE];
-    has COSDict $.dict;
-    has CArray[uint8] $.value;
-    has size_t $.value-len;
-
-    method !cos_inline_image_write(Blob, size_t --> size_t) is native(libpdf) {*}
-
-    method new(|) {
-        fail
-    }
-    method write(::?CLASS:D: buf8 :$buf = buf8.allocate($!value-len+1)) handles<Str> {
-        my $n = self!cos_inline_image_write($buf, $buf.bytes);
-        $buf.subbuf(0,$n).decode;
-    }
-    method ast {
-        :ID[ $!dict.ast, encoded => $!value.&to-blob($!value-len).decode: 'latin-1' ];
-    }
-}
-

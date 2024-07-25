@@ -97,6 +97,11 @@ class PDF::Native::COS::COSReal
 
 Real object
 
+class PDF::Native::COS::COSLiteralString
+----------------------------------------
+
+Literal string object
+
 class PDF::Native::COS::COSHexString
 ------------------------------------
 
@@ -112,13 +117,13 @@ class PDF::Native::COS::COSOp
 
 Graphics Operator
 
+class PDF::Native::COS::COSInlineImage
+--------------------------------------
+
+Inline graphics image
+
 class PDF::Native::COS::COSContent
 ----------------------------------
 
 Graphics content stream
-
-class PDF::Native::COS::COSInlineImage
---------------------------------------
-
-Inline Image
 
