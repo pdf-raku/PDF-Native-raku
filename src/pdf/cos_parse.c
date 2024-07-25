@@ -975,27 +975,35 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
         object = _parse_object(ctx);
 
         if (object && object->type == COS_NODE_DICT) {
-            /* upgrade dict to a stream, if followed by 'stream' keyword */
+            /* possible upgrade of dict to a stream */
             CosDict* dict = (void*)object;
+            CosStream* stream = NULL;
             int dos_mode;
-            if ( _get_token(ctx, "stream") && _scan_new_line(ctx, &dos_mode)) {
+
+            if (_get_token(ctx, "stream") && _scan_new_line(ctx, &dos_mode)) {
                 size_t stream_start = ctx->buf_pos;
-                uint8_t *value = NULL;
-                size_t length = 0;
-                if (mode != COS_PARSE_NIBBLE) {
+                if (mode == COS_PARSE_NIBBLE) {
+                    stream = cos_stream_new(dict, NULL, stream_start);
+                }
+                else {
                     /* Eager parsing of stream data */
+                    uint8_t *value = NULL;
+                    size_t length = 0;
                     size_t stream_end = _locate_endstream(ctx, stream_start, dos_mode);
                     if (stream_end) {
                         value = (uint8_t*) ctx->buf + stream_start;
                         length = stream_end - stream_start;
-                        ctx->buf_pos += length;
+
+                        stream = cos_stream_new(dict, value, length);
+
                         /* resume parse after 'endstream' */
+                        ctx->buf_pos += length;
                         _flush_tk(ctx);
                         _get_token(ctx, "endstream");
                     }
                 }
-                CosStream* stream = cos_stream_new(dict, value, length);
-                if (mode == COS_PARSE_NIBBLE) stream->value_pos = stream_start;
+
+                if (!stream) cos_node_done((CosNode*)dict);
                 object = (void*) stream;
             }
         }
