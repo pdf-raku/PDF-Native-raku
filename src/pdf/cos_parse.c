@@ -977,10 +977,10 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
         if (object && object->type == COS_NODE_DICT) {
             /* possible upgrade of dict to a stream */
             CosDict* dict = (void*)object;
-            CosStream* stream = NULL;
             int dos_mode;
 
             if (_get_token(ctx, "stream") && _scan_new_line(ctx, &dos_mode)) {
+                CosStream* stream = NULL;
                 size_t stream_start = ctx->buf_pos;
                 if (mode == COS_PARSE_NIBBLE) {
                     stream = cos_stream_new(dict, NULL, stream_start);

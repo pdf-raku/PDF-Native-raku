@@ -1,6 +1,7 @@
 #include "pdf.h"
 #include "pdf/cos.h"
 #include "pdf/write.h"
+#include "pdf/_bufcat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -358,22 +359,14 @@ DLLEXPORT CosArray* cos_array_new(CosNode** values, size_t elems) {
     return self;
 }
 
-static int _bufcat(char *in, char* out, int out_len) {
-    int n;
-    for (n=0; in[n] && out_len-- > 0; n++) {
-        out[n] = in[n];
-    }
-    return n;
-}
-
 DLLEXPORT size_t cos_array_write(CosArray* self, char* out, size_t out_len, int indent) {
     size_t n = 0;
     size_t i;
     size_t m;
 
-    if (!out || out_len < 3) return 0;
+    n += (m = _bufcat(out, out_len, "[ "));
+    if (m == 0) return 0;
 
-    n += _bufcat("[ ", out, out_len);
     for (i=0; i < self->elems; i++) {
         n += (m = _node_write(self->values[i], out+n, out_len - n, indent));
         if (m == 0 || n >= out_len) return 0;
@@ -518,9 +511,8 @@ DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int in
     size_t* pos = malloc((self->elems+1) * sizeof(size_t));
     int elem_indent = indent >= 0 ? indent + 2 : -1;
 
-    if (!out || out_len <= 5) goto bail;
-
-    n += _bufcat("<< ", out, out_len);
+    n += (m = _bufcat(out, out_len, "<< "));
+    if (m == 0) goto bail;
 
     for (i = 0; i < self->elems; i++) {
         pos[i] = n - 1;
@@ -546,8 +538,8 @@ DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int in
         }
     }
 
-    if (n+2 > out_len) goto bail;
-    n += _bufcat(">>", out+n, out_len-n);
+    n += (m = _bufcat(out+n, out_len-n, ">>"));
+    if (m == 0) goto bail;
 
     free(pos);
     return n;
@@ -588,9 +580,10 @@ DLLEXPORT size_t cos_ind_obj_write(CosIndObj* self, char* out, size_t out_len) {
     size_t m;
     n = snprintf(out, out_len, "%" PRId64 " %d obj\n", self->obj_num, self->gen_num);
     n += (m = _node_write(self->value, out+n, out_len-n, 0));
-    if (m == 0 || n + 8 > out_len) return 0;
-    n += _bufcat("\nendobj\n", out+n, out_len-n);
-    return n;
+    if (m == 0) return 0;
+    n += (m = _bufcat(out+n, out_len-n, "\nendobj\n"));
+
+    return m ? n : 0;
 }
 
 static void _crypt_node(CosNode* self, CosCryptNodeCtx* crypt_ctx) {
@@ -688,10 +681,11 @@ DLLEXPORT int cos_stream_attach_data(CosStream* self, unsigned char* buf, size_t
 }
 
 DLLEXPORT size_t cos_stream_write(CosStream* self, char* out, size_t out_len) {
+    size_t m;
     size_t n = cos_dict_write(self->dict, out, out_len, 0);
-    if (n == 0) return 0;
 
-    n += _bufcat(" stream\n", out+n, out_len-n);
+    n += (m = _bufcat(out+n, out_len-n, " stream\n"));
+    if (m == 0) return 0;
 
     if (self->value) {
         size_t i;
@@ -699,8 +693,8 @@ DLLEXPORT size_t cos_stream_write(CosStream* self, char* out, size_t out_len) {
             out[n++] = self->value[i];
         }
 
-        if (n + 11 > out_len) return 0;
-        n += _bufcat("\nendstream", out+n, out_len-n);
+        n += (m = _bufcat(out+n, out_len-n, "\nendstream"));
+        if (m == 0) return 0;
     }
 
     return n;
@@ -1126,8 +1120,8 @@ DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent
         out[n++] = (self->values[i] && self->values[i]->type == COS_NODE_INLINE_IMAGE ? '\n' : ' ');
     }
 
-    if (strlen(self->opn) > out_len-n) return 0;
-    n += _bufcat(self->opn, out+n, out_len-n);
+    n += (m = _bufcat(out+n, out_len-n, self->opn));
+    if (m == 0) return 0;
 
     return n;
 }
@@ -1214,8 +1208,8 @@ DLLEXPORT size_t cos_inline_image_write(CosInlineImage* self, char* out, size_t 
         out[n++] = ' ';
     }
 
-    if (n + 3 + self->value_len > out_len) return 0;
-    n += _bufcat("ID\n", out+n, 3);
+    n += (m = _bufcat(out+n, out_len-n, "ID\n" ));
+    if (m == 0 ||  self->value_len > out_len) return 0;
     memcpy(out+n, self->value, self->value_len);
 
     return n + self->value_len;

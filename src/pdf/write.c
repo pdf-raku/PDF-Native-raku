@@ -9,14 +9,7 @@
 #include "pdf/types.h"
 #include "pdf/write.h"
 #include "pdf/utf8.h"
-
-static int _bufcat(char* out, int out_len, char *in) {
-    int n;
-    for (n=0; in[n] && out_len-- > 0; n++) {
-        out[n] = in[n];
-    }
-    return n;
-}
+#include "pdf/_bufcat.h"
 
 DLLEXPORT size_t pdf_write_bool(PDF_TYPE_BOOL val, char *out, size_t out_len) {
     if (out_len < (val ? 4 : 5)) return 0;
@@ -61,7 +54,7 @@ DLLEXPORT size_t pdf_write_literal(PDF_TYPE_STRING val, size_t in_len, char* out
 
   PDF_TYPE_STRING in_p = val;
   PDF_TYPE_STRING in_end = val + in_len;
-  size_t n = 0;
+  size_t n = 0, m;
 
   if (out_len < 2) return 0;
   out[n++] = '(';
@@ -74,13 +67,13 @@ DLLEXPORT size_t pdf_write_literal(PDF_TYPE_STRING val, size_t in_len, char* out
     if (c && (sym = strchr("\n\r\t\f\b\0nrtfb", c))) {
       // symbolic escape
       esc[1] = sym[6];
-      if (n+1 >= out_len) break;
-      n += _bufcat(out+n, out_len-n, esc);
+      n += (m = _bufcat(out+n, out_len-n, esc));
+      if (m == 0) return 0;
     }
     else {
       if (c && strchr("\\()", c)) {
           // escape: '\\', '(', ')'
-          if (n+1 >= out_len) break;
+          if (n+1 >= out_len) return 0;
           out[n++] = '\\';
       }
       if (n >= out_len) return 0;
@@ -125,7 +118,7 @@ DLLEXPORT size_t pdf_write_hex_string(PDF_TYPE_STRING val, size_t in_len, char* 
 DLLEXPORT size_t pdf_write_xref_seg(PDF_TYPE_XREF xref, PDF_TYPE_UINT length, PDF_TYPE_STRING out, size_t out_len) {
   PDF_TYPE_UINT i;
   char entry[24];
-  size_t n = 0;
+  size_t n = 0, m;
 
   for (i = 0; i < length; i++) {
       uint64_t offset  = *(xref++);
@@ -133,8 +126,8 @@ DLLEXPORT size_t pdf_write_xref_seg(PDF_TYPE_XREF xref, PDF_TYPE_UINT length, PD
       uint8_t type     = *(xref++) ? 'n' : 'f';
 
       sprintf(entry, "%010"PRIu64" %05" PRIu64" %c \n", offset, gen_num, type);
-      if (n + strlen(entry) > out_len) return 0;
-      n += _bufcat(out+n, out_len-n, entry);
+      n += (m = _bufcat(out+n, out_len-n, entry));
+      if (m == 0) return 0;
   }
 
   return n;
@@ -144,14 +137,14 @@ DLLEXPORT size_t pdf_write_name(PDF_TYPE_CODE_POINTS name, size_t in_len, char* 
 
   PDF_TYPE_CODE_POINTS in_p = name;
   PDF_TYPE_CODE_POINTS in_end = name + in_len;
-  size_t n = 0;
+  size_t n = 0, m;
 
   if (n < out_len) out[n++] = '/';
 
   while (in_p < in_end) {
     uint32_t cp = *(in_p++);
     uint8_t bp[5];
-    uint8_t m;
+    uint8_t bytes;
     uint8_t i;
     uint8_t byte;
     char buf[4] = { '#', ' ', ' ', 0};
@@ -160,8 +153,8 @@ DLLEXPORT size_t pdf_write_name(PDF_TYPE_CODE_POINTS name, size_t in_len, char* 
       // regular printable ascii character
       uint8_t c = (uint8_t) cp;
       if (c == '#') {
-        if (n+1 >= out_len) return 0;
-        n += _bufcat(out+n, out_len-n, "##");
+          n += (m = _bufcat(out+n, out_len-n, "##"));
+          if (m == 0) return 0;
         continue;
       }
       else if (!strchr("()<>[]{}/%", c)) {
@@ -170,13 +163,13 @@ DLLEXPORT size_t pdf_write_name(PDF_TYPE_CODE_POINTS name, size_t in_len, char* 
           continue;
       }
     }
-    m = utf8_from_code(cp, bp);
-    for (i = 0; i < m; i++) {
-      if (n+1 >= out_len) return 0;
+    bytes = utf8_from_code(cp, bp);
+    for (i = 0; i < bytes; i++) {
       byte = bp[i];
       buf[1] = hex_char(byte / 16);
       buf[2] = hex_char(byte % 16);
-      n += _bufcat(out+n, out_len-n, buf);
+      n += (m = _bufcat(out+n, out_len-n, buf));
+      if (m == 0) return 0;
     }
 
   }
