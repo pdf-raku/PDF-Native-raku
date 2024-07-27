@@ -420,7 +420,7 @@ class COSStream is repr('CStruct') is COSNode is export {
             # stream not attached
             start => $!u.value-pos;
         };
-        stream => %( $!dict.ast, $body );
+        stream => %( $.dict.ast, $body );
     }
     multi method COERCE(%s) {
         my COSDict $dict .= COERCE(%s<dict> // {});
