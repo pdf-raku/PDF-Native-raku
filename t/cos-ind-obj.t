@@ -1,7 +1,7 @@
 use PDF::Native::COS;
 use Test;
 
-plan 14;
+plan 15;
 
 my COSInt() $value = 69;
 
@@ -14,5 +14,17 @@ for (COSIndObj.new(:obj-num(42), :gen-num(3), :$value), COSIndObj.COERCE($[42, 3
     is-deeply $ind-obj.Str.lines , ('42 3 obj', '69', 'endobj');
     is-deeply COSNode.COERCE($ind-obj.ast).Str.lines , ('42 3 obj', '69', 'endobj');
 }
+
+my $stream = q:to<END>;
+45 0 obj
+<< /Length 4 >> stream
+abcd
+endstream
+endobj
+END
+
+my COSIndObj $ind-obj .= parse: $stream, :scan;
+
+is-deeply COSNode.COERCE($ind-obj.ast).Str.lines, $stream.lines;
 
 done-testing;
