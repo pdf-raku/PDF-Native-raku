@@ -2,6 +2,11 @@ Revision history for PDF-Native
 
 {{$NEXT}}
 
+0.1.7  2024-07-30T14:45:58+12:00
+   - Add COSComment node. Used for output only, at this stage.
+   - Add CosNode.write-buf() method. This is used to accurately presize
+     output write buffers.
+
 0.1.6  2024-07-28T10:37:54+12:00
    - Fix Stream AST, broken in last release
 
