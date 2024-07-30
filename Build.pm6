@@ -15,7 +15,7 @@ class Build {
             note "Setting to GCC...";
             %vars<MAKE> = 'make';
             %vars<CC> = 'gcc';
-            %vars<CCFLAGS> = '-fPIC -O3 -DNDEBUG --std=gnu99 -Wextra -Wall';
+            %vars<CCFLAGS> = '-fPIC -O3 -DNDEBUG --std=gnu99 -Wextra -Wall -Wno-unused-parameter';
             %vars<LD> = 'gcc';
             %vars<LDSHARED> = '-shared';
             %vars<LDFLAGS> = "-fPIC -O3 -Lresources/libraries";

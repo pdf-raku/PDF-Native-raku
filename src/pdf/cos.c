@@ -812,7 +812,7 @@ DLLEXPORT CosNull* cos_null_new(void) {
     return self;
 }
 
-DLLEXPORT size_t cos_null_write(CosNull*, char* out, size_t out_len) {
+DLLEXPORT size_t cos_null_write(CosNull* _self, char* out, size_t out_len) {
     strncpy(out, "null", out_len);
     return strnlen(out, out_len);
 }
