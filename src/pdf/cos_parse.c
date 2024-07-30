@@ -239,6 +239,7 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
         }
         break;
     default:
+        break;
     }
 
     ctx->buf_pos--;
