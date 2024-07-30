@@ -9,6 +9,7 @@ typedef enum COS_NODE_TYPE {
     COS_NODE_ANY,
     COS_NODE_ARRAY,
     COS_NODE_BOOL,
+    COS_NODE_COMMENT,
     COS_NODE_DICT,
     COS_NODE_HEX_STR, /* 4 */
     COS_NODE_IND_OBJ,
@@ -124,7 +125,7 @@ typedef struct {
     uint8_t         type;
     uint8_t         check;
     uint16_t        ref_count;
-    PDF_TYPE_INT    value;
+    PDF_TYPE_INT64  value;
 } CosInt;
 
 typedef struct {
@@ -140,7 +141,7 @@ typedef struct CosStringyNode {
     uint16_t        ref_count;
     PDF_TYPE_STRING value;
     size_t          value_len;
-} CosHexString, CosLiteralStr;
+} CosHexString, CosLiteralStr, CosComment;
 
 typedef struct CosStreamish {
     uint8_t         type;
@@ -256,5 +257,10 @@ DLLEXPORT size_t cos_content_write(CosContent*, char*, size_t);
 
 DLLEXPORT CosInlineImage* cos_inline_image_new(CosDict* dict, unsigned char* value, size_t value_len);
 DLLEXPORT size_t cos_inline_image_write(CosInlineImage*, char*, size_t);
+
+DLLEXPORT CosComment* cos_comment_new(PDF_TYPE_STRING, size_t);
+DLLEXPORT size_t cos_comment_write(CosComment*, char*, size_t, int);
+
+DLLEXPORT size_t cos_node_get_write_size(CosNode*, int);
 
 #endif

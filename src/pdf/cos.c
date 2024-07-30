@@ -80,8 +80,6 @@ DLLEXPORT void cos_node_done(CosNode* self) {
                 if (stream->value) free(stream->value);
             }
             break;
-        default :
-            fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
         }
         free((void*)self);
     }
@@ -175,43 +173,68 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
             case COS_NODE_REAL:
                 return COS_CMP(((CosReal*)self)->value, ((CosInt*)obj)->value);
             case COS_NODE_REF:
-                {
-                    CosRef* a = (void*)self;
-                    CosRef* b = (void*)obj;
-                    return (a->obj_num == b->obj_num && a->gen_num == b->gen_num)
-                        ? COS_CMP_EQUAL
-                        : COS_CMP_DIFFERENT;
-                }
+            {
+                CosRef* a = (void*)self;
+                CosRef* b = (void*)obj;
+                return (a->obj_num == b->obj_num && a->gen_num == b->gen_num)
+                    ? COS_CMP_EQUAL
+                    : COS_CMP_DIFFERENT;
+            }
             case COS_NODE_NAME:
-                {
-                    CosName* a = (void*)self;
-                    CosName* b = (void*)obj;
-                    return ((a->value_len == b->value_len) && !_cmp_code_points(a->value, b->value, a->value_len))
-                        ? COS_CMP_EQUAL
-                        : COS_CMP_DIFFERENT;
-                }
+            {
+                CosName* a = (void*)self;
+                CosName* b = (void*)obj;
+                return ((a->value_len == b->value_len) && !_cmp_code_points(a->value, b->value, a->value_len))
+                    ? COS_CMP_EQUAL
+                    : COS_CMP_DIFFERENT;
+            }
             case COS_NODE_LIT_STR:
             case COS_NODE_HEX_STR:
-                {
-                    struct CosStringyNode* a = (void*)self;
-                    struct CosStringyNode* b = (void*)obj;
-                    return ((a->value_len == b->value_len) && !_cmp_chars(a->value, b->value, a->value_len))
-                        ? COS_CMP_EQUAL
-                        : COS_CMP_DIFFERENT;
-                }
+            {
+                struct CosStringyNode* a = (void*)self;
+                struct CosStringyNode* b = (void*)obj;
+                return ((a->value_len == b->value_len) && !_cmp_chars(a->value, b->value, a->value_len))
+                    ? COS_CMP_EQUAL
+                    : COS_CMP_DIFFERENT;
+            }
             case COS_NODE_OP:
                 if (strcmp(((CosOp*)self)->opn, ((CosOp*)obj)->opn)) return  COS_CMP_DIFFERENT;
                 /* fallthrough */
             case COS_NODE_CONTENT:
             case COS_NODE_ARRAY:
-                {
-                    struct CosArrayishNode* a = (void*)self;
-                    struct CosArrayishNode* b = (void*)obj;
-                    int rv = COS_CMP_EQUAL;
-                    size_t i;
-                    if (a->elems != b->elems) return COS_CMP_DIFFERENT;
-                    for (i = 0; i < a->elems; i++) {
-                        int cmp = cos_node_cmp(a->values[i], b->values[i]);
+            {
+                struct CosArrayishNode* a = (void*)self;
+                struct CosArrayishNode* b = (void*)obj;
+                int rv = COS_CMP_EQUAL;
+                size_t i;
+                if (a->elems != b->elems) return COS_CMP_DIFFERENT;
+                for (i = 0; i < a->elems; i++) {
+                    int cmp = cos_node_cmp(a->values[i], b->values[i]);
+                    if (cmp == COS_CMP_SIMILAR) {
+                        rv = cmp;
+                    }
+                    else if (cmp >= COS_CMP_DIFFERENT) {
+                        return COS_CMP_DIFFERENT;
+                    }
+                }
+                return rv;
+            }
+            case COS_NODE_DICT:
+            {
+                CosDict* a = (void*)self;
+                CosDict* b = (void*)obj;
+                int rv = COS_CMP_EQUAL;
+                size_t i;
+                if (!a->index) cos_dict_build_index(a);
+                if (!b->index) cos_dict_build_index(b);
+                if (a->index_len != b->index_len) return COS_CMP_DIFFERENT;
+                for (i = 0; i < a->index_len; i++) {
+                    size_t ai = a->index[ i ];
+                    size_t bi = b->index[ i ];
+                    if (ai != bi) rv = COS_CMP_SIMILAR; /* keys in different order */
+                    if (cos_node_cmp((CosNode*)a->keys[ai], (CosNode*)b->keys[bi])) return COS_CMP_DIFFERENT;
+                    {
+                        int cmp = cos_node_cmp(a->values[ai], b->values[bi]);
                         if (cmp == COS_CMP_SIMILAR) {
                             rv = cmp;
                         }
@@ -219,72 +242,44 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
                             return COS_CMP_DIFFERENT;
                         }
                     }
-                    return rv;
                 }
-                break;
-            case COS_NODE_DICT:
-                {
-                    CosDict* a = (void*)self;
-                    CosDict* b = (void*)obj;
-                    int rv = COS_CMP_EQUAL;
-                    size_t i;
-                    if (!a->index) cos_dict_build_index(a);
-                    if (!b->index) cos_dict_build_index(b);
-                    if (a->index_len != b->index_len) return COS_CMP_DIFFERENT;
-                    for (i = 0; i < a->index_len; i++) {
-                        size_t ai = a->index[ i ];
-                        size_t bi = b->index[ i ];
-                        if (ai != bi) rv = COS_CMP_SIMILAR; /* keys in different order */
-                        if (cos_node_cmp((CosNode*)a->keys[ai], (CosNode*)b->keys[bi])) return COS_CMP_DIFFERENT;
-                        {
-                            int cmp = cos_node_cmp(a->values[ai], b->values[bi]);
-                            if (cmp == COS_CMP_SIMILAR) {
-                                rv = cmp;
-                            }
-                            else if (cmp >= COS_CMP_DIFFERENT) {
-                                return COS_CMP_DIFFERENT;
-                            }
-                        }
-                    }
-                    return rv;
-                 }
+                return rv;
+            }
             case COS_NODE_IND_OBJ:
-                {
-                    CosIndObj* a = (void*)self;
-                    CosIndObj* b = (void*)obj;
-                    int rv = COS_CMP_EQUAL;
-                    if (a->obj_num != b->obj_num || a->gen_num != b->gen_num) {
-                        rv = COS_CMP_DIFFERENT;
-                    }
-                    else {
-                        rv = cos_node_cmp(a->value, b->value);
-                        if (rv > COS_CMP_DIFFERENT) rv = COS_CMP_DIFFERENT;
-                    }
-                    return rv;
+            {
+                CosIndObj* a = (void*)self;
+                CosIndObj* b = (void*)obj;
+                int rv = COS_CMP_EQUAL;
+                if (a->obj_num != b->obj_num || a->gen_num != b->gen_num) {
+                    rv = COS_CMP_DIFFERENT;
                 }
+                else {
+                    rv = cos_node_cmp(a->value, b->value);
+                    if (rv > COS_CMP_DIFFERENT) rv = COS_CMP_DIFFERENT;
+                }
+                return rv;
+            }
             case COS_NODE_STREAM:
             case COS_NODE_INLINE_IMAGE:
-                {
-                    struct CosStreamish* a = (void*)self;
-                    struct CosStreamish* b = (void*)obj;
-                    int rv = COS_CMP_EQUAL;
-                    if (!a->value || !b->value) {
-                        /* streams not fully loaded */
-                        rv = COS_CMP_INVALID;
-                    }
-                    else if (a->value_len != b->value_len || _cmp_chars(a->value, b->value, a->value_len)) {
-                        rv = COS_CMP_DIFFERENT;
-                    }
-                    else {
-                        rv = cos_node_cmp((CosNode*)a->dict, (CosNode*)b->dict);
-                        if (rv > COS_CMP_DIFFERENT) rv = COS_CMP_DIFFERENT;
-                    }
-                    return rv;
+            {
+                struct CosStreamish* a = (void*)self;
+                struct CosStreamish* b = (void*)obj;
+                int rv = COS_CMP_EQUAL;
+                if (!a->value || !b->value) {
+                    /* streams not fully loaded */
+                    rv = COS_CMP_INVALID;
                 }
-            default :
-                fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
-                return COS_CMP_EQUAL;
+                else if (a->value_len != b->value_len || _cmp_chars(a->value, b->value, a->value_len)) {
+                    rv = COS_CMP_DIFFERENT;
+                }
+                else {
+                    rv = cos_node_cmp((CosNode*)a->dict, (CosNode*)b->dict);
+                    if (rv > COS_CMP_DIFFERENT) rv = COS_CMP_DIFFERENT;
+                }
+                return rv;
+            }
         }
+        return 0;
     }
 }
 
@@ -337,12 +332,16 @@ static int _node_write(CosNode* self, char* out, int out_len, int indent) {
     case COS_NODE_CONTENT:
         n = cos_content_write((CosContent*)self, out, out_len);
         break;
+    case COS_NODE_COMMENT:
+        n = cos_comment_write((CosHexString*)self, out, out_len, indent);
+        break;
     default :
         fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
     }
 
     return n;
 }
+
 
 DLLEXPORT CosArray* cos_array_new(CosNode** values, size_t elems) {
     size_t i;
@@ -785,6 +784,26 @@ DLLEXPORT size_t cos_hex_string_write(CosHexString* self, char* out, size_t out_
     return pdf_write_hex_string(self->value, self->value_len, out, out_len);
 }
 
+DLLEXPORT CosComment* cos_comment_new(PDF_TYPE_STRING value, size_t value_len) {
+    CosComment* self = malloc(sizeof(CosComment));
+    self->type = COS_NODE_COMMENT;
+    self->check = COS_CHECK(self);
+    self->ref_count = 1;
+    self->value = malloc(sizeof(*value) * value_len);
+    memcpy(self->value, value, sizeof(*value) * value_len);
+    self->value_len = value_len;
+    return self;
+ }
+
+DLLEXPORT size_t cos_comment_write(CosComment* self, char* out, size_t out_len, int indent) {
+    size_t n = 0;
+    for (; indent > 0; indent--) {
+        if (n >= out_len) return 0;
+        out[n++] = ' ';
+    }
+    return n + pdf_write_comment(self->value, self->value_len, out+n, out_len-n);
+}
+
 DLLEXPORT CosNull* cos_null_new(void) {
     CosNull* self = malloc(sizeof(CosNull));
     self->type = COS_NODE_NULL;
@@ -1147,6 +1166,27 @@ DLLEXPORT CosContent* cos_content_new(CosOp** values, size_t elems) {
     return self;
 }
 
+static int _op_nesting(CosOp* op) {
+    if (op->type == COS_NODE_OP) {
+        switch (op->sub_type) {
+        case COS_OP_Save:
+        case COS_OP_BeginText:
+        case COS_OP_BeginExtended:
+        case COS_OP_BeginMarkedContent:
+        case COS_OP_BeginMarkedContentDict:
+            return 1;
+        case COS_OP_Restore:
+        case COS_OP_EndText:
+        case COS_OP_EndExtended:
+        case COS_OP_EndMarkedContent:
+            return -1;
+        default :
+            break;
+        }
+    }
+    return 0;
+}
+
 DLLEXPORT size_t cos_content_write(CosContent* self, char* out, size_t out_len) {
     size_t n = 0;
     size_t i;
@@ -1156,32 +1196,14 @@ DLLEXPORT size_t cos_content_write(CosContent* self, char* out, size_t out_len) 
     for (i=0; i < self->elems; i++) {
         if (n >= out_len) return 0;
         CosOp* op = self->values[i];
-        int ch;
+        int ch = _op_nesting(op);
 
-        switch (op->sub_type) {
-        case COS_OP_Save:
-        case COS_OP_BeginText:
-        case COS_OP_BeginExtended:
-        case COS_OP_BeginMarkedContent:
-        case COS_OP_BeginMarkedContentDict:
-            ch = 1;
-            break;
-        case COS_OP_Restore:
-        case COS_OP_EndText:
-        case COS_OP_EndExtended:
-        case COS_OP_EndMarkedContent:
-            ch = -1;
-            break;
-        default :
-            ch = 0;
-        }
-
+        if (i > 0 && n < out_len) out[n++] = '\n';
         if (ch < 0 && indent > 1) indent -= 2;
         n += (m = _node_write((CosNode*)op, out+n, out_len - n, indent));
+        if (m == 0) return 0;
         if (ch > 0 && indent >= 0) indent += 2;
 
-        if (m == 0 || n >= out_len) return 0;
-        out[n++] = '\n';
     }
 
     return n;
@@ -1213,4 +1235,113 @@ DLLEXPORT size_t cos_inline_image_write(CosInlineImage* self, char* out, size_t 
     memcpy(out+n, self->value, self->value_len);
 
     return n + self->value_len;
+}
+
+/* gives a modest overestimate of write buffer size for preallocation */
+DLLEXPORT size_t cos_node_get_write_size(CosNode* self, int indent) {
+    char out[64];
+    size_t size = 0;
+    size_t i;
+
+    switch (self ? self->type : COS_NODE_NULL) {
+    case COS_NODE_IND_OBJ:
+        return 50 + cos_node_get_write_size(((CosIndObj*)self)->value, 0);
+    case COS_NODE_INT:
+        return snprintf(out, sizeof(out), "%" PRId64, ((CosInt*)self)->value);
+    case COS_NODE_BOOL:
+        return 5;
+    case COS_NODE_NULL:
+        return 4;
+    case COS_NODE_REAL:
+        return cos_real_write((CosReal*)self, out, sizeof(out));
+    case COS_NODE_REF:
+        return cos_ref_write((CosRef*)self, out, sizeof(out)) + 1;
+    case COS_NODE_ARRAY:
+    {
+        CosArray* a = (void*)self;
+        size += 4; /* '[ ' + ' ]' */
+        for (i = 0; i < a->elems; i++) {
+            size += cos_node_get_write_size(a->values[i], indent+2);
+        }
+        return size + (a->elems + 2) * (indent+1);
+    }
+    case COS_NODE_DICT:
+    {
+        CosDict* d = (void*)self;
+        size += 6; /* '<< ' + ' >>' */
+        for (i = 0; i < d->elems; i++) {
+            size += cos_node_get_write_size((CosNode*)d->keys[i], indent);
+            size += cos_node_get_write_size(d->values[i], indent+2);
+            size += 2;
+        }
+        return size;
+    }
+    case COS_NODE_STREAM:
+    case COS_NODE_INLINE_IMAGE:
+    {
+        struct CosStreamish *s = (void*) self;
+        size += cos_node_get_write_size((CosNode*)s->dict, indent + 2);
+        size += 20;
+        if (s->value) size += s->value_len;
+        return size;
+    }
+    case COS_NODE_NAME:
+    {
+        CosName* n = (void*) self;
+        size++; /* leading '/' */
+        for (i = 0; i < n->value_len; i++) {
+            size += pdf_write_name_code(n->value[i], out, sizeof(out));
+        }
+        return size;
+    }
+    case COS_NODE_LIT_STR:
+    {
+        CosLiteralStr* ls = (void*) self;
+        size += 2; /* '(' and ')' */
+        for (i = 0; i < ls->value_len; i++) {
+            switch(ls->value[i]) {
+            case '\n': case '\r': case '\t': case '\f': case '\b':
+            case '\\': case '(': case ')':
+                /* escaped */
+                size += 2;
+                break;
+            default:
+                /* literal */
+                size += 1;
+            }
+        }
+        return size;
+    }
+    case COS_NODE_HEX_STR:
+        return ((CosHexString*)self)->value_len * 2 + 2;
+
+    case COS_NODE_OP:
+    {
+        CosOp* op = (void*) self;
+        size = strlen(op->opn) + op->elems;
+        for (i = 0; i < op->elems; i++) {
+            size += 1 + cos_node_get_write_size(op->values[i], 0);
+        }
+        return size; 
+    }
+    case COS_NODE_CONTENT:
+    {
+        CosContent* c = (void*) self;
+        indent = 1;
+        for (i = 0; i < c->elems; i++) {
+            CosNode* node = (void*) c->values[i];
+            if (node->type == COS_NODE_OP) {
+                indent += _op_nesting((CosOp*)node);
+                size += indent;
+            }
+            size += cos_node_get_write_size(node, indent);
+            size++;
+        }
+        return size;
+    }
+    case COS_NODE_COMMENT:
+        return ((CosComment*)self)->value_len + 2;
+    }
+
+    return size;
 }

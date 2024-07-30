@@ -755,6 +755,7 @@ static int _typecheck_operand(CosNode* node) {
         case  COS_NODE_NAME:
         case  COS_NODE_NULL:
         case  COS_NODE_REAL:
+        case COS_NODE_COMMENT:
             return 1;
 
         case  COS_NODE_ARRAY:

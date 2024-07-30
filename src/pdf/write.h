@@ -16,6 +16,11 @@ DLLEXPORT size_t pdf_write_literal(PDF_TYPE_STRING, size_t in_len, char* out, si
 /* write hex string: "snoopy" -> "<736e6f6f7079>" */
 DLLEXPORT size_t pdf_write_hex_string(PDF_TYPE_STRING, size_t in_len, char* out, size_t out_len);
 
+/* write comment: "comment1\ncomment2" -> "% comment1\n% comment2" */
+DLLEXPORT size_t pdf_write_comment(PDF_TYPE_STRING , size_t in_len, char* out, size_t out_len);
+
+DLLEXPORT int pdf_write_name_code(PDF_TYPE_CODE_POINT cp, char*, size_t); 
+
 /* write name: "Hi#there" -> "/Hi##there" */
 DLLEXPORT size_t pdf_write_name(PDF_TYPE_CODE_POINTS, size_t in_len, char* out, size_t out_len);
 
