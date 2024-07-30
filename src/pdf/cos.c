@@ -1022,7 +1022,7 @@ DLLEXPORT int cos_op_is_valid(CosOp* self) {
     case COS_OP_SetFillColorSpace: case COS_OP_SetStrokeColorSpace:
     case COS_OP_XObject: case COS_OP_SetGraphicsState:
     case COS_OP_MarkPoint: case COS_OP_SetRenderingIntent:
-    case COS_OP_ShFill: 
+    case COS_OP_ShFill:
     case COS_OP_BeginMarkedContent:
         return self->elems == 1 && self->values[0]->type == COS_NODE_NAME;
 
@@ -1071,7 +1071,7 @@ DLLEXPORT int cos_op_is_valid(CosOp* self) {
 
     case COS_OP_MoveTo: case COS_OP_LineTo:
     case COS_OP_TextMove: case COS_OP_TextMoveSet:
-    case COS_OP_SetCharWidth: 
+    case COS_OP_SetCharWidth:
         return self->elems == 2
             && _is_numeric(self->values[0])
             && _is_numeric(self->values[1]);
@@ -1126,6 +1126,7 @@ DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent
     size_t n = 0;
     size_t i;
     size_t m;
+    CosNode* comment = NULL;
 
     for (; indent > 0; indent--) {
         if (n >= out_len) return 0;
@@ -1133,6 +1134,10 @@ DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent
     }
 
     for (i=0; i < self->elems; i++) {
+        if (self->values[i]->type == COS_NODE_COMMENT) {
+            comment = self->values[i];
+            continue;
+        }
         n += (m = _node_write(self->values[i], out+n, out_len - n, 0));
         if (m == 0 ) return 0;
         if (n >= out_len) return 0;
@@ -1141,6 +1146,11 @@ DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent
 
     n += (m = _bufcat(out+n, out_len-n, self->opn));
     if (m == 0) return 0;
+
+    if (comment && n < out_len) {
+        out[n++] = ' ';
+        n += _node_write(comment, out+n, out_len - n, 0);
+    }
 
     return n;
 }
@@ -1322,7 +1332,7 @@ DLLEXPORT size_t cos_node_get_write_size(CosNode* self, int indent) {
         for (i = 0; i < op->elems; i++) {
             size += 1 + cos_node_get_write_size(op->values[i], 0);
         }
-        return size; 
+        return size;
     }
     case COS_NODE_CONTENT:
     {

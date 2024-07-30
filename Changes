@@ -1,6 +1,7 @@
 Revision history for PDF-Native
 
 {{$NEXT}}
+   - Ensure comments are written at the end of a line in content stream
 
 0.1.7  2024-07-30T14:45:58+12:00
    - Add COSComment node. Used for output only, at this stage.
