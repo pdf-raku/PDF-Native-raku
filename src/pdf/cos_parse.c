@@ -638,10 +638,11 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
     case COS_TK_NAME:
         node = (CosNode*) _parse_name(ctx);
         break;
-    case COS_TK_REAL:
+    case COS_TK_REAL: {
         PDF_TYPE_REAL val = _read_real(ctx, tk1);
         node = (CosNode*)cos_real_new(val);
         break;
+    }
     case COS_TK_WORD:
         switch (tk1->len) {
         case 4:
@@ -799,7 +800,7 @@ static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
         break;
     case COS_TK_DONE:
         break;
-    default:
+    default: {
         CosNode* operand = _parse_object(ctx);
         size_t i = (*n)++;
 
@@ -816,6 +817,7 @@ static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
             cos_node_done((CosNode*)op);
             op = NULL;
         }
+    }
     }
 
     return op;
