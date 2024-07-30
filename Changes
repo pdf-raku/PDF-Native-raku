@@ -1,6 +1,8 @@
 Revision history for PDF-Native
 
 {{$NEXT}}
+
+0.1.8  2024-07-31T05:51:38+12:00
    - Ensure comments are written at the end of a line in content stream
 
 0.1.7  2024-07-30T14:45:58+12:00
