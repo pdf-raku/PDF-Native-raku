@@ -1331,9 +1331,10 @@ DLLEXPORT size_t cos_node_get_write_size(CosNode* self, int indent) {
         for (i = 0; i < c->elems; i++) {
             CosNode* node = (void*) c->values[i];
             if (node->type == COS_NODE_OP) {
-                indent += _op_nesting((CosOp*)node);
-                size += indent;
+                indent += 2 * _op_nesting((CosOp*)node);
+                if (indent < 0) indent = 0;
             }
+            size += indent;
             size += cos_node_get_write_size(node, indent);
             size++;
         }
