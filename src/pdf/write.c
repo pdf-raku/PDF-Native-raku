@@ -129,13 +129,15 @@ DLLEXPORT size_t pdf_write_comment(PDF_TYPE_STRING val, size_t in_len, char* out
     char ch = *(in_p++);
     if (ch == '\r' || ch == '\n') {
         if (ch == '\r' && in_p < in_end && *(in_p) == '\n') in_p++;
-        n += (m = _bufcat(out+n, out_len-n, "% "));
-        if (m == 0) return n;
+        n += (m = _bufcat(out+n, out_len-n, "\n% "));
+        if (m == 0) return 0;
     }
     else {
         out[n++] = ch;
     }
   }
+  n += (m = _bufcat(out+n, out_len-n, "\n"));
+  if (m == 0) return 0;
 
   return n;
 }

@@ -1150,6 +1150,7 @@ DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent
     if (comment && n < out_len) {
         out[n++] = ' ';
         n += _node_write(comment, out+n, out_len - n, 0);
+        n--;
     }
 
     return n;
@@ -1210,8 +1211,9 @@ DLLEXPORT size_t cos_content_write(CosContent* self, char* out, size_t out_len) 
 
         if (i > 0 && n < out_len) out[n++] = '\n';
         if (ch < 0 && indent > 1) indent -= 2;
-        n += (m = _node_write((CosNode*)op, out+n, out_len - n, indent));
+        n += (m = _node_write((CosNode*)op, out+n, out_len-n, indent));
         if (m == 0) return 0;
+        if (out[n-1] == '\n') n--;
         if (ch > 0 && indent >= 0) indent += 2;
 
     }
@@ -1351,7 +1353,15 @@ DLLEXPORT size_t cos_node_get_write_size(CosNode* self, int indent) {
         return size;
     }
     case COS_NODE_COMMENT:
-        return ((CosComment*)self)->value_len + 2;
+    {
+        size += 3;
+        CosComment* c = (void*) self;
+        for (i = 0; i < c->value_len; i++) {
+            char ch = c->value[i];
+            size += (ch == '\r' || ch == '\n') ? 3 : 1;
+        }
+        return size;
+    }
     }
 
     return size;
