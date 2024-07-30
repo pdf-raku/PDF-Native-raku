@@ -604,7 +604,7 @@ static CosDict* _pairs_to_dict(CosNode** objects, size_t n) {
     }
     dict = cos_dict_new(keys, values, elems);
 bail:
-    if (!dict) _done_objects(objects, n);
+    _done_objects(objects, n);
     if (keys) free(keys);
     if (values) free(values);
     return dict;
