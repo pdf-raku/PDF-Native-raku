@@ -2,6 +2,9 @@ Revision history for PDF-Native
 
 {{$NEXT}}
 
+0.1.9  2024-07-31T09:15:11+12:00
+  - Fixes for MSVE and MacOS compilation
+
 0.1.8  2024-07-31T05:51:38+12:00
    - Ensure comments are written at the end of a line in content stream
 

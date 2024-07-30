@@ -22,8 +22,6 @@ jobs:
       - name: Update DLL
         run: |
           zef install --/test LibraryMake
-          zef install --/test LibraryMake
-          zef install --/test LibraryMake
           raku Build.pm6 --rebuild
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
