@@ -78,7 +78,7 @@ static size_t _skip_ws(CosParserCtx* ctx) {
 }
 
 // strict scan for crlf or lf. This may matter at a binary-data boundaries such
-// as 'stream'...'endstream', or 'ID'...'EI'.
+// as 'stream'..'endstream', or 'ID'..'EI'.
 static int _scan_new_line(CosParserCtx* ctx, int* dos_mode) {
     if (ctx->buf[ctx->buf_pos] == '\n' && ctx->buf_pos < ctx->buf_len) {
         ctx->buf_pos++;
@@ -116,7 +116,24 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
     for (; ctx->buf_pos <= ctx->buf_len && !wb; ctx->buf_pos++) {
         if (ctx->buf_pos >= ctx->buf_len) { wb = 1; continue; }
         ch = ctx->buf[ctx->buf_pos];
-        switch (ch) {
+        if (ch >= '0' && ch <= '9') {
+            got_digits = 1;
+            switch (tk->type) {
+            case COS_TK_START:
+                tk->type = COS_TK_INT;
+                break;
+            case COS_TK_INT:
+            case COS_TK_REAL:
+            case COS_TK_NAME:
+            case COS_TK_WORD:
+                break;
+            case COS_TK_DELIM:
+            case COS_TK_DONE:
+                wb = 1;
+                break;
+            }
+        }
+        else switch (ch) {
         case '+': case '-':
             switch (tk->type) {
             case COS_TK_START:
@@ -149,23 +166,6 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
                 break;
             case COS_TK_DONE:
             case COS_TK_DELIM:
-                wb = 1;
-                break;
-            }
-            break;
-        case '0'...'9':
-            got_digits = 1;
-            switch (tk->type) {
-            case COS_TK_START:
-                tk->type = COS_TK_INT;
-                break;
-            case COS_TK_INT:
-            case COS_TK_REAL:
-            case COS_TK_NAME:
-            case COS_TK_WORD:
-                break;
-            case COS_TK_DELIM:
-            case COS_TK_DONE:
                 wb = 1;
                 break;
             }
@@ -299,16 +299,17 @@ static PDF_TYPE_INT _read_int(CosParserCtx* ctx, CosTk* tk) {
 
 static int _hex_value(char ch) {
 
-    switch (ch) {
-        case '0'...'9':
-            return ch - '0';
-        case 'A'...'F':
-            return ch - 'A' + 10;
-        case 'a'...'f':
-            return ch - 'a' + 10;
-        default:
-            return -1;
+    if (ch >= '0' && ch <= '9') {
+        return ch - '0';
     }
+    else if (ch >= 'A' && ch <= 'F') {
+        return ch - 'A' + 10;
+    }
+    else if (ch >= 'a' && ch <= 'f') {
+        return ch - 'a' + 10;
+    }
+
+    return -1;
 }
 
 static CosName* _parse_name(CosParserCtx* ctx) {
@@ -470,7 +471,11 @@ static int _lit_str_nibble(char **pos, char *end, int *nesting) {
     switch (ch) {
     case '\\': {
         if (*pos >= end) return -1;
-        switch (*(++(*pos))) {
+        ch = *(++(*pos));
+        if (ch >= '0' && ch <= '7') {
+            return _octal_nibble(pos, end, 0, 1);
+        }
+        else switch (ch) {
         case 'n': return '\n';
         case 'r': return '\r';
         case 't': return '\t';
@@ -479,8 +484,6 @@ static int _lit_str_nibble(char **pos, char *end, int *nesting) {
         case '(': return '(';
         case ')': return ')';
         case '\\': return '\\';
-        case '0' ... '7':
-            return _octal_nibble(pos, end, 0, 1);
         case '\r':
             if (*pos < end && *(*pos+1) == '\n') ++(*pos);
             /* fallthrough */
