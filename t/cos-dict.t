@@ -1,7 +1,7 @@
 use PDF::Native::COS;
 use Test;
 
-plan 15;
+plan 16;
 
 sub parse(Str:D $str) {
     COSNode.parse: $str;
@@ -16,6 +16,7 @@ is $dict.elems, 4;
 isa-ok $dict[0], COSInt;
 isa-ok $dict[1], COSRef;
 is $dict[0].value, 69;
+is-deeply $dict[3], COSNode;
 is $dict<foo>.value, 69;
 is $dict<bar>.obj-num, 123;
 my COSName() $key = 'bar'; 

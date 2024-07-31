@@ -663,7 +663,7 @@ DLLEXPORT CosStream* cos_stream_new(CosDict* dict, unsigned char* value, size_t 
     }
     else {
         self->value = NULL;
-        self->value_len = value_len;
+        self->value_pos = value_len;
     }
 
     return self;

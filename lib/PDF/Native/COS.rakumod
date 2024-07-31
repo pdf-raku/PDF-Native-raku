@@ -125,7 +125,7 @@ class COSNode is repr('CStruct') is _Node is export {
     our sub cos_parse_obj(Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
 
     #| Parse a COS object
-    multi method parse(LatinStr:D $str --> COSNode) {
+    multi method parse(LatinStr:D $str --> _Node) {
         my blob8 $buf = $str.encode: "latin-1";
         cos_parse_obj($buf, $buf.bytes).delegate;
     }
@@ -301,7 +301,7 @@ class COSDict is COSNode is repr('CStruct') is export {
     our sub cos_dict_new(CArray[COSName], CArray[COSNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
     method !cos_dict_write(Blob, size_t, int32 --> size_t) is native(libpdf) {*}
     method !cos_dict_build_index(--> Pointer[size_t]) is native(libpdf) {*}
-    method !cos_dict_lookup(COSName --> COSNode) is native(libpdf) {*}
+    method !cos_dict_lookup(COSName --> _Node) is native(libpdf) {*}
 
     method new(
         CArray[COSName] :$keys,
@@ -312,13 +312,15 @@ class COSDict is COSNode is repr('CStruct') is export {
     }
 
     method AT-KEY(COSName:D() $key --> COSNode) {
-        my COSNode $value = self!cos_dict_lookup($key);
-        $value.defined ?? $value.delegate !! $value;
+        my _Node $value = self!cos_dict_lookup($key);
+        $value.defined ?? $value.delegate !! COSNode;
     }
 
     method AT-POS(UInt:D() $idx --> COSNode) {
-        $idx < $!elems
-            ?? $!values[$idx].delegate
+        my _Node $value = $!values[$idx]
+            if $idx < $!elems;
+        $value.defined && $value.type != COS_NODE_NULL
+            ?? $value.delegate
             !! COSNode;
     }
 
