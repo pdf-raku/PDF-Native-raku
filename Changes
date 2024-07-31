@@ -2,6 +2,9 @@ Revision history for PDF-Native
 
 {{$NEXT}}
 
+0.1.10  2024-07-31T13:55:50+12:00
+  - Fix memory leak in dictionary parse
+
 0.1.9  2024-07-31T09:15:11+12:00
   - Fixes for MSVE and MacOS compilation
 
