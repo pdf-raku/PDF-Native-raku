@@ -444,7 +444,6 @@ class COSIndObj is repr('CStruct') is COSNode is export {
         cos_parse_ind_obj($buf, $buf.bytes, +$scan);
     }
     method write(::?CLASS:D: buf8 :$buf! is rw) {
-        my $obj = self.value;
         $.presize-write-buf($buf);
         my $n = self!cos_ind_obj_write($buf, $buf.bytes);
         fail "Unable to write indirect object $!obj-num $!gen-num R in {$buf.bytes} bytes" unless $n;

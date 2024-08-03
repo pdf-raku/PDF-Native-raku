@@ -284,62 +284,44 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
 }
 
 static int _node_write(CosNode* self, char* out, int out_len, int indent) {
-    int n = 0;
-
     switch (self ? self->type : COS_NODE_NULL) {
     case COS_NODE_IND_OBJ:
-        n = cos_ind_obj_write((CosIndObj*)self, out, out_len);
-        break;
+        return cos_ind_obj_write((CosIndObj*)self, out, out_len);
     case COS_NODE_INT:
-        n = cos_int_write((CosInt*)self, out, out_len);
-        break;
+        return cos_int_write((CosInt*)self, out, out_len);
     case COS_NODE_BOOL:
-        n = cos_bool_write((CosBool*)self, out, out_len);
-        break;
+        return cos_bool_write((CosBool*)self, out, out_len);
     case COS_NODE_NULL:
-        n = cos_null_write((CosNull*)self, out, out_len);
-        break;
+        return cos_null_write((CosNull*)self, out, out_len);
     case COS_NODE_REAL:
-        n = cos_real_write((CosReal*)self, out, out_len);
-        break;
+        return cos_real_write((CosReal*)self, out, out_len);
     case COS_NODE_REF:
-        n = cos_ref_write((CosRef*)self, out, out_len);
-        break;
+        return cos_ref_write((CosRef*)self, out, out_len);
     case COS_NODE_ARRAY:
-        n = cos_array_write((CosArray*)self, out, out_len, indent);
-        break;
+        return cos_array_write((CosArray*)self, out, out_len, indent);
     case COS_NODE_DICT:
-        n = cos_dict_write((CosDict*)self, out, out_len, indent);
-        break;
+        return cos_dict_write((CosDict*)self, out, out_len, indent);
     case COS_NODE_NAME:
-        n = cos_name_write((CosName*)self, out, out_len);
-        break;
+        return cos_name_write((CosName*)self, out, out_len);
     case COS_NODE_LIT_STR:
-        n = cos_literal_write((CosLiteralStr*)self, out, out_len);
-        break;
+        return cos_literal_write((CosLiteralStr*)self, out, out_len);
     case COS_NODE_HEX_STR:
-        n = cos_hex_string_write((CosHexString*)self, out, out_len);
-        break;
+        return cos_hex_string_write((CosHexString*)self, out, out_len);
     case COS_NODE_STREAM:
-        n = cos_stream_write((CosStream*)self, out, out_len);
-        break;
+        return cos_stream_write((CosStream*)self, out, out_len);
     case COS_NODE_OP:
-        n = cos_op_write((CosOp*)self, out, out_len, indent);
-        break;
+        return cos_op_write((CosOp*)self, out, out_len, indent);
     case COS_NODE_INLINE_IMAGE:
-        n = cos_inline_image_write((CosInlineImage*)self, out, out_len);
-        break;
+        return cos_inline_image_write((CosInlineImage*)self, out, out_len);
     case COS_NODE_CONTENT:
-        n = cos_content_write((CosContent*)self, out, out_len);
-        break;
+        return cos_content_write((CosContent*)self, out, out_len);
     case COS_NODE_COMMENT:
-        n = cos_comment_write((CosHexString*)self, out, out_len, indent);
-        break;
+        return cos_comment_write((CosHexString*)self, out, out_len, indent);
     default :
         fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
     }
 
-    return n;
+    return 0;
 }
 
 
