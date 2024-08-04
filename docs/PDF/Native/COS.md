@@ -42,7 +42,7 @@ Generic COS objects
 ```raku
 multi method parse(
     Str:D $str where { ... }
-) returns PDF::Native::COS::COSNode
+) returns PDF::Native::COS::_Node
 ```
 
 Parse a COS object
@@ -112,10 +112,15 @@ class PDF::Native::COS::COSNull
 
 Null object
 
+class PDF::Native::COS::COSComment
+----------------------------------
+
+Comment
+
 class PDF::Native::COS::COSOp
 -----------------------------
 
-Graphics Operator
+Graphics Operation
 
 class PDF::Native::COS::COSInlineImage
 --------------------------------------

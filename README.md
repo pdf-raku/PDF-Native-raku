@@ -14,6 +14,7 @@ which is most noticeable when reading or writing larger PDF files.
 So far, the areas covered are:
 
 - parsing of native (COS) objects by PDF::IO::Reader
+- parsing and serialization of graphics by PDF::Content::Ops
 - the PDF::IO::Filter::Predictor `decode` and `encode` functions.
 - the widely used PDF::IO::Util `pack` and `unpack` functions.
 - reading of cross reference tables and PDF 1.5+ cross reference streams.

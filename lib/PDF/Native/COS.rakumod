@@ -588,7 +588,7 @@ class COSNull is repr('CStruct') is COSNode is export {
     }
 }
 
-#| Hex string object
+#| Comment
 class COSComment is repr('CStruct') is _COSStringy is export {
     also does COSType[$?CLASS, COS_NODE_COMMENT];
     our sub cos_comment_new(blob8, size_t --> ::?CLASS:D) is native(libpdf) {*}
@@ -606,7 +606,7 @@ class COSComment is repr('CStruct') is _COSStringy is export {
 
 }
 
-#| Graphics Operator
+#| Graphics Operation
 class COSOp is repr('CStruct') is COSNode is export {
     also does COSType[$?CLASS, COS_NODE_OP];
     has size_t $.elems;
