@@ -239,8 +239,10 @@ class COSArray is COSNode is repr('CStruct') is export {
     has size_t $.elems;
     has CArray[_Node] $.values;
     method AT-POS(UInt:D() $idx --> COSNode) {
-        $idx < $!elems
-            ?? $!values[$idx].delegate
+        my _Node $value = $!values[$idx]
+            if $idx < $!elems;
+        $value.defined && $value.type != COS_NODE_NULL
+            ?? $value.delegate
             !! COSNode;
     }
     our sub cos_array_new(CArray[COSNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
