@@ -257,7 +257,7 @@ class COSArray is COSNode is repr('CStruct') is export {
         fail "Unable to write array" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
     }
-    method ast { :array[ (^$!elems).map: { self.AT-POS($_).ast } ] }
+    method ast { :array[ (^$!elems).map: { $!values[$_].delegate.ast } ] }
     multi method COERCE(@array) {
         my CArray[COSNode] $values .= new: @array.map: { COSNode.COERCE: $_ };
         self.new: :$values;
@@ -330,7 +330,7 @@ class COSDict is COSNode is repr('CStruct') is export {
         self!cos_dict_build_index() unless $!index;
     }
 
-    method ast { dict => %( (^$!elems).map: { $!keys[$_].delegate.ast.value => self.AT-POS($_).ast }) }
+    method ast { dict => %( (^$!elems).map: { $!keys[$_].delegate.ast.value => $!values[$_].delegate.ast }) }
 
     method write(::?CLASS:D: buf8
                  :$buf = self.write-buf,
