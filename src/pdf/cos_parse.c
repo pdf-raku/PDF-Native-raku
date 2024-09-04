@@ -850,7 +850,6 @@ static CosInlineImage* _parse_inline_image(CosParserCtx* ctx) {
             cos_node_done((CosNode*)dict);
             return NULL;
         }
-
     }
 
     if (ok && dict) {
@@ -943,19 +942,20 @@ static CosContent* _parse_content(CosParserCtx* ctx, size_t* n, int expect_inlin
 }
 
 /* locate 'endstream' at the end of stream data, working from the end of
- * the buffer backwards. Be careful to only consume \r, if the earlier 'stream'
- * token was also \r\n, as the 'endstream' is proceeded by binary data.
+ * the buffer backwards. Attempt to match the same end-of-line sequence to
+ * avoid accidentally consuming binary data.
  */
 static size_t _locate_endstream(CosParserCtx* ctx, size_t start, char eoln[]) {
     size_t p;
     int len = strlen(eoln);
+    int guess = len == 0;
 
     for (p = ctx->buf_len - 10; p > start; p--) {
         if (strncmp("endstream", ctx->buf + p, 9) == 0) {
-            if (len == 0 || strncmp(eoln, ctx->buf + p - len, len) == 0) {
-                if (len == 0) {
-                    if (ctx->buf[p-1] == '\n' || ctx->buf[p-1] == '\r') len++;
-                    if (ctx->buf[p-2] == '\n' || ctx->buf[p-2] == '\r') len++;
+            if (guess || strncmp(eoln, ctx->buf + p - len, len) == 0) {
+                if (guess)  {
+                    if (p > start   && (ctx->buf[p-1] == '\n' || ctx->buf[p-1] == '\r')) len++;
+                    if (p > start+1 && (ctx->buf[p-2] == '\n' || ctx->buf[p-2] == '\r')) len++;
                 }
                 return p - len;
             }
