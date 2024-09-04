@@ -16,7 +16,7 @@
  *   - parse an inner object, dictionary, arrays or other simple objects
  *
  * CosContent* cos_parse_content(char, size_t)
- *   - parse an content stream, as a series of CosOp* objects, sprinkled
+ *   - parse a content stream, as a series of CosOp* objects, sprinkled
  *     with occasional chunkier CosInlineImage* objects
  *
  */
@@ -79,18 +79,17 @@ static size_t _skip_ws(CosParserCtx* ctx) {
 
 // strict scan for crlf or lf. This may matter at a binary-data boundaries such
 // as 'stream'..'endstream', or 'ID'..'EI'.
-static int _scan_new_line(CosParserCtx* ctx, int* dos_mode) {
+static int _scan_new_line(CosParserCtx* ctx, char eoln[]) {
+    int len = 0;
+    if (ctx->buf[ctx->buf_pos] == '\r' && ctx->buf_pos < ctx->buf_len) {
+        ctx->buf_pos++;
+        eoln[len++] = '\r';
+    }
     if (ctx->buf[ctx->buf_pos] == '\n' && ctx->buf_pos < ctx->buf_len) {
         ctx->buf_pos++;
-        *dos_mode = 0;
-        return 1;
+        eoln[len++] = '\n';
     }
-    else if (ctx->buf[ctx->buf_pos] == '\r' && ctx->buf_pos < ctx->buf_len-1 && ctx->buf[ctx->buf_pos+1] == '\n') {
-        ctx->buf_pos += 2;
-        *dos_mode = 1;
-        return 1;
-    }
-    return 0;
+    return len;
 }
 
 /* Outer scan for the next start token: */
@@ -947,17 +946,18 @@ static CosContent* _parse_content(CosParserCtx* ctx, size_t* n, int expect_inlin
  * the buffer backwards. Be careful to only consume \r, if the earlier 'stream'
  * token was also \r\n, as the 'endstream' is proceeded by binary data.
  */
-static size_t _locate_endstream(CosParserCtx* ctx, size_t start, int dos_mode) {
+static size_t _locate_endstream(CosParserCtx* ctx, size_t start, char eoln[]) {
     size_t p;
+    int len = strlen(eoln);
 
     for (p = ctx->buf_len - 10; p > start; p--) {
         if (strncmp("endstream", ctx->buf + p, 9) == 0) {
-            if (ctx->buf[p-1] == '\n' || ctx->buf[p-1] == '\r') {
-                if (dos_mode && ctx->buf[p-1] == '\n'
-                    && p+1 > start && ctx->buf[p-2] == '\r') {
-                    --p;
+            if (len == 0 || strncmp(eoln, ctx->buf + p - len, len) == 0) {
+                if (len == 0) {
+                    if (ctx->buf[p-1] == '\n' || ctx->buf[p-1] == '\r') len++;
+                    if (ctx->buf[p-2] == '\n' || ctx->buf[p-2] == '\r') len++;
                 }
-                return --p;
+                return p - len;
             }
         }
     }
@@ -984,11 +984,13 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
         if (object && object->type == COS_NODE_DICT) {
             /* possible upgrade of dict to a stream */
             CosDict* dict = (void*)object;
-            int dos_mode;
+            char eoln[3] = {0, 0, 0 };
+            char guess_eoln[1] = {0};
 
-            if (_get_token(ctx, "stream") && _scan_new_line(ctx, &dos_mode)) {
+            if (_get_token(ctx, "stream") && _scan_new_line(ctx, eoln)) {
                 CosStream* stream = NULL;
                 size_t stream_start = ctx->buf_pos;
+
                 if (mode == COS_PARSE_NIBBLE) {
                     stream = cos_stream_new(dict, NULL, stream_start);
                 }
@@ -996,7 +998,8 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
                     /* Eager parsing of stream data */
                     uint8_t *value = NULL;
                     size_t length = 0;
-                    size_t stream_end = _locate_endstream(ctx, stream_start, dos_mode);
+                    size_t stream_end = _locate_endstream(ctx, stream_start, eoln);
+                    if (!stream_end) stream_end = _locate_endstream(ctx, stream_start, guess_eoln);
                     if (stream_end) {
                         value = (uint8_t*) ctx->buf + stream_start;
                         length = stream_end - stream_start;

@@ -319,9 +319,9 @@ static int _node_write(CosNode* self, char* out, int out_len, int indent) {
         return cos_comment_write((CosHexString*)self, out, out_len, indent);
     default :
         fprintf(stderr, __FILE__ ":%d type not yet handled: %d\n", __LINE__, self->type);
+        return 0;
     }
 
-    return 0;
 }
 
 
@@ -483,7 +483,7 @@ static size_t _indent_items(CosDict* self, char *out, size_t out_len, size_t* po
     return indent * self->elems;
 }
 
-/* Same as PDF::IO::Writer::MultiLineDictSize constant */
+/* Same as the Raku PDF::IO::Writer::MultiLineDictSize constant */
 #define MultiLineDictSize 65
 
 DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int indent) {
