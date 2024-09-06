@@ -781,15 +781,15 @@ static int _typecheck_operand(CosNode* node) {
     return 0;
 }
 
-/* parse one operation, including operands, from a content stream */
-static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
+/* parse one operation, (operands followed by an operator), from a content stream */
+static CosOp* _parse_content_operation(CosParserCtx* ctx, size_t* m) {
     CosOp* op = NULL;
     CosTk* tk = _look_ahead(ctx, 1);
 
     switch(tk->type) {
     case COS_TK_WORD:
         if (_at_op(ctx, tk)) {
-            op = cos_op_new(ctx->buf + tk->pos, tk->len, NULL, *n);
+            op = cos_op_new(ctx->buf + tk->pos, tk->len, NULL, *m);
             _shift(ctx);
         }
         break;
@@ -797,11 +797,11 @@ static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
         break;
     default: {
         CosNode* operand = _parse_object(ctx);
-        size_t i = (*n)++;
+        size_t i = (*m)++;
 
         if (operand && _typecheck_operand(operand)) {
             /* success, continue parsing */
-            op = _parse_content_op_parts(ctx, n);
+            op = _parse_content_operation(ctx, m);
         }
 
         if (op) {
@@ -816,11 +816,6 @@ static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
     }
 
     return op;
-}
-
-static CosOp* _parse_content_op(CosParserCtx* ctx) {
-    size_t n = 0;
-    return _parse_content_op_parts(ctx, &n);
 }
 
 /* ID should follow a BI (begin image) operation, it:
@@ -919,7 +914,8 @@ static CosContent* _parse_content(CosParserCtx* ctx, size_t* n, int expect_inlin
         }
     }
     else {
-        CosOp* opn = expect_inline ? (CosOp*) _parse_inline_image(ctx) : _parse_content_op(ctx);
+        size_t args = 0;
+        CosOp* opn = expect_inline ? (CosOp*) _parse_inline_image(ctx) : _parse_content_operation(ctx, &args);
         if (opn) {
             expect_inline = !expect_inline && opn->sub_type == COS_OP_BeginImage;
             size_t i = (*n)++;
