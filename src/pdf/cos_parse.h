@@ -9,5 +9,6 @@ typedef enum {
 
 DLLEXPORT CosIndObj* cos_parse_ind_obj(char*, size_t, CosParseMode);
 DLLEXPORT CosNode* cos_parse_obj(char *, size_t);
+DLLEXPORT CosContent* cos_parse_content(char* in_buf, size_t in_len);
 
 #endif

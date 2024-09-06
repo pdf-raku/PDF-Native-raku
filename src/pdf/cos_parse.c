@@ -82,12 +82,10 @@ static size_t _skip_ws(CosParserCtx* ctx) {
 static int _scan_new_line(CosParserCtx* ctx, char eoln[]) {
     int len = 0;
     if (ctx->buf[ctx->buf_pos] == '\r' && ctx->buf_pos < ctx->buf_len) {
-        ctx->buf_pos++;
-        eoln[len++] = '\r';
+        eoln[len++] = ctx->buf[ctx->buf_pos++];
     }
     if (ctx->buf[ctx->buf_pos] == '\n' && ctx->buf_pos < ctx->buf_len) {
-        ctx->buf_pos++;
-        eoln[len++] = '\n';
+        eoln[len++] = ctx->buf[ctx->buf_pos++];
     }
     return len;
 }
