@@ -431,6 +431,19 @@ static int _at_uint(CosParserCtx* ctx, CosTk* tk) {
     return tk->type == COS_TK_INT && isdigit(ctx->buf[tk->pos]);
 }
 
+static int _at_op(CosParserCtx* ctx, CosTk* tk) {
+    if (tk->type == COS_TK_WORD) {
+        size_t i;
+
+        for (i = 0; i < tk->len; i++) {
+            unsigned char ch = ctx->buf[tk->pos + i];
+            if (!isgraph(ch)) return 0;
+        }
+        return 1;
+    }
+    return 0;
+}
+
 static int _get_token(CosParserCtx* ctx, char* word) {
     int found = 0;
     CosTk* tk = _look_ahead(ctx, 1);
@@ -731,21 +744,6 @@ static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n, char *stopper) {
     return objects;
 }
 
-static int _looks_like_an_op(CosParserCtx* ctx, CosTk* tk) {
-
-    if (tk->type == COS_TK_WORD) {
-        size_t i;
-
-        for (i = 0; i < tk->len; i++) {
-            unsigned char ch = ctx->buf[tk->pos + i];
-            if (ch <= '!' || ch > '~') return 0;
-        }
-        return 1;
-    }
-
-    return 0;
-}
-
 static int _typecheck_operand(CosNode* node) {
     if (node) {
         CosNodeType type = node->type;
@@ -790,9 +788,9 @@ static CosOp* _parse_content_op_parts(CosParserCtx* ctx, size_t* n) {
 
     switch(tk->type) {
     case COS_TK_WORD:
-        if (_looks_like_an_op(ctx, tk)) {
-            _shift(ctx);
+        if (_at_op(ctx, tk)) {
             op = cos_op_new(ctx->buf + tk->pos, tk->len, NULL, *n);
+            _shift(ctx);
         }
         break;
     case COS_TK_DONE:
