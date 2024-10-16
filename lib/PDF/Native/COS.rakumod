@@ -330,7 +330,10 @@ class COSDict is COSNode is repr('CStruct') is export {
         self!cos_dict_build_index() unless $!index;
     }
 
-    method ast { dict => %( (^$!elems).map: { $!keys[$_].delegate.ast.value => $!values[$_].delegate.ast }) }
+    method ast {
+        my %dict = (^$!elems).map: { $!keys[$_].delegate.ast.value => $!values[$_].delegate.ast };
+        :%dict;
+    }
 
     method write(::?CLASS:D: buf8
                  :$buf = self.write-buf,
@@ -411,7 +414,8 @@ class COSStream is repr('CStruct') is COSNode is export {
             # stream not attached
             start => $!u.value-pos;
         };
-        stream => %( $.dict.ast, $body );
+        my %stream = $.dict.ast, $body;
+        :%stream;
     }
     multi method COERCE(%s) {
         my COSDict $dict .= COERCE(%s<dict> // {});
@@ -549,7 +553,10 @@ class COSLiteralString is repr('CStruct') is _COSStringy is export {
     method new(blob8:D :$value!, UInt:D :$value-len = $value.elems) {
         cos_literal_new($value, $value-len);
     }
-    method ast { :literal(my $ = self.Str) }
+    method ast {
+        my $literal = self.Str;
+        :$literal;
+    }
     method write(::?CLASS:D: buf8 :$buf = self.write-buf) {
         my $n = self!cos_literal_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
@@ -565,7 +572,10 @@ class COSHexString is repr('CStruct') is _COSStringy is export {
     method new(blob8:D :$value!, UInt:D :$value-len = $value.elems) {
         cos_hex_string_new($value, $value-len);
     }
-    method ast { :hex-string(my $ = self.Str) }
+    method ast {
+        my $hex-string = self.Str:
+        :$hex-string;
+    }
     method write(::?CLASS:D: buf8 :$buf = self.write-buf) {
         my $n = self!cos_hex_string_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
@@ -599,7 +609,10 @@ class COSComment is repr('CStruct') is _COSStringy is export {
     method new(blob8:D :$value!, UInt:D :$value-len = $value.elems) {
         cos_comment_new($value, $value-len);
     }
-    method ast { :comment[my $ = self.Str] }
+    method ast {
+        my @comment = self.Str;
+        :@comment;
+    }
     method write(::?CLASS:D: buf8 :$buf = self.write-buf, Int:D :$indent = 0) {
         my $n = self!cos_comment_write($buf, $buf.bytes, $indent);
         $buf.subbuf(0,$n).decode: "latin-1";
@@ -664,7 +677,8 @@ class COSInlineImage is repr('CStruct') is COSNode is export {
         $buf.subbuf(0,$n).decode;
     }
     method ast {
-        :ID[ $.dict.ast, encoded => $!value.&to-blob($!value-len).decode: 'latin-1' ];
+        my $encoded := $!value.&to-blob($!value-len).decode: 'latin-1';
+        :ID[ $.dict.ast, :$encoded ];
     }
     multi method COERCE(Pair $_ where .key ~~ 'ID') { self.COERCE: .value }
     multi method COERCE(@a where .elems == 2) {
@@ -713,6 +727,7 @@ class COSContent is repr('CStruct') is COSNode is export {
         self.new: :$values;
     }
     method ast {
-        :content[ (^$!elems).map: { self.AT-POS($_).ast } ]
+        my @content = (^$!elems).map: { self.AT-POS($_).ast };
+        :@content;
     }
 }
