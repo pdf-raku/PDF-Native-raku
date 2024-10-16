@@ -32,16 +32,11 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-latest
-          - macOS-latest
           - windows-2019
-#          - windows-latest
+          - windows-latest
         raku-version:
           - 'latest'
           - '2022.07'
-        exclude:
-          - os: windows-latest
-            raku-version: 'latest'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
@@ -55,9 +50,6 @@ jobs:
           zef install --deps-only .
           zef install --deps-only .
           zef build .
-      - name: Install Prerequisite Libraries (MacOS)
-        if: matrix.os == 'macOS-latest'
-        run: brew install openssl
       - name: Run Tests
         run: |
           prove6 -I. t
