@@ -40,6 +40,7 @@ DLLEXPORT void cos_node_done(CosNode* self) {
             break;
         case COS_NODE_LIT_STR:
         case COS_NODE_HEX_STR:
+        case COS_NODE_COMMENT:
             free(((struct CosStringyNode*)self)->value);
             break;
         case COS_NODE_OP:
@@ -125,7 +126,7 @@ static int _int_value(CosNode *node, PDF_TYPE_INT *value) {
 }
 
 static int _is_stringy_node(CosNode* self) {
-    return self != NULL && (self->type == COS_NODE_LIT_STR || self->type == COS_NODE_HEX_STR);
+    return self != NULL && (self->type == COS_NODE_LIT_STR || self->type == COS_NODE_HEX_STR || self->type == COS_NODE_COMMENT);
 }
 
 static int _is_numeric_node(CosNode* self) {
@@ -190,6 +191,7 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
             }
             case COS_NODE_LIT_STR:
             case COS_NODE_HEX_STR:
+            case COS_NODE_COMMENT:
             {
                 struct CosStringyNode* a = (void*)self;
                 struct CosStringyNode* b = (void*)obj;
