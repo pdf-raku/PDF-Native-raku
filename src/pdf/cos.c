@@ -27,7 +27,8 @@ DLLEXPORT void cos_node_done(CosNode* self) {
         fprintf(stderr, __FILE__ ":%d node was not referenced: %p\n", __LINE__, (void*) self);
     }
     else if (--(self->ref_count) <= 0) {
-        switch (self->type) {
+        switch ((CosNodeType)self->type) {
+        case COS_NODE_ANY:
         case COS_NODE_BOOL:
         case COS_NODE_INT:
         case COS_NODE_NULL:
@@ -164,11 +165,12 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
     }
     else {
         /* both nodes are non-null and the same type */
-        switch (self->type) {
+        switch ((CosNodeType)self->type) {
             case COS_NODE_BOOL:
                 return COS_CMP(((CosBool*)self)->value, ((CosBool*)obj)->value);
             case COS_NODE_INT:
                 return COS_CMP(((CosInt*)self)->value, ((CosInt*)obj)->value);
+            case COS_NODE_ANY:
             case COS_NODE_NULL:
                 return COS_CMP_EQUAL;
             case COS_NODE_REAL:
