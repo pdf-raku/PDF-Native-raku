@@ -252,22 +252,16 @@ static CosTk* _look_ahead(CosParserCtx* ctx, int n) {
     return ctx->tk[n - 1];
 }
 
-/* consume entire look-ahead buffer */
-static void _flush_tk(CosParserCtx* ctx) {
-    ctx->n_tk = 0;
-}
-
 static void _resume_parse(CosParserCtx* ctx, void *pos) {
     assert(pos >= ctx->buf && pos <= ctx->buf + ctx->buf_len);
-    _flush_tk(ctx);
+    ctx->n_tk = 0;
     ctx->buf_pos = (char*)pos - ctx->buf;
 }
 
 /* get current token and advance one token */
 static CosTk* _shift(CosParserCtx* ctx) {
     CosTk* tk;
-
-    if (ctx->n_tk == 0) _look_ahead(ctx, 1);
+    assert(ctx->n_tk >= 1 && ctx->n_tk <= 3);
     tk = ctx->tk[0];
     ctx->tk[0] = ctx->tk[1];
     ctx->tk[1] = ctx->tk[2];
