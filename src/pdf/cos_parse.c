@@ -970,11 +970,11 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
 
     if (_at_uint(ctx, &tk1) && _at_uint(ctx, &tk2) && _at_token(ctx, &tk3, "obj") ) {
         /* indirect object header: <uint> <uint> obj */
-        uint64_t obj_num = _read_int(ctx, &tk1);
-        uint32_t gen_num = _read_int(ctx, &tk2);
+        uint64_t obj_num = _read_int(ctx, _shift(ctx));
+        uint32_t gen_num = _read_int(ctx, _shift(ctx));
         CosNode* object;
 
-        _flush_tk(ctx); /* done parsing indirect object header; now parse the object */
+        _shift(ctx); /* skip 'obj' keyword */
         object = _parse_object(ctx);
 
         if (object && object->type == COS_NODE_DICT) {
