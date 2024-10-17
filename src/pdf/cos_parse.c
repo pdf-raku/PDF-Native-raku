@@ -258,6 +258,7 @@ static void _flush_tk(CosParserCtx* ctx) {
 }
 
 static void _resume_parse(CosParserCtx* ctx, void *pos) {
+    assert(pos >= ctx->buf && pos <= ctx->buf + ctx->buf_len);
     _flush_tk(ctx);
     ctx->buf_pos = (char*)pos - ctx->buf;
 }
@@ -698,12 +699,13 @@ static CosNode* _parse_object(CosParserCtx* ctx) {
                 node = (void*) _parse_dict(ctx);
                 break;
             }
+            break;
         }
         case ']': case '>':
         case '{': case '}':
             break;
         default:
-            fprintf(stderr, "Unhandled delimiter: %d\n", ctx->buf[tk1->pos]);
+            fprintf(stderr, "Unhandled delimiter: '%c'\n", ch);
             break;
         }
         break;
