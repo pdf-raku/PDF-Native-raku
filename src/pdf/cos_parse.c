@@ -491,14 +491,14 @@ static int _lit_str_nibble(char **pos, char *end, int *nesting) {
         case 't': return '\t';
         case 'b': return '\b';
         case 'f': return '\f';
-        case '(': return '(';
-        case ')': return ')';
-        case '\\': return '\\';
         case '\r':
             if (*pos < end && *(*pos+1) == '\n') ++(*pos);
             /* fallthrough */
         case '\n':
             return _lit_str_nibble(pos, end, nesting);
+        case '(':
+        case ')':
+        case '\\':
         default:
             return **pos;
         }
