@@ -586,8 +586,8 @@ static CosHexString* _parse_hex_string(CosParserCtx* ctx) {
 
 static CosArray* _parse_array(CosParserCtx* ctx) {
     size_t n = 0;
-    CosArray* array = NULL;
     CosNode** objects = _parse_objects(ctx, &n, "]");
+    CosArray* array = NULL;
     if (n == 0 || objects[n-1] != NULL) {
         array = cos_array_new(objects, n);
     }
@@ -745,26 +745,26 @@ static CosNode** _parse_objects(CosParserCtx* ctx, size_t* n, char *stopper) {
     return objects;
 }
 
-static int _typecheck_operand(CosNode* node) {
+static int _valid_operand(CosNode* node) {
     if (node) {
         CosNodeType type = node->type;
         switch ((CosNodeType)type) {
-        case  COS_NODE_BOOL:
-        case  COS_NODE_HEX_STR:
-        case  COS_NODE_INT:
-        case  COS_NODE_LIT_STR:
-        case  COS_NODE_NAME:
-        case  COS_NODE_NULL:
-        case  COS_NODE_REAL:
+        case COS_NODE_BOOL:
+        case COS_NODE_HEX_STR:
+        case COS_NODE_INT:
+        case COS_NODE_LIT_STR:
+        case COS_NODE_NAME:
+        case COS_NODE_NULL:
+        case COS_NODE_REAL:
         case COS_NODE_COMMENT:
             return 1;
 
-        case  COS_NODE_ARRAY:
-        case  COS_NODE_DICT: {
+        case COS_NODE_ARRAY:
+        case COS_NODE_DICT: {
             struct CosArrayishNode* a = (void*) node;
             size_t i;
             for (i = 0; i < a->elems; i++) {
-                if (! _typecheck_operand( a->values[i]) ) return 0;
+                if (! _valid_operand( a->values[i]) ) return 0;
             }
             return 1;
         }
@@ -800,7 +800,7 @@ static CosOp* _parse_content_operation(CosParserCtx* ctx, size_t* m) {
         CosNode* operand = _parse_object(ctx);
         size_t i = (*m)++;
 
-        if (operand && _typecheck_operand(operand)) {
+        if (operand && _valid_operand(operand)) {
             /* success, continue parsing */
             op = _parse_content_operation(ctx, m);
         }
@@ -810,8 +810,6 @@ static CosOp* _parse_content_operation(CosParserCtx* ctx, size_t* m) {
         }
         else {
             cos_node_done(operand);
-            cos_node_done((CosNode*)op);
-            op = NULL;
         }
     }
     }
@@ -828,72 +826,73 @@ static CosOp* _parse_content_operation(CosParserCtx* ctx, size_t* m) {
 static CosInlineImage* _parse_inline_image(CosParserCtx* ctx) {
     size_t n = 0;
     CosNode** objects = _parse_objects(ctx, &n, "ID");
-    unsigned char* start_image = (unsigned char*) ctx->buf + ctx->buf_pos;
-    int ok = isspace(*(start_image++));
-    CosDict* dict = NULL;
     CosInlineImage* inline_image = NULL;
-    size_t image_len = 0;
 
-    if (!objects) return NULL;
+    if (objects) {
+        unsigned char* start_image = (unsigned char*) ctx->buf + ctx->buf_pos;
+        int ok = isspace(*(start_image++));
+        CosDict* dict = NULL;
+        size_t image_len = 0;
 
-    if (ok) {
-        dict = _pairs_to_dict(objects, n);
-        if (! _typecheck_operand((CosNode*)dict)) {
-            cos_node_done((CosNode*)dict);
-            return NULL;
-        }
-    }
-
-    if (ok && dict) {
-        /* PDF 2.0 Mandates a /L or /Length entry to determine image length */
-        static PDF_TYPE_CODE_POINT Length[6] = {'L', 'e', 'n', 'g', 't', 'h'};
-        CosName* len_entry = cos_name_new(Length, 6);
-        CosInt* len_lookup = (CosInt*) cos_dict_lookup(dict, len_entry);
-        if (!len_lookup) {
-            /* /Length not present, try /L */
-            len_entry->value_len = 1;
-            len_lookup = (CosInt*) cos_dict_lookup(dict, len_entry);
-        }
-        cos_node_done((CosNode*)len_entry);
-
-        if (len_lookup) {
-            /* content length supplied in the dictionary */
-            if (len_lookup->type == COS_NODE_INT && len_lookup->value >= 0
-                && ctx->buf_pos + len_lookup->value < ctx->buf_len - 3 /* can fit <value> + " EI" */
-                ) {
-                image_len = len_lookup->value;
-                ctx->buf_pos += image_len;
+        if (ok) {
+            dict = _pairs_to_dict(objects, n);
+            if (! _valid_operand((CosNode*)dict)) {
+                cos_node_done((CosNode*)dict);
+                return NULL;
             }
-            else ok = 0;
         }
-        else {
-            /* we need to (gulp) scan for the end of image data */
-            /* look for terminating <ws>EI</b> */
-            unsigned char* p;
-            unsigned char* end_image = NULL;
-            unsigned char* end = (unsigned char*) ctx->buf + ctx->buf_len - 2;
 
-            for (p = start_image; p < end && !end_image; p++) {
-                if (isspace(p[0]) && p[1] == 'E' && p[2] == 'I') {
-                    /* Confirm we can actually parse 'EI' as a word */
-                    _resume_parse(ctx,  p);
-                    if (_at_token(ctx, _look_ahead(ctx, 1), "EI")) {
-                        end_image = p;
-                    }
+        if (ok && dict) {
+            /* PDF 2.0 Mandates a /L or /Length entry to determine image length */
+            static PDF_TYPE_CODE_POINT Length[6] = {'L', 'e', 'n', 'g', 't', 'h'};
+            CosName* len_entry = cos_name_new(Length, 6);
+            CosInt* len_lookup = (CosInt*) cos_dict_lookup(dict, len_entry);
+            if (!len_lookup) {
+                /* /Length not present, try /L */
+                len_entry->value_len = 1;
+                len_lookup = (CosInt*) cos_dict_lookup(dict, len_entry);
+            }
+            cos_node_done((CosNode*)len_entry);
+
+            if (len_lookup) {
+                /* content length supplied in the dictionary */
+                if (len_lookup->type == COS_NODE_INT && len_lookup->value >= 0
+                    && ctx->buf_pos + len_lookup->value < ctx->buf_len - 3 /* can fit <value> + " EI" */
+                    ) {
+                    image_len = len_lookup->value;
+                    ctx->buf_pos += image_len;
                 }
-            }
-
-            if (end_image) {
-                image_len = end_image - start_image;
+                else ok = 0;
             }
             else {
-                ok = 0;
+                /* we need to (gulp) scan for the end of image data */
+                /* look for terminating <ws>EI</b> */
+                unsigned char* p;
+                unsigned char* end_image = NULL;
+                unsigned char* end = (unsigned char*) ctx->buf + ctx->buf_len - 2;
+
+                for (p = start_image; p < end && !end_image; p++) {
+                    if (isspace(p[0]) && p[1] == 'E' && p[2] == 'I') {
+                        /* Confirm we can actually parse 'EI' as a word */
+                        _resume_parse(ctx,  p);
+                        if (_at_token(ctx, _look_ahead(ctx, 1), "EI")) {
+                            end_image = p;
+                        }
+                    }
+                }
+
+                if (end_image) {
+                    image_len = end_image - start_image;
+                }
+                else {
+                    ok = 0;
+                }
             }
         }
-    }
 
-    if (ok) {
-        inline_image = cos_inline_image_new(dict, start_image, image_len);
+        if (ok) {
+            inline_image = cos_inline_image_new(dict, start_image, image_len);
+        }
 
         /* restart parse just before "EI" */
         _resume_parse(ctx, start_image + image_len);
@@ -996,7 +995,6 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
 
                         stream = cos_stream_new(dict, value, length);
 
-                        /* resume parse after 'endstream' */
                         _resume_parse(ctx, value + length);
                         _get_token(ctx, "endstream");
                     }
