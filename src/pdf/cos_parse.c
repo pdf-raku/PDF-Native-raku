@@ -92,27 +92,27 @@ static int _scan_new_line(CosParserCtx* ctx, char eoln[]) {
 
 /* Outer scan for the next start token: */
 /* - preceding comments and whitespace are skipped */
-/* - names, numbers, words and indirect references are returned as tokens */
-/* - returns opening delimiter for strings, arrays and dictionaries */
+/* - names, numbers and words are returned as tokens */
+/* - opening delimiter is returned for strings, arrays and dictionaries */
 static CosTk* _scan_tk(CosParserCtx* ctx) {
     CosTk* tk;
-    unsigned char ch = ' ';
     unsigned char prev_ch = ' ';
     int wb = 0;
     int got_digits = 0;
 
     assert(ctx->n_tk < 3);
-
-    tk = ctx->tk[ctx->n_tk++];
     _skip_ws(ctx);
 
+    tk = ctx->tk[ctx->n_tk++];
     tk->type = COS_TK_START;
     tk->pos  = ctx->buf_pos;
     tk->len  = 0;
 
     for (; ctx->buf_pos <= ctx->buf_len && !wb; ctx->buf_pos++) {
+
         if (ctx->buf_pos >= ctx->buf_len) { wb = 1; continue; }
-        ch = ctx->buf[ctx->buf_pos];
+        unsigned char ch = ctx->buf[ctx->buf_pos];
+
         if (ch >= '0' && ch <= '9') {
             got_digits = 1;
             switch (tk->type) {
@@ -444,10 +444,9 @@ static int _at_op(CosParserCtx* ctx, CosTk* tk) {
     return 0;
 }
 
-static int _get_token(CosParserCtx* ctx, char* word) {
-    int found = 0;
+static int _shift_word(CosParserCtx* ctx, char* word) {
     CosTk* tk = _look_ahead(ctx, 1);
-    found = _at_token(ctx, tk, word);
+    int found = _at_token(ctx, tk, word);
     if (found) _shift(ctx);
 
     return found;
@@ -522,8 +521,8 @@ static CosLiteralStr* _parse_lit_string(CosParserCtx* ctx) {
     size_t n_bytes = 0;
     int nesting = 1;
 
+    /* count output bytes and locate the end of the string */
     while (_lit_str_nibble(&lit_end, buf_end, &nesting) >= 0) {
-        /* count output bytes and locate the end of the string */
         n_bytes++;
     };
 
@@ -976,7 +975,7 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
             char eoln[3] = {0, 0, 0 };
             char guess_eoln[1] = {0};
 
-            if (_get_token(ctx, "stream") && _scan_new_line(ctx, eoln)) {
+            if (_shift_word(ctx, "stream") && _scan_new_line(ctx, eoln)) {
                 CosStream* stream = NULL;
                 size_t stream_start = ctx->buf_pos;
 
@@ -996,7 +995,7 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
                         stream = cos_stream_new(dict, value, length);
 
                         _resume_parse(ctx, value + length);
-                        _get_token(ctx, "endstream");
+                        _shift_word(ctx, "endstream");
                     }
                 }
 
@@ -1005,7 +1004,7 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
             }
         }
         if (object) {
-            if ((object->type == COS_NODE_STREAM && mode == COS_PARSE_NIBBLE) || _get_token(ctx, "endobj")) {
+            if ((object->type == COS_NODE_STREAM && mode == COS_PARSE_NIBBLE) || _shift_word(ctx, "endobj")) {
                 ind_obj = cos_ind_obj_new(obj_num, gen_num, object);
             }
             else {
