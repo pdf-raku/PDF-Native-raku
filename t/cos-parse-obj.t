@@ -46,11 +46,11 @@ given COSNode.parse('(\7\07\007\0077)') {
     is-deeply .write, (flat '(', 7.chr xx 4, '7)').join, 'parse octal escapes';
 }
 
-for '(\n\r\t\f\b\\' ~ 10.chr ~ 'X)', '(\n\r\t\f\b\\' ~ 13.chr ~ 10.chr ~ 'X)' {
+for '(\n\r\t\f\b\\' ~ 10.chr ~ 'X\Y)', '(\n\r\t\f\b\\' ~ 13.chr ~ 10.chr ~ 'X\Y)' {
     given COSNode.parse($_) {
         .&isa-ok: COSLiteralString;
-        is-deeply .Str, "\n\r\t\x[c]\x[8]X", 'parse: '~.raku;
-        is-deeply .write, "(\\n\\r\\t\\f\\bX)", 'parse: '~.raku;
+        is-deeply .Str, "\n\r\t\x[c]\x[8]XY", 'parse: '~.raku;
+        is-deeply .write, "(\\n\\r\\t\\f\\bXY)", 'parse: '~.raku;
     }
 }
 
