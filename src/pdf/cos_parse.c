@@ -974,13 +974,11 @@ static CosIndObj* _parse_ind_obj(CosParserCtx* ctx, CosParseMode mode) {
                 }
                 else {
                     /* Eager parsing of stream data */
-                    uint8_t *value = NULL;
-                    size_t length = 0;
                     size_t stream_end = _locate_endstream(ctx, stream_start, eoln);
                     if (!stream_end) stream_end = _locate_endstream(ctx, stream_start, auto_eoln);
                     if (stream_end) {
-                        value = (uint8_t*) ctx->buf + stream_start;
-                        length = stream_end - stream_start;
+                        uint8_t *value = (uint8_t*) ctx->buf + stream_start;
+                        size_t length = stream_end - stream_start;
 
                         stream = cos_stream_new(dict, value, length);
 
