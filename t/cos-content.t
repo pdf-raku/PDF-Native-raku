@@ -2,7 +2,7 @@ use PDF::Native::COS;
 use NativeCall;
 use Test;
 
-plan 15;
+plan 16;
 
 my COSContent $content .= parse: "BT /F1 24 Tf  100 250 Td (Hello, world!) Tj ET";
 ok $content.defined, "content parse";
@@ -20,15 +20,18 @@ is-deeply $content.COERCE($content.ast). ast, $content.ast, "COERCE";
 
 is-deeply $content.write.lines, ('BI', 'ID', 'abc', 'EI');
 
-$content .= parse: "BI /Foo (bar) ID abc EI";
-is-deeply $content.ast, 'content' => [:BI[], :ID[:dict{:Foo(:literal<bar>)}, :encoded<abc>], :EI[]];
+$content .= parse: "BI /Foo (bar) ID  abc EI";
+is-deeply $content.ast, 'content' => [:BI[], :ID[:dict{:Foo(:literal<bar>)}, :encoded(' abc')], :EI[]];
 
-is-deeply $content.write.lines, ('BI', '/Foo (bar) ID', 'abc', 'EI');
+is-deeply $content.write.lines, ('BI', '/Foo (bar) ID', ' abc', 'EI');
 
-$content .= parse: "BI /L 6 ID abc EI EI";
-is-deeply $content.ast, 'content' => [:BI[], :ID[:dict{:L(6)}, :encoded("abc EI")], :EI[]];
+$content .= parse: "BI ID ab EIcEI EI";
+is-deeply $content.ast, 'content' => [:BI[], :ID[:dict{},  :encoded("ab EIcEI")], :EI[]];
 
-is-deeply $content.write.lines, ('BI', '/L 6 ID', 'abc EI', 'EI');
+$content .= parse: "BI /L 7 ID  abc EI EI";
+is-deeply $content.ast, 'content' => [:BI[], :ID[:dict{:L(7)}, :encoded(" abc EI")], :EI[]];
+
+is-deeply $content.write.lines, ('BI', '/L 7 ID', ' abc EI', 'EI');
 
 $content .= parse: "XX /Y 6 ZZ 42 Td";
 is-deeply $content.ast, 'content' => ['??' => :XX[], '??' => :ZZ[:name<Y>, 6], '??' => :Td[42]];

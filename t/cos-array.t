@@ -22,6 +22,10 @@ isa-ok $array[0], COSInt;
 isa-ok $array[1], COSRef;
 isa-ok $array[2], COSName;
 is $array[0].value, 69;
-is-deeply $array.Str.lines, ('[ 69 123 0 R /Hi#20There true null % Hello', '% again', ' 1234.5 ]');
+is-deeply $array.write.lines, (
+    '[ 69 123 0 R /Hi#20There true null % Hello',
+    '% again',
+    ' 1234.5 ]'
+);
 
 done-testing;

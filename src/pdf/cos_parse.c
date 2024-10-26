@@ -1009,7 +1009,6 @@ DLLEXPORT CosIndObj* cos_parse_ind_obj(char* in_buf, size_t in_len, CosParseMode
     CosTk tk1 = {COS_TK_START, 0, 0}, tk2 = {COS_TK_START, 0, 0}, tk3 = {COS_TK_START, 0, 0};
     CosParserCtx ctx = { in_buf, in_len, 0, {&tk1, &tk2, &tk3}, 0};
     return _parse_ind_obj(&ctx, mode);
-
 }
 
 DLLEXPORT CosNode* cos_parse_obj(char* in_buf, size_t in_len) {
