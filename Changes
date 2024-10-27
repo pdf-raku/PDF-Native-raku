@@ -2,6 +2,9 @@ Revision history for PDF-Native
 
 {{$NEXT}}
 
+0.1.11  2024-10-28T06:44:36+13:00
+  - Fixes to indirect object 'endstream' parsing.
+
 0.1.10  2024-07-31T13:55:50+12:00
   - Fix memory leak in dictionary parse
 

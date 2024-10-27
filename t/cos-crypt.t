@@ -1,7 +1,6 @@
 use PDF::Native::COS;
 use NativeCall;
 use Test;
-
 plan 12;
 
 my List $lines = (
@@ -29,15 +28,16 @@ sub crypt-func(COSCryptCtx $ctx, CArray[uint8] $buf, size_t $buf-len ) {
 }
 
 my $mode = COS_CRYPT_ONLY_STRINGS;
-my COSCryptCtx $crypt-ctx .= new: :$key, :&crypt-func, :$mode;
+my COSCryptCtx:D $crypt-ctx .= new: :$key, :&crypt-func, :$mode;
 
 $ind-obj.crypt(:$crypt-ctx);
 is $value6.Str, '1234.5';
-is-deeply $value7.Str, "\x[88]\x[87]\x[86]";
+is-deeply $value7.Str, "\x[88]\x[87]\x[86]", 'encrypted value';
 isnt $ind-obj.Str.lines.join("\n"), $lines.join("\n");
 
 $ind-obj.crypt(:$crypt-ctx);
-is $value7.Str, 'xyz';
+note $crypt-ctx.obj-num;
+is $value7.Str, 'xyz', 'decrypted value';
 
 is $ind-obj.Str.lines.join("\n"), $lines.join("\n");
 

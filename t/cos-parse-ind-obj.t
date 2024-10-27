@@ -1,7 +1,7 @@
 use PDF::Native::COS;
 use Test;
 
-plan 11;
+plan 8;
 
 my COSIndObj $ind-obj .= parse: "10 0 obj 42 endobj";
 ok $ind-obj.defined;
@@ -65,11 +65,15 @@ my Str:D $str = "t/pdf/samples/ind-obj-dict.bin".IO.slurp(:bin).decode: "latin-1
 $ind-obj .= parse: $str;
 ok $ind-obj.defined, 'binary dict parse';
 
-$str = "t/pdf/samples/ind-obj-stream.bin".IO.slurp(:bin).decode: "latin-1";
-$ind-obj .= parse: $str, :scan;
-ok $ind-obj.defined, 'binary stream parse';
-isa-ok $ind-obj.value, COSStream;
-ok $ind-obj.value.value.defined;
-is $ind-obj.value.dict<Length>, $ind-obj.value.value-len;
+for "t/pdf/samples/ind-obj-stream.bin" {
+    subtest $_, {
+        $str = .IO.slurp(:bin).decode: "latin-1";
+        $ind-obj .= parse: $str, :scan;
+        ok $ind-obj.defined, 'binary stream parse';
+        isa-ok $ind-obj.value, COSStream;
+        ok $ind-obj.value.value.defined;
+        is $ind-obj.value.value-len, $ind-obj.value.dict<Length>, '/Length';
+    }
+}
 
 done-testing;
