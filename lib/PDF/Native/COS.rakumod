@@ -18,10 +18,10 @@ my $stream = q:to<--END-->;
     --END--
 
 my COSIndObj $ind-obj .= parse: "123 4 obj\n{$stream}endobj";
-say $ind-obj.write;    # serialize to PDF
 say $ind-obj.ast.raku; # mimic PDF::Grammar::COS.parse( $_ , :rule<ind-obj>);
-my COSInt $val .= parse: "42"; # simple object parse
 say $ind-obj.value.dict<Length>.cmp($val); # derefencing and comparision
+say $ind-obj.write;    # serialize to PDF
+my COSInt $val .= parse: "42"; # simple object parse
 
 =end code
 
