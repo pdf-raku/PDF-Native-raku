@@ -487,8 +487,8 @@ static size_t _indent_items(CosDict* self, char *out, size_t out_len, size_t* po
     return indent * self->elems;
 }
 
-/* Same as the Raku PDF::IO::Writer::MultiLineDictSize constant */
-#define MultiLineDictSize 65
+/* Same as the Raku PDF::IO::Writer::MultiLineDictWrap constant */
+#define MultiLineDictWrap 65
 
 DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int indent) {
     size_t n = 0;
@@ -511,7 +511,7 @@ DLLEXPORT size_t cos_dict_write(CosDict* self, char* out, size_t out_len, int in
         out[n++] = ' ';
     }
 
-    if (elem_indent > 0 && n - self->elems - 3 >= MultiLineDictSize) {
+    if (elem_indent > 0 && n - self->elems - 3 >= MultiLineDictWrap) {
         pos[self->elems] = n;
         n += (m = _indent_items(self, out, out_len, pos, elem_indent));
         if (m == 0 || n + indent >= out_len) goto bail;

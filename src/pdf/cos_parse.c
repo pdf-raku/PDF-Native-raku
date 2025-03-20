@@ -5,7 +5,8 @@
  * singular objects.
  *
  * The primary goal is efficent parsing of COS objects, once they have
- * been identified and isolated by indexing or scanning a PDF file.
+ * been identified and isolated by indexing or scanning a PDF file and
+ * after decyption/decompression/object-stream extraction.
  *
  * There are three main functions:
  *
