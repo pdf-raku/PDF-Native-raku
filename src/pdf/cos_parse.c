@@ -743,6 +743,7 @@ static int _valid_operand(CosNode* node) {
     if (node) {
         CosNodeType type = node->type;
         switch ((CosNodeType)type) {
+
         case COS_NODE_BOOL:
         case COS_NODE_HEX_STR:
         case COS_NODE_INT:
@@ -755,7 +756,7 @@ static int _valid_operand(CosNode* node) {
 
         case COS_NODE_ARRAY:
         case COS_NODE_DICT: {
-            struct CosArrayishNode* a = (void*) node;
+            struct CosContainerNode* a = (void*) node;
             size_t i;
             for (i = 0; i < a->elems; i++) {
                 if (! _valid_operand( a->values[i]) ) return 0;

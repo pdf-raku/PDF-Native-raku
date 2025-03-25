@@ -51,7 +51,7 @@ DLLEXPORT void cos_node_done(CosNode* self) {
         case COS_NODE_ARRAY:
             {
                 size_t i;
-                struct CosArrayishNode* a = (void*)self;
+                struct CosContainerNode* a = (void*)self;
                 for (i=0; i < a->elems; i++) {
                     cos_node_done(a->values[i]);
                 }
@@ -207,8 +207,8 @@ DLLEXPORT int cos_node_cmp(CosNode* self, CosNode* obj) {
             case COS_NODE_CONTENT:
             case COS_NODE_ARRAY:
             {
-                struct CosArrayishNode* a = (void*)self;
-                struct CosArrayishNode* b = (void*)obj;
+                struct CosContainerNode* a = (void*)self;
+                struct CosContainerNode* b = (void*)obj;
                 int rv = COS_CMP_EQUAL;
                 size_t i;
                 if (a->elems != b->elems) return COS_CMP_DIFFERENT;
@@ -584,7 +584,7 @@ static void _crypt_node(CosNode* self, CosCryptNodeCtx* crypt_ctx) {
         case COS_NODE_DICT:
             {
                 size_t i;
-                struct CosArrayishNode* a = (void*)self;
+                struct CosContainerNode* a = (void*)self;
                 for (i=0; i < a->elems; i++) {
                     _crypt_node(a->values[i], crypt_ctx);
                 }

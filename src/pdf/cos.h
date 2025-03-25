@@ -64,7 +64,7 @@ typedef enum {
     COS_OP_MoveShowText
 } CosOpCode;
 
-typedef struct CosBlankNode {
+typedef struct {
     uint8_t         type;
     uint8_t         check;
     uint16_t        ref_count;
@@ -87,7 +87,15 @@ typedef struct {
     CosNode*        value;
 } CosIndObj;
 
-typedef struct CosArrayishNode {
+typedef struct {
+    uint8_t         type;
+    uint8_t         check;
+    uint16_t        ref_count;
+    PDF_TYPE_CODE_POINTS value;
+    uint16_t        value_len;
+} CosName;
+
+typedef struct CosContainerNode {
     uint8_t         type;
     uint8_t         check;
     uint16_t        ref_count;
@@ -99,16 +107,9 @@ typedef struct {
     uint8_t         type;
     uint8_t         check;
     uint16_t        ref_count;
-    PDF_TYPE_CODE_POINTS value;
-    uint16_t        value_len;
-} CosName;
-
-typedef struct {
-    uint8_t         type;
-    uint8_t         check;
-    uint16_t        ref_count;
     size_t          elems;
     CosNode**       values;
+    /* struct CosContainerNode */
     CosName**       keys;
     size_t*         index;
     size_t          index_len;
@@ -161,6 +162,7 @@ typedef struct {
     uint16_t        ref_count;
     size_t          elems;
     CosNode**       values;
+    /* struct CosContainerNode */
     char*           opn;
     CosOpCode       sub_type;
 } CosOp;
@@ -171,6 +173,7 @@ typedef struct {
     uint16_t        ref_count;
     size_t          elems;
     CosOp**         values;
+    /* struct CosContainerNode */
 } CosContent;
 
 DLLEXPORT void cos_node_reference(CosNode*);
