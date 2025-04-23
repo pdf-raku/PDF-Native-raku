@@ -1123,15 +1123,17 @@ DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent
     }
 
     for (i=0; i < self->elems; i++) {
-        int is_inline_image = self->values[i] && self->values[i]->type == COS_NODE_INLINE_IMAGE;
         if (self->values[i]->type == COS_NODE_COMMENT) {
             comment = self->values[i];
             continue;
         }
-        n += (m = _node_write(self->values[i], out+n, out_len - n, is_inline_image ? indent : 0));
-        if (m == 0 ) return 0;
-        if (n >= out_len) return 0;
-        out[n++] = (is_inline_image ? '\n' : ' ');
+        else {
+            int is_inline_image = self->values[i]->type == COS_NODE_INLINE_IMAGE;
+            n += (m = _node_write(self->values[i], out+n, out_len - n, is_inline_image ? indent : 0));
+            if (m == 0 ) return 0;
+            if (n >= out_len) return 0;
+            out[n++] = (is_inline_image ? '\n' : ' ');
+        }
     }
 
     n += (m = _bufcat(out+n, out_len-n, self->opn));
