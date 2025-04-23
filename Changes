@@ -1,6 +1,9 @@
 Revision history for PDF-Native
 
 {{$NEXT}}
+  - Adjust cos_inline_image_write() indentation to match Raku implementation.
+    -- indent the inline image dictionary
+    -- don't indent final 'EI' (end-image)
 
 0.1.11  2024-10-28T06:44:36+13:00
   - Fixes to indirect object 'endstream' parsing.

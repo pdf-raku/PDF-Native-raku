@@ -316,7 +316,7 @@ static int _node_write(CosNode* self, char* out, int out_len, int indent) {
     case COS_NODE_OP:
         return cos_op_write((CosOp*)self, out, out_len, indent);
     case COS_NODE_INLINE_IMAGE:
-        return cos_inline_image_write((CosInlineImage*)self, out, out_len);
+        return cos_inline_image_write((CosInlineImage*)self, out, out_len, indent);
     case COS_NODE_CONTENT:
         return cos_content_write((CosContent*)self, out, out_len);
     case COS_NODE_COMMENT:
@@ -1114,20 +1114,24 @@ DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent
     size_t m;
     CosNode* comment = NULL;
 
-    for (; indent > 0; indent--) {
-        if (n >= out_len) return 0;
-        out[n++] = ' ';
+    if (self->sub_type != COS_OP_EndImage) {
+        int j;
+        for (j = 0; j < indent; j++) {
+            if (n >= out_len) return 0;
+            out[n++] = ' ';
+        }
     }
 
     for (i=0; i < self->elems; i++) {
+        int is_inline_image = self->values[i] && self->values[i]->type == COS_NODE_INLINE_IMAGE;
         if (self->values[i]->type == COS_NODE_COMMENT) {
             comment = self->values[i];
             continue;
         }
-        n += (m = _node_write(self->values[i], out+n, out_len - n, 0));
+        n += (m = _node_write(self->values[i], out+n, out_len - n, is_inline_image ? indent : 0));
         if (m == 0 ) return 0;
         if (n >= out_len) return 0;
-        out[n++] = (self->values[i] && self->values[i]->type == COS_NODE_INLINE_IMAGE ? '\n' : ' ');
+        out[n++] = (is_inline_image ? '\n' : ' ');
     }
 
     n += (m = _bufcat(out+n, out_len-n, self->opn));
@@ -1214,11 +1218,16 @@ DLLEXPORT CosInlineImage* cos_inline_image_new(CosDict* dict, unsigned char* val
     return self;
 }
 
-DLLEXPORT size_t cos_inline_image_write(CosInlineImage* self, char* out, size_t out_len) {
+DLLEXPORT size_t cos_inline_image_write(CosInlineImage* self, char* out, size_t out_len, int indent) {
     size_t n = 0, m, i;
     CosDict* dict = self->dict;
 
-    for (i = 0; i < dict->elems; i++) {
+    for (; indent > 0; indent--) {
+        if (n >= out_len) return 0;
+        out[n++] = ' ';
+    }
+
+   for (i = 0; i < dict->elems; i++) {
         n += (m = _node_write((CosNode*)dict->keys[i], out+n, out_len - n, -1));
         if (m == 0 || n >= out_len) return 0;
         out[n++] = ' ';

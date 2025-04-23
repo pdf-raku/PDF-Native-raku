@@ -259,7 +259,7 @@ DLLEXPORT CosContent* cos_content_new(CosOp**, size_t);
 DLLEXPORT size_t cos_content_write(CosContent*, char*, size_t);
 
 DLLEXPORT CosInlineImage* cos_inline_image_new(CosDict* dict, unsigned char* value, size_t value_len);
-DLLEXPORT size_t cos_inline_image_write(CosInlineImage*, char*, size_t);
+DLLEXPORT size_t cos_inline_image_write(CosInlineImage*, char*, size_t, int);
 
 DLLEXPORT CosComment* cos_comment_new(PDF_TYPE_STRING, size_t);
 DLLEXPORT size_t cos_comment_write(CosComment*, char*, size_t, int);

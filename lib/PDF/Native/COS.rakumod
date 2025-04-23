@@ -667,13 +667,13 @@ class COSInlineImage is repr('CStruct') is COSNode is export {
     method dict returns COSDict {  $!dict.delegate }
 
     sub cos_inline_image_new(COSDict, Blob, size_t --> COSInlineImage) is native(libpdf) {*}
-    method !cos_inline_image_write(Blob, size_t --> size_t) is native(libpdf) {*}
+    method !cos_inline_image_write(Blob, size_t, int32 --> size_t) is native(libpdf) {*}
 
     method bless(COSDict :$dict!, Blob :$value!) {
         cos_inline_image_new($dict, $value, $value.bytes);
     }
-    method write(::?CLASS:D: buf8 :$buf = self.write-buf) handles<Str> {
-        my $n = self!cos_inline_image_write($buf, $buf.bytes);
+    method write(::?CLASS:D: buf8 :$buf = self.write-buf, Int :$indent = 0) handles<Str> {
+        my $n = self!cos_inline_image_write($buf, $buf.bytes, $indent);
         $buf.subbuf(0,$n).decode;
     }
     method ast {
