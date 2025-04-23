@@ -1125,7 +1125,6 @@ DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent
     for (i=0; i < self->elems; i++) {
         if (self->values[i]->type == COS_NODE_COMMENT) {
             comment = self->values[i];
-            continue;
         }
         else {
             int is_inline_image = self->values[i]->type == COS_NODE_INLINE_IMAGE;
