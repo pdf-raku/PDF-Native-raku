@@ -1139,8 +1139,7 @@ DLLEXPORT size_t cos_op_write(CosOp* self, char* out, size_t out_len, int indent
     if (m == 0) return 0;
 
     if (comment && n < out_len) {
-        out[n++] = ' ';
-        n += _node_write(comment, out+n, out_len - n, 0);
+        n += _node_write(comment, out+n, out_len - n, 1);
         n--;
     }
 

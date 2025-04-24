@@ -272,8 +272,8 @@ static CosTk* _shift(CosParserCtx* ctx) {
     return tk;
 }
 
-static PDF_TYPE_INT _read_int(CosParserCtx* ctx, CosTk* tk) {
-    PDF_TYPE_INT val = 0;
+static PDF_TYPE_INT64 _read_int(CosParserCtx* ctx, CosTk* tk) {
+    PDF_TYPE_INT64 val = 0;
     size_t i = 0;
     int sign = 1;
 
