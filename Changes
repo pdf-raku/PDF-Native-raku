@@ -1,7 +1,9 @@
 Revision history for PDF-Native
 
 {{$NEXT}}
-  - Fix accidental 32bit (4Gb) PDF file-size limit
+
+0.1.12  2025-04-25T09:06:28+12:00
+  - Fix accidental 32bit (4Gb) PDF file-size read limit
   - Adjust cos_inline_image_write() indentation to match Raku implementation.
     -- indent the inline image dictionary
     -- don't indent final 'EI' (end-image)
