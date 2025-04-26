@@ -573,7 +573,7 @@ class COSHexString is repr('CStruct') is _COSStringy is export {
         cos_hex_string_new($value, $value-len);
     }
     method ast {
-        my $hex-string = self.Str:
+        my $hex-string = self.Str;
         :$hex-string;
     }
     method write(::?CLASS:D: buf8 :$buf = self.write-buf) {
