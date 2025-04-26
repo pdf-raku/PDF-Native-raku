@@ -2,6 +2,9 @@ Revision history for PDF-Native
 
 {{$NEXT}}
 
+0.1.13  2025-04-27T07:15:09+12:00
+  - Fix hex-string AST construction (and parsing)
+
 0.1.12  2025-04-25T09:06:28+12:00
   - Fix accidental 32bit (4Gb) PDF file-size read limit
   - Adjust cos_inline_image_write() indentation to match Raku implementation.
