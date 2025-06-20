@@ -840,15 +840,20 @@ static CosInlineImage* _parse_inline_image(CosParserCtx* ctx) {
 
         if (ok && dict) {
             /* PDF 2.0 Mandates a /L or /Length entry to determine image length */
-            static PDF_TYPE_CODE_POINT Length[6] = {'L', 'e', 'n', 'g', 't', 'h'};
-            CosName* len_entry = cos_name_new(Length, 6);
+            static PDF_TYPE_CODE_POINT L[1] = {'L'};
+            CosName* len_entry = cos_name_new(L, 1);
             CosInt* len_lookup = (CosInt*) cos_dict_lookup(dict, len_entry);
-            if (!len_lookup) {
-                /* /Length not present, try /L */
-                len_entry->value_len = 1;
-                len_lookup = (CosInt*) cos_dict_lookup(dict, len_entry);
-            }
             cos_node_done((CosNode*)len_entry);
+            len_entry = NULL;
+
+            if (!len_lookup) {
+                /* /L not found, try /Length */
+                static PDF_TYPE_CODE_POINT Length[6] = {'L', 'e', 'n', 'g', 't', 'h'};
+                len_entry = cos_name_new(Length, 6);
+                len_lookup = (CosInt*) cos_dict_lookup(dict, len_entry);
+                cos_node_done((CosNode*)len_entry);
+                len_entry = NULL;
+            }
 
             if (len_lookup) {
                 /* content length supplied in the dictionary */
