@@ -52,7 +52,7 @@ DLLEXPORT void cos_node_done(CosNode* self) {
         case COS_NODE_DICT:
             {
                 struct CosContainerNode* c = (void*)self;
-                CosDict* d = self->type == COS_NODE_DICT ? (void*)self : NULL;
+                CosDict* d = c->type == COS_NODE_DICT ? (void*)c : NULL;
                 size_t i;
 
                 for (i=0; i < c->elems; i++) {

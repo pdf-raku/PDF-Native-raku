@@ -29,7 +29,7 @@ my COSInt $val .= parse: "42"; # simple object parse
 
 This is under development as a set of objects for the native construction and serialization of COS (PDF) objects.
 
-It utilized by L<PDF::IO::Reader> and L<PDF::IO::Writer> to provide faster reading and writing of larger PDF files.
+It is optionally used by L<PDF::IO::Reader> and L<PDF::IO::Writer> to boost reading and writing of larger PDF files.
 
 =end pod
 

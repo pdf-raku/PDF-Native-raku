@@ -30,7 +30,7 @@ Description
 
 This is under development as a set of objects for the native construction and serialization of COS (PDF) objects.
 
-It utilized by [PDF::IO::Reader](https://pdf-raku.github.io/PDF-raku) and [PDF::IO::Writer](https://pdf-raku.github.io/PDF-raku) to provide faster reading and writing of larger PDF files.
+It is optionally used by [PDF::IO::Reader](https://pdf-raku.github.io/PDF-raku) and [PDF::IO::Writer](https://pdf-raku.github.io/PDF-raku) to boost reading and writing of larger PDF files.
 
 class PDF::Native::COS::COSNode
 -------------------------------
