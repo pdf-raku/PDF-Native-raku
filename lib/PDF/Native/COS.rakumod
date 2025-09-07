@@ -328,7 +328,7 @@ class COSDict is COSNode is repr('CStruct') is export {
     }
 
     method ast {
-        my %dict = (^$!elems).map: { $!keys[$_].delegate.ast.value => $!values[$_].delegate.ast };
+        my %dict = (^$!elems).map: { $!keys[$_].delegate.Str => $!values[$_].delegate.ast };
         :%dict;
     }
 
