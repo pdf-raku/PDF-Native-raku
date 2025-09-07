@@ -25,6 +25,8 @@ subtest 'numeric', {
     my COSInt:D $two = parse("2");
 
     is $two.cmp(parse("2")), +COS_CMP_EQUAL;
+    is $two.cmp(2), +COS_CMP_EQUAL;
+    is $two.cmp(3), +COS_CMP_DIFFERENT;
     is $two.cmp(parse("2.0")), +COS_CMP_SIMILAR;
     is $two.cmp(parse("2.1")), +COS_CMP_DIFFERENT;
     is $two.cmp($one), +COS_CMP_DIFFERENT;

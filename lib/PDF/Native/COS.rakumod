@@ -104,14 +104,12 @@ my class _Node is repr('CStruct') {
     has uint8 $!private;
     has uint16 $.ref-count;
 
-    method delegate {
-        with self {
-            my $class := @ClassMap[$!type];
-            nativecast($class, $_).reference;
-        }
-        else {
-            $_;
-        }
+    multi method delegate(::?CLASS:D:) {
+        my $class := @ClassMap[$!type];
+        $class.&nativecast(self).reference;
+    }
+    multi method delegate(::?CLASS:U:) {
+        self
     }
 }
 
@@ -148,7 +146,7 @@ class COSNode is repr('CStruct') is _Node is export {
         self!cos_node_done();
     }
 
-    method cmp(COSNode $obj) {
+    method cmp(COSNode() $obj) {
         self!cos_node_cmp($obj);
     }
     multi method COERCE(COSNode:D $_) is default { $_ }
@@ -362,9 +360,9 @@ class COSDict is COSNode is repr('CStruct') is export {
 
 constant $CLIB is export(:CLIB) = BEGIN Rakudo::Internals.IS-WIN ?? 'msvcrt' !! Str;
 sub memcpy(Blob $dest, CArray $chars, size_t $n) is native($CLIB) {*};
-sub to-blob( CArray[uint8] $value, UInt:D $len ) {
-    my blob8 $buf .= allocate($len);
-    memcpy($buf, $value, $len);
+sub to-blob( CArray[uint8] $value, UInt:D $bytes ) {
+    my blob8 $buf .= allocate($bytes);
+    memcpy($buf, $value, $bytes);
     $buf;
 }
 
@@ -402,8 +400,8 @@ class COSStream is repr('CStruct') is COSNode is export {
         my $n = self!cos_stream_write($buf, $buf.bytes);
         $buf.subbuf(0,$n).decode: "latin-1";
     }
-    method attach-data(Blob:D $buf, UInt:D $len) {
-        self!cos_stream_attach_data($buf, $buf.bytes, $len);
+    method attach-data(Blob:D $buf, UInt:D $bytes) {
+        self!cos_stream_attach_data($buf, $buf.bytes, $bytes);
     }
     method ast {
         my Pair $body = do with $!value {
