@@ -36,7 +36,6 @@ is-deeply $value7.Str, "\x[88]\x[87]\x[86]", 'encrypted value';
 isnt $ind-obj.Str.lines.join("\n"), $lines.join("\n");
 
 $ind-obj.crypt(:$crypt-ctx);
-note $crypt-ctx.obj-num;
 is $value7.Str, 'xyz', 'decrypted value';
 
 is $ind-obj.Str.lines.join("\n"), $lines.join("\n");
