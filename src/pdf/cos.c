@@ -49,26 +49,23 @@ DLLEXPORT void cos_node_done(CosNode* self) {
             /* fallthrough */
         case COS_NODE_CONTENT:
         case COS_NODE_ARRAY:
-            {
-                size_t i;
-                struct CosContainerNode* a = (void*)self;
-                for (i=0; i < a->elems; i++) {
-                    cos_node_done(a->values[i]);
-                }
-                free(a->values);
-            }
-            break;
         case COS_NODE_DICT:
-             {
+            {
+                struct CosContainerNode* c = (void*)self;
+                CosDict* d = self->type == COS_NODE_DICT ? (void*)self : NULL;
                 size_t i;
-                CosDict* a = (void*)self;
-                for (i=0; i < a->elems; i++) {
-                    cos_node_done((CosNode*)a->keys[i]);
-                    cos_node_done(a->values[i]);
+
+                for (i=0; i < c->elems; i++) {
+                    cos_node_done(c->values[i]);
+                    if (d) cos_node_done((CosNode*)d->keys[i]);
                 }
-                free(a->keys);
-                free(a->values);
-                if (a->index) free(a->index);
+
+                free(c->values);
+
+                if (d) {
+                    free(d->keys);
+                    if (d->index) free(d->index);
+                }
             }
             break;
         case COS_NODE_IND_OBJ:
@@ -1244,7 +1241,7 @@ DLLEXPORT size_t cos_inline_image_write(CosInlineImage* self, char* out, size_t 
     return n + self->value_len;
 }
 
-/* gives a modest overestimate of write buffer size for preallocation */
+/* Calculate a write buffer size for preallocation. This may be an over-estimate in some cases */
 DLLEXPORT size_t cos_node_get_write_size(CosNode* self, int indent) {
     char out[64];
     size_t size = 0;
