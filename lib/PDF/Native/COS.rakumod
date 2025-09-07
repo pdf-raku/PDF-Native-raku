@@ -249,8 +249,7 @@ class COSArray is COSNode is repr('CStruct') is export {
     method bless(CArray[COSNode] :$values!, UInt:D :$elems = $values.elems) {
         cos_array_new($values, $elems);
     }
-    method write(::?CLASS:D: buf8 :$buf is copy = self.write-buf, Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) handles<Str> {
-        $buf = buf8.allocate(90);
+    method write(::?CLASS:D: buf8 :$buf = self.write-buf, Bool :$compact, Int:D :$indent = $compact ?? -1 !! 0) handles<Str> {
         my $n = self!cos_array_write($buf, $buf.bytes, $indent);
         fail "Unable to write array" unless $n;
         $buf.subbuf(0,$n).decode: "latin-1";
