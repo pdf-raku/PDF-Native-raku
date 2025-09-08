@@ -164,6 +164,9 @@ class COSNode is repr('CStruct') is _Node is export {
     multi method COERCE(Numeric:D $_) {
          @ClassMap[COS_NODE_REAL].COERCE: $_
     }
+    multi method COERCE(Str:D) {
+        fail "COERCE(Str:D) requires a specific class:  COSName, COSLiteralString, or COSHexString";
+    }
     multi method COERCE(@a) {
          @ClassMap[COS_NODE_ARRAY].COERCE: @a
     }

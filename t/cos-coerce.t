@@ -26,4 +26,6 @@ for (
     is $class.COERCE($value).write(:$buf), $result, "{$class.raku} coercement of {$value.isa(COSNode) ?? "node " ~ $value.write !! $value.raku}";
 }
 
+throws-like COSNode.COERCE("x"), X::AdHoc, :message("COERCE(Str:D) requires a specific class:  COSName, COSLiteralString, or COSHexString");
+
 done-testing;
