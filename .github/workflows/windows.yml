@@ -10,13 +10,13 @@ on:
 
 jobs:
   build-libraries:
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
       - uses: ilammy/msvc-dev-cmd@v1
       - uses: actions/checkout@v2
       - uses: Raku/setup-raku@v1
         with:
-          raku-version: '2022.04'
+          raku-version: '2022.07'
       - uses: actions/checkout@v2
       - uses: chetan/git-restore-mtime-action@v1
       - name: Update DLL
@@ -32,7 +32,6 @@ jobs:
     strategy:
       matrix:
         os:
-          - windows-2019
           - windows-latest
         raku-version:
           - 'latest'
