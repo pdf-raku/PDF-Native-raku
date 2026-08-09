@@ -120,7 +120,7 @@ class COSNode is repr('CStruct') is _Node is export {
     method !cos_node_done() is native(libpdf) {*}
     method !cos_node_cmp(COSNode --> int32) is native(libpdf) {*}
     method !cos_node_get_write_size(int32 --> size_t) is native(libpdf) {*}
-    our sub cos_parse_obj(Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
+    our sub cos_parse_obj(Blob, size_t --> ::?CLASS) is native(libpdf) {*}
 
     #| Parse a COS object
     multi method parse(LatinStr:D $str --> _Node) {
@@ -433,7 +433,7 @@ class COSIndObj is repr('CStruct') is COSNode is export {
     method value returns COSNode { $!value.delegate }
 
     our sub cos_ind_obj_new(uint64, uint32, COSNode --> ::?CLASS:D) is native(libpdf) {*}
-    our sub cos_parse_ind_obj(Blob, size_t, int32 --> ::?CLASS:D) is native(libpdf) {*}
+    our sub cos_parse_ind_obj(Blob, size_t, int32 --> ::?CLASS) is native(libpdf) {*}
     method !cos_ind_obj_write(Blob, size_t --> size_t) is native(libpdf) {*}
     method !cos_ind_obj_crypt(COSCryptCtx:D) is native(libpdf) {*}
     method crypt(COSCryptCtx:D :$crypt-ctx!) {
@@ -695,7 +695,7 @@ class COSContent is repr('CStruct') is COSNode is export {
     has CArray[_Node] $.values;
 
     our sub cos_content_new(CArray[COSNode], size_t --> ::?CLASS:D) is native(libpdf) {*}
-    our sub cos_parse_content(Blob, size_t --> ::?CLASS:D) is native(libpdf) {*}
+    our sub cos_parse_content(Blob, size_t --> ::?CLASS) is native(libpdf) {*}
     method !cos_content_write(Blob, size_t --> size_t) is native(libpdf) {*}
 
     method bless(CArray[COSNode] :$values!, UInt:D :$elems = $values.elems) {
