@@ -11,8 +11,6 @@ use PDF::Native::Reader;
 
 given PDF::Native::Reader.new {
 
-     enum <free inuse>;
-
      my Str $xref = (
          'xref',
          '10 4',
@@ -25,6 +23,10 @@ given PDF::Native::Reader.new {
      my Blob $buf = $xref.encode('latin-1');
 
      my array $entries = .read-xref($buf);
+
+     for $entries.rotor(4) -> ($obj-num, $inuse, $offset, $gen-num) {
+         say "Indirect object $obj-num $gen-num R is {$inuse ?? 'in-use' !! 'free'} at byte offset $offset";
+     }
 }
 =end code
 =end pod
