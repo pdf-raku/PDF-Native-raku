@@ -73,10 +73,10 @@ multi method encode($buf where Blob,
                     BPC  :$BitsPerComponent = 8, # number of bits per color
                    --> Blob) {
     my $rows = ($buf.bytes * 8) div ($Columns * $Colors * $BitsPerComponent);
-    my \nums := unpack( $buf, $BitsPerComponent );
+    my \nums := $buf.&unpack( $BitsPerComponent );
     my $out = nums.WHAT.allocate(nums.elems);
-    pdf_filt_predict_encode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
-    $out = pack($out, $BitsPerComponent);
+    nums.&pdf_filt_predict_encode($out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
+    $out .= &pack($BitsPerComponent);
     $out;
 }
 
@@ -99,8 +99,7 @@ multi method encode($buf is copy where Blob,
     # preallocate, allowing room for per-row data + tag + padding
     my blob8 $out .= allocate($rows * ($row-size + 1));
 
-    pdf_filt_predict_encode($buf, $out, $Predictor, $colors, $bpc, $Columns, $rows);
-
+    $buf.&pdf_filt_predict_encode($out, $Predictor, $colors, $bpc, $Columns, $rows);
     $out;
 }
 
@@ -123,10 +122,10 @@ multi method decode($buf where Blob,
                     BPC :$BitsPerComponent = 8,  # number of bits per color
                    --> Blob) {
     my $rows = ($buf.bytes * 8) div ($Columns * $Colors * $BitsPerComponent);
-    my \nums := unpack( $buf, $BitsPerComponent );
+    my \nums := $buf.&unpack($BitsPerComponent );
     my $out = nums.WHAT.allocate(nums.elems);
-    pdf_filt_predict_decode(nums, $out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
-    $out = pack( $out, $BitsPerComponent);
+    nums.&pdf_filt_predict_decode($out, $Predictor, $Colors, $BitsPerComponent, $Columns, $rows);
+    $out = $out.&pack($BitsPerComponent);
     $out;
 }
 
@@ -149,8 +148,7 @@ multi method decode(Blob $buf,  # input stream
     my $rows = +$buf div ($row-size + 1);
     my blob8 $out .= allocate($rows * $row-size);
 
-    pdf_filt_predict_decode($buf, $out, $Predictor, $colors, $bpc, $Columns, $rows);
-
+    $buf.&pdf_filt_predict_decode($out, $Predictor, $colors, $bpc, $Columns, $rows);
     $out;
 }
 
