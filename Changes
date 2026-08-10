@@ -2,6 +2,10 @@ Revision history for PDF-Native
 
 {{$NEXT}}
 
+0.1.14  2026-08-10T16:20:50+12:00
+  - Remove :D from the return of parse functions that can return :U #3. 
+    For forward compatibility with RakuAST 2026.07 NativeCall
+
 0.1.13  2025-04-27T07:15:09+12:00
   - Fix hex-string AST construction (and parsing)
 
