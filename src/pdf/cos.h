@@ -66,13 +66,13 @@ typedef enum {
 
 typedef struct {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
 } CosNode, CosNull;
 
 typedef struct {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
     uint64_t        obj_num;
     uint32_t        gen_num;
@@ -80,7 +80,7 @@ typedef struct {
 
 typedef struct {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
     uint64_t        obj_num;
     uint32_t        gen_num;
@@ -89,7 +89,7 @@ typedef struct {
 
 typedef struct {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
     PDF_TYPE_CODE_POINTS value;
     uint16_t        value_len;
@@ -97,7 +97,7 @@ typedef struct {
 
 typedef struct CosContainerNode {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
     size_t          elems;
     CosNode**       values;
@@ -105,7 +105,7 @@ typedef struct CosContainerNode {
 
 typedef struct {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
     size_t          elems;
     CosNode**       values;
@@ -117,28 +117,28 @@ typedef struct {
 
 typedef struct {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
     PDF_TYPE_BOOL   value;
 } CosBool;
 
 typedef struct {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
     PDF_TYPE_INT64  value;
 } CosInt;
 
 typedef struct {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
     PDF_TYPE_REAL   value;
 } CosReal;
 
 typedef struct CosStringyNode {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
     PDF_TYPE_STRING value;
     size_t          value_len;
@@ -146,7 +146,7 @@ typedef struct CosStringyNode {
 
 typedef struct CosStreamish {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
     CosDict*        dict;
     char*           value;
@@ -158,7 +158,7 @@ typedef struct CosStreamish {
 
 typedef struct {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
     size_t          elems;
     CosNode**       values;
@@ -169,7 +169,7 @@ typedef struct {
 
 typedef struct {
     uint8_t         type;
-    uint8_t         check;
+    uint8_t         check_sum;
     uint16_t        ref_count;
     size_t          elems;
     CosOp**         values;

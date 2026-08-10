@@ -181,7 +181,7 @@ static CosTk* _scan_tk(CosParserCtx* ctx) {
                 tk->type = COS_TK_DELIM;
             }
             else if (!(tk->len == 1 && prev_ch == ch)) {
-                /* allow just '<<' and '>>' as 2 character delimiters */
+                /* allow '<<' and '>>' as 2 character delimiters */
                 wb = 1;
             }
             break;
@@ -329,14 +329,17 @@ static CosName* _parse_name(CosParserCtx* ctx) {
             unsigned char ch = *pos;
 
             if (ch == '#') {
+                /* escape sequence */
                 if (pos+1 >= end) goto bail;
                 if (*(pos+1) == '#') {
+                    /* escaped '#' */
                     bytes[n_bytes++] = *(++pos);
                 }
                 else if (pos + 1 > end) {
                     goto bail;
                 }
                 else {
+                    /* hex encoded byte */
                     int d1 = _hex_value(*(++pos));
                     int d2 = _hex_value(*(++pos));
                     if (d1 < 0 || d2 < 0) goto bail;
